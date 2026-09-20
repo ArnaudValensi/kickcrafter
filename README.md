@@ -33,9 +33,8 @@ it MIDI notes.
 host scans, for example `~/.vst3/`. Like the other two, this binary is compiled and unit-tested by
 continuous integration. Linux is also the platform the maintainer validates: before each release, a
 local build of the same sources goes through the Steinberg validator, the plug-in tests, the REAPER
-host harness and the memory gate ([docs/development.md](docs/development.md)), and that build's
-evidence archive is attached to the release. The downloaded binary is not that local build
-(another compiler produced it), only its sources are.
+host harness and the memory gate ([docs/development.md](docs/development.md)). The downloaded
+binary is not that local build (another compiler produced it), only its sources are.
 
 ### macOS (Apple Silicon and Intel, VST3 and Audio Unit)
 

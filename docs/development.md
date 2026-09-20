@@ -328,22 +328,21 @@ is future work.
 The release procedure, in this order:
 
 1. On the commit to release: `./run validate`, `./run memory`, `./run memory --diag`, then
-   `./run package`, which writes the Linux evidence archive
-   (`artifacts/dist/kickcrafter-fable-<version>-evidence.tar.gz`) next to the locally validated
-   binary and source archives. Keep them.
+   `./run package`, which writes the locally validated binary, source and evidence archives under
+   `artifacts/dist/`. They stay on the development machine, with every log under `artifacts/`:
+   the release page is for users, the evidence is for the maintainer.
 2. Rehearse once: run the `Release` workflow by hand (`workflow_dispatch` on `main`) and read its
    summary: the version check, `codesign --verify` and `--check-notarization` accepting both bundles, notarization
    `Accepted`, `SHA256SUMS` listing the three archives. Download `release-assets-rehearsal` if you
    want to try the archives.
 3. Tag: `git tag v<version> && git push origin v<version>`. The workflow publishes the release
    with the three archives and `SHA256SUMS`.
-4. Add the evidence archive of step 1 to the release (`gh release upload v<version>
-   artifacts/dist/kickcrafter-fable-<version>-evidence.tar.gz`), then download the three
-   archives once and check them (the listing, `INSTALL.txt`, the checksums against `SHA256SUMS`).
+4. Download the three archives once and check them (the listing, `INSTALL.txt`, the checksums
+   against `SHA256SUMS`).
 
 The Linux archive in the release is the CI build, compiled by a different GCC than the machine
 that ran the gates: its module hash differs from the locally validated one, which is accepted and
-stated in the README. The evidence archive names the validated hash.
+stated in the README. The local evidence archive names the validated hash.
 
 ## Preset files
 

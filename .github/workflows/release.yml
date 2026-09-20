@@ -2,11 +2,9 @@
 # CMakeLists.txt and the CHANGELOG, rebuild the three platforms through build.yml (unchanged), sign
 # and notarize the macOS bundles with tools/macos-sign.sh, then publish the GitHub Release with
 # the three archives and SHA256SUMS (the owner's decision, 2026-09-20: the workflow releases, no
-# draft). The evidence archive of the locally validated Linux build is added to the release by the
-# maintainer afterwards (docs/development.md, "Continuous integration and releases"). On
-# workflow_dispatch the same flow runs against HEAD, the tag check only reports, and the would-be
-# assets are uploaded as a workflow artifact instead of a release, so the whole thing (signing
-# included) can be rehearsed without a tag.
+# draft). On workflow_dispatch the same flow runs against HEAD, the tag check only reports, and
+# the would-be assets are uploaded as a workflow artifact instead of a release, so the whole
+# thing (signing included) can be rehearsed without a tag.
 #
 # Required repository secrets (Settings > Secrets and variables > Actions), the same six names as
 # the owner's other repositories. Without MACOS_SIGN_IDENTITY the macOS bundles are signed ad hoc
@@ -155,9 +153,9 @@ jobs:
           name: KickCrafter Fable ${{ needs.verify.outputs.version }}
           draft: false
           body: |
-            See CHANGELOG.md, section ${{ needs.verify.outputs.version }}. The three archives were built
-            by GitHub Actions; the evidence archive of the maintainer's validated Linux build is
-            added to this release afterwards (docs/development.md).
+            See CHANGELOG.md, section ${{ needs.verify.outputs.version }}, and INSTALL.txt inside each
+            archive. Linux x86_64 VST3, macOS universal VST3 and AU (signed and notarized), Windows
+            x64 VST3.
           files: |
             assets/kickcrafter-fable-*-linux-x86_64.tar.gz
             assets/kickcrafter-fable-*-macos-universal.zip
