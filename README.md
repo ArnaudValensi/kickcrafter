@@ -127,8 +127,7 @@ loaded preset.
 
 ## Known limitations
 
-- Linux x86_64 VST3, macOS universal VST3 and AU, Windows x64 VST3. No LV2, CLAP, AUv3 or AAX.
-- No pitch bend, MPE, LFOs, multi-point envelopes, sample import, sequencer, kit or WAV export.
+- Formats: VST3 on the three platforms and Audio Unit on macOS. No LV2, CLAP, AUv3 or AAX.
 - The square waveform is not band-limited (about 21 dB of aliasing below the harmonics at
   44.1/48 kHz, 25 dB at 96 kHz), by design. Use Shape below 100 % or a higher sample rate for
   cleaner square-heavy sounds.
