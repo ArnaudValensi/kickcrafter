@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Display for headless test executables (:104, Xvfb + Openbox), separate from :102 so the
-# plugin/leak tests never share :102 with the REAPER mouse-driven stages. Idempotent.
+# Start a headless X display with a window manager: Xvfb + Openbox, 1600x1200, idempotent.
+#   tools/xvfb-display.sh          -> :104, used by the GUI tests, the chain and the memory gate
+#   tools/xvfb-display.sh :102     -> the REAPER host harness display (KCF_DISPLAY)
+# Two displays so the plugin/leak tests never share a screen with the mouse-driven REAPER stages.
 # Openbox is started with a task-local XDG_CACHE_HOME and the system rc.xml (no user settings).
 set -uo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

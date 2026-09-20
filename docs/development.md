@@ -4,20 +4,81 @@ Everything below runs from the repository root. All tool scripts write their out
 `artifacts/` (git-ignored) and keep every run's log with the real exit code, so evidence is never
 overwritten by a later run.
 
-## Prerequisites
+## Setting up a development machine
 
-For the build: see "Building from source" below. For the GUI tests and the host harness:
-[uv](https://docs.astral.sh/uv/) (every Python script in `tools/` is a self-contained uv script with
-inline PEP 723 metadata; run it directly and uv provides its Python and packages), Xvfb, Openbox,
-xdotool, xprop/xwininfo. For the host stages: REAPER (tested with
-7.80). For the bundle check: the Steinberg VST3 SDK `validator` (set `KCF_VALIDATOR` or put it on
-`PATH`).
+Nothing here assumes a particular machine: every external tool is found on `PATH` or named by an
+environment variable, and every script creates the folders it needs.
+
+### 1. Build tools
+
+Linux x86_64, CMake 3.22+, Ninja, GCC 12+ (or a recent Clang), pkg-config, git, and the development
+packages of FreeType, fontconfig, ALSA and X11 (`libx11`, `libxext`, `libxrandr`, `libxinerama`,
+`libxcursor`). Debian/Ubuntu: `apt install build-essential cmake ninja-build pkg-config git
+libfreetype-dev libfontconfig-dev libasound2-dev libx11-dev libxext-dev libxrandr-dev
+libxinerama-dev libxcursor-dev`. Arch: `pacman -S base-devel cmake ninja pkgconf git freetype2
+fontconfig alsa-lib libx11 libxext libxrandr libxinerama libxcursor`.
 
 JUCE 8.0.9 is pinned by commit and fetched once into `external/JUCE` (not vendored):
 
 ```sh
 tools/fetch-juce.sh
 ```
+
+### 2. uv, for every Python script
+
+Every Python script under `tools/` is a self-contained [uv](https://docs.astral.sh/uv/) script
+(shebang `#!/usr/bin/env -S uv run --script`, inline PEP 723 metadata with pinned dependencies). Run
+a script directly; uv provides the interpreter and the packages on first use. Install uv with your
+package manager or `curl -LsSf https://astral.sh/uv/install.sh | sh`.
+
+### 3. Headless displays (GUI tests, memory gate, host harness)
+
+Install `xvfb`, `openbox`, `xdotool` and the X utilities `xprop` / `xwininfo` (package `x11-utils`
+on Debian/Ubuntu, `xorg-xprop` and `xorg-xwininfo` on Arch). Then:
+
+```sh
+tools/xvfb-display.sh          # :104 (Xvfb + Openbox), used by the plugin tests, the chain and the memory gate
+tools/xvfb-display.sh :102     # the REAPER harness display
+```
+
+The script is idempotent and disables the X screen saver (a blanked Xvfb gives black captures). A
+window manager is required: JUCE on a bare Xvfb can hit X11 BadAtom errors, and the popup-menu
+tests need real window focus. Other display numbers work: `DISPLAY` for the tests, `KCF_DISPLAY`
+for the harness.
+
+### 4. Steinberg VST3 validator (bundle check)
+
+Build it from the VST3 SDK once, then point `KCF_VALIDATOR` at it or put it on `PATH`:
+
+```sh
+git clone --recursive https://github.com/steinbergmedia/vst3sdk.git
+cmake -S vst3sdk -B vst3sdk/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSMTG_ENABLE_VST3_HOSTING_EXAMPLES=OFF
+cmake --build vst3sdk/build --target validator
+export KCF_VALIDATOR="$PWD/vst3sdk/build/bin/validator"     # tools/validate-bundle.sh and tools/memory-check.sh read it
+```
+
+### 5. REAPER (host harness)
+
+Download the Linux x86_64 build from [reaper.fm](https://www.reaper.fm/download.php) (tested with
+7.80; the evaluation licence is enough) and make `reaper` reachable: `KCF_REAPER` names the
+executable (default `/usr/sbin/reaper`). The harness runs REAPER with its own configuration under
+`artifacts/reaper/config/` and never touches `~/.config/REAPER`.
+
+### 6. Environment variables
+
+| Variable | Read by | Meaning (default) |
+|---|---|---|
+| `KCF_VALIDATOR` | `validate-bundle.sh`, `memory-check.sh` | Steinberg validator executable (`validator` on `PATH`) |
+| `KCF_REAPER` | REAPER harness | REAPER executable (`/usr/sbin/reaper`) |
+| `KCF_DISPLAY` | REAPER harness, `memory-check.sh --display` | X display of the harness (`:102`); the tests use `DISPLAY` (`:104`) |
+| `KCF_XDOTOOL` | REAPER harness | xdotool executable (`xdotool`) |
+| `KCF_PRESET_DIR` | plug-in, tests, harness | user preset folder; tests and harness always set a private one |
+| `KCF_ENGINE_TESTS` | `analyze` stage | engine test binary for the reference hit (`build/tests/kcf_engine_tests`) |
+| `KCF_RESULTS`, `KCF_SHOTS` | REAPER harness | output folders (`artifacts/reaper`, `artifacts/screenshots`) |
+| `CMAKE_BUILD_PARALLEL_LEVEL` | CMake, JUCE's `juceaide` | parallel jobs; set to `1` on a machine with 8 GB or less (a JUCE unity build with LTO is memory hungry) |
+
+Long jobs (the chain, the host stages, the memory passes) take 5 to 20 minutes each: run them in a
+persistent shell (tmux, screen) so they survive a closed terminal.
 
 ## Building from source
 
@@ -30,9 +91,7 @@ cmake --build build --target KickCrafterFable_VST3
 mkdir -p ~/.vst3 && cp -r "build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3" ~/.vst3/
 ```
 
-Requirements: Linux x86_64, CMake 3.22+, Ninja, GCC 12+ (or a recent Clang), pkg-config, git, and
-the development packages of FreeType, fontconfig, ALSA and X11 (`libx11`, `libxext`, `libxrandr`,
-`libxinerama`, `libxcursor`). The full set of targets:
+Requirements: section 1 of "Setting up" above. The full set of targets:
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -59,8 +118,8 @@ the diagnostic build of the memory gate (see below).
 DISPLAY=:104 ./build/tests/kcf_plugin_tests    # real processor + editor: 28 cases, needs an X display with a window manager
 ```
 
-`tools/xvfb-104.sh` starts an Xvfb display `:104` with Openbox for the GUI cases (a bare Xvfb
-without a window manager can hit X11 BadAtom errors). Both test binaries point the user preset
+`tools/xvfb-display.sh` starts the `:104` display with Openbox for the GUI cases (see "Setting up").
+Both test binaries point the user preset
 folder at a private temporary directory unless `KCF_PRESET_DIR` is set, so they never read or write
 `~/.config`. A single test can be selected by a substring of its name:
 `kcf_plugin_tests "user preset library"`.

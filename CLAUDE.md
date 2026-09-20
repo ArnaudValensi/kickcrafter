@@ -41,6 +41,15 @@ Layout: `engine/` (JUCE-free synthesis), `plugin/` and `plugin/ui/` (JUCE integr
 - Never edit `external/JUCE` (pinned by `tools/fetch-juce.sh`) and never install the plug-in into
   system folders from scripts.
 
+## Status and open decisions
+
+Version 1.3.0 is complete and validated (all gates green, see `docs/development.md`). Next steps
+the owner has named, in order: CI/CD (GitHub Actions running the chain, the tests and the validator),
+then binary releases. Open decisions, to be taken by the owner before the first public release: the
+plug-in is still named "KickCrafter Fable" inside hosts (renaming changes the bundle name and breaks
+existing projects); whether the nine dials should be equalised upwards (they share the former
+frequency-dial size); whether the Start Frequency range (20–2000 Hz) should be reduced.
+
 ## Working conventions
 
 - Prefer small, self-contained commits with messages that say what changed and why.

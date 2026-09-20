@@ -35,7 +35,7 @@ cp "$cfg_log" artifacts/logs/configure.log; cp "$build_log" artifacts/logs/build
 if [ "$build_exit" -ne 0 ]; then echo "chain FAILED (build) $(date -u +%FT%TZ)" >> "$status"; exit 1; fi
 [ -x build/tests/kcf_plugin_tests ] || { echo "chain FAILED (no test executable) $(date -u +%FT%TZ)" >> "$status"; exit 1; }
 
-tools/xvfb-104.sh >/dev/null 2>&1 || { echo "chain FAILED (test display :104 unavailable) $(date -u +%FT%TZ)" >> "$status"; exit 1; }
+tools/xvfb-display.sh >/dev/null 2>&1 || { echo "chain FAILED (test display :104 unavailable) $(date -u +%FT%TZ)" >> "$status"; exit 1; }
 test_line="$(DISPLAY=:104 tools/run-logged.sh plugin-tests ./build/tests/kcf_plugin_tests)"
 test_exit=$?
 echo "$test_line" >> "$status"
