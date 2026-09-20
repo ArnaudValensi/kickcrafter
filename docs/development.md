@@ -52,9 +52,9 @@ Build it from the VST3 SDK once, then point `KCF_VALIDATOR` at it or put it on `
 
 ```sh
 git clone --recursive https://github.com/steinbergmedia/vst3sdk.git
-cmake -S vst3sdk -B vst3sdk/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSMTG_ENABLE_VST3_HOSTING_EXAMPLES=OFF
+cmake -S vst3sdk -B vst3sdk/build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build vst3sdk/build --target validator
-export KCF_VALIDATOR="$PWD/vst3sdk/build/bin/validator"     # tools/validate-bundle.sh and tools/memory-check.sh read it
+export KCF_VALIDATOR="$(find "$PWD/vst3sdk/build/bin" -name validator -type f | head -1)"   # the SDK nests it under bin/<Config>/
 ```
 
 ### 5. REAPER (host harness)
