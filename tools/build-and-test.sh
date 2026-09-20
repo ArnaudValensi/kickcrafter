@@ -27,7 +27,7 @@ cfg_exit=$?
 echo "configure exit=$cfg_exit ($cfg_log)" >> "$status"
 if [ "$cfg_exit" -ne 0 ]; then echo "chain FAILED (configure) $(date -u +%FT%TZ)" >> "$status"; exit 1; fi
 
-( cd build && ninja -j1 -k 0 kcf_plugin_tests KickCrafterFable_VST3 ) > "$build_log" 2>&1
+( cd build && ninja -j1 -k 0 kcf_plugin_tests kcf_engine_tests KickCrafterFable_VST3 ) > "$build_log" 2>&1
 build_exit=$?
 echo "build exit=$build_exit ($build_log)" >> "$status"
 # Compatibility copies for readers of the old fixed paths (always fresh for this run).

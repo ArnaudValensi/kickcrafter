@@ -233,7 +233,12 @@ stage_setup() {
 }
 
 stage_analyze() {
-    [ -f "$results/reference-hit-48k.f32" ] || "$here/build-engine/tests/kcf_engine_tests" --dump-default-hit "$results/reference-hit-48k.f32" || fail "reference hit dump"
+    local engine_tests="${KCF_ENGINE_TESTS:-}"     # the engine test binary dumps the reference hit (build/ from the chain, or an engine-only tree)
+    for candidate in "$here/build/tests/kcf_engine_tests" "$here/build-engine/tests/kcf_engine_tests"; do
+        [ -n "$engine_tests" ] || { [ -x "$candidate" ] && engine_tests="$candidate"; }
+    done
+    [ -n "$engine_tests" ] || { fail "kcf_engine_tests not built (build/tests or build-engine/tests)"; return 1; }
+    [ -f "$results/reference-hit-48k.f32" ] || "$engine_tests" --dump-default-hit "$results/reference-hit-48k.f32" || fail "reference hit dump"
     local since; since="$(cat "$results/setup-start-epoch" 2>/dev/null || echo 0)"
     "$python" "$here/tools/reaper/analyze_render.py" "$results" "$results/reference-hit-48k.f32" --fresh-since "$since" | tee "$results/analyze-render.txt"
     [ "${PIPESTATUS[0]}" -eq 0 ] || fail "render analysis"
