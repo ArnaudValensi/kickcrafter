@@ -199,11 +199,18 @@ in CI; Windows code signing; installers (`.pkg`, `.msi`); ccache in CI.
 
 ## Validation
 
-Every milestone ends with `./run validate` green on the development machine (the CMake and test
-changes alter the Linux build, which must stay behaviourally identical: same 23 + 28 test results,
-same 47 validator tests, every REAPER stage PASS) and `./run memory` (the preset-folder code is on
-a lifecycle path), then `./run package-controls` and `./run preflight` after the commit because
-`package.sh` and its preflight change. Milestone 1 is proven locally. Milestones 2 and 3 are
+**Run only the checks the change needs** (owner's instruction, 2026-09-20): the what-to-run table
+of `docs/development.md` names what a change can break, and the proof that Linux is unchanged is
+the hash, not a rerun. Concretely for M1: rebuild, and compare the staged module's SHA-256 with the
+one in `artifacts/logs/build-record.txt` before the change. Guards that only affect other
+compilers or platforms (`if(NOT MSVC)`, `if(APPLE)`, the Linux-only test block, the `JUCE_MAC`
+branch in `Presets.cpp`) leave the Linux module byte-identical, and an identical hash closes the
+question. The version bump changes the module (the version string is compiled in): that earns
+`./run check` (plug-in tests, validator) and nothing more, because a version string does not alter
+host behaviour. `./run memory` only if a lifecycle path changed on Linux (it does not in this
+epic's plan). `./run validate` is for a change that can alter what the host sees: none is planned
+here. `./run dist`, `./run package`, `./run package-controls` and `./run preflight` are the checks
+for the packaging scripts, which do change. Milestone 1 is proven locally. Milestones 2 and 3 are
 proven by green GitHub Actions runs after the owner pushes (decision 14): three green jobs with
 downloadable archives for M2; a green `workflow_dispatch` rehearsal of the release with a signed,
 notarized macOS archive whose `codesign --verify` and `spctl` output appear in the job summary for

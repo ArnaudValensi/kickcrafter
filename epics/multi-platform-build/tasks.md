@@ -18,8 +18,9 @@ list and `INSTALL.txt`; `tools/package.sh` uses it and the archive names carry t
 `package-preflight.sh` and `package-negative-controls.sh` follow the names. `CHANGELOG.md` gains the
 1.4.0 entry (dated from the clock) and `CLAUDE.md`'s closed decision on platforms is updated.
 
-Acceptance: `./run validate` green (23 engine cases, 28 plug-in cases, 47 validator tests, eleven
-REAPER stages PASS), `./run memory` green, `./run dist` produces
+Acceptance: the Linux module's hash unchanged by the guards (recorded in the journal), `./run check`
+green after the version bump (23 engine cases, 28 plug-in cases, 47 validator tests), no other gate
+unless a Linux code path changed (see "Validation" in `requirements.md`), `./run dist` produces
 `artifacts/dist/kickcrafter-fable-1.4.0-linux-x86_64.tar.gz` whose listing contains the bundle,
 the five documents, `INSTALL.txt` and the licence files, `./run package` still produces its three
 archives and `SHA256SUMS` on the committed tree, `./run package-controls` and `./run preflight`

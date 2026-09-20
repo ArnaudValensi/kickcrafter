@@ -101,8 +101,10 @@ committed finding and put it before the reviewer, do not reopen it on your own.
 ## Milestones, the session and the handoff
 
 Orient from the files, not from any inherited conversation. Confirm the tree is clean and identify
-the current milestone before editing. While implementing, run the smallest affected checks. Every
-milestone runs the validation `requirements.md` names for it before its review request.
+the current milestone before editing. **Run only the checks a change needs, never the whole suite
+by reflex** (owner's instruction): the smallest affected check while implementing, and before a
+review request exactly the validation "Validation" in `requirements.md` names for the milestone,
+which for M1 is a hash comparison plus `./run check`, not `./run validate`.
 
 **Milestones 2 and 3 are proven by GitHub Actions, which needs a push you may not make.** When M2
 or M3 is implemented, validated locally as far as Linux allows, journalled and committed, and the
@@ -147,8 +149,9 @@ reviewer is read-only.
 Request review at these checkpoints, and only these (one per `tasks.md` milestone):
 
 1. **M1, at the end**: the portable build, `dist`, the preset folder, the version and CHANGELOG,
-   validated by `./run validate`, `./run memory`, `./run dist`, `./run package`,
-   `./run package-controls`, `./run preflight`, journalled and committed.
+   validated by the hash comparison and `./run check` (see "Validation" in `requirements.md`),
+   `./run dist`, `./run package`, `./run package-controls`, `./run preflight`, journalled and
+   committed.
 2. **M2, at the end**: `build.yml`, the Git Bash and bash 3.2 fixes, the README and guide
    sections, validated as far as Linux allows, journalled and committed.
 3. **M3, at the end**: `release.yml`, `tools/macos-sign.sh`, the guide's release procedure,

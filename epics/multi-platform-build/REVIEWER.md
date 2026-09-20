@@ -34,10 +34,13 @@ validation. A validation claim must point at a log under `artifacts/logs/` whose
 
 ## What you guard
 
-**Linux does not change.** The Linux build after M1 is behaviourally the build before it: the
-engine tests report 23 cases and 1180 checks, the plug-in tests 28 cases and 1166 checks, the
-validator 47 passed, every REAPER stage PASS, both memory passes 0 leaks with the negative controls
-detected. Read those numbers in the logs the request names, do not take them from the claim. Any
+**Linux does not change.** The Linux build after M1 is behaviourally the build before it. The
+proof the owner wants is the cheapest sufficient one, not the whole suite: for the guards, the
+staged module's SHA-256 equal to the pre-change build record's; for the version bump, `./run check`
+green (23 engine cases and 1180 checks, 28 plug-in cases and 1166 checks, 47 validator tests). Do
+not demand `./run validate` or the memory passes unless the diff touches a Linux code path that
+can alter host behaviour or a lifecycle; do flag a claim that skipped a check the diff does need.
+Read the numbers in the logs the request names, do not take them from the claim. Any
 CMake change must be a guard (`if(NOT MSVC)`, `if(APPLE)`, `if(CMAKE_SYSTEM_NAME STREQUAL
 "Linux")`) or a portable addition; a flag the Linux compiler used to receive and no longer does
 is a finding.
