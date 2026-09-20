@@ -82,9 +82,10 @@ The reasoning is in `docs/development.md` (Conventions, Memory-leak gate) and `R
 - The plug-in keeps the name "KickCrafter Fable" inside hosts until the owner renames it
   (renaming changes the bundle name and breaks existing projects).
 - CI builds, it does not validate. GitHub Actions compiles the plug-in for every platform (Linux,
-  macOS Intel and ARM, Windows) and publishes the archives; `./run check`, `./run validate` and
-  `./run memory` run on a development machine only, where REAPER, the displays and the validator
-  live.
+  macOS Intel and ARM, Windows), runs the JUCE-free engine tests on each (six seconds, the only
+  proof that every binary makes the same sound) and publishes the archives; `./run check`,
+  `./run validate` and `./run memory` run on a development machine only, where REAPER, the
+  displays and the validator live.
 
 ## Self-validation
 
