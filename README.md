@@ -5,8 +5,7 @@ moment it starts.
 
 ![KickCrafter editor](docs/screenshots/editor.png)
 
-KickCrafter is a Linux VST3 instrument derived from the Daisy KickCrafter hardware firmware. The
-sound is a 2048-point wavetable oscillator morphing between sine and square, a pitch sweep with an
+KickCrafter is a Linux VST3 instrument. The sound is a 2048-point wavetable oscillator morphing between sine and square, a pitch sweep with an
 adjustable curve, a linear attack / hold / fade envelope, per-hit drive and a soft limiter on the
 bus. Every Note On snapshots all synthesis parameters into the new voice, so knobs, graph handles,
 automation, presets and A/B switching only ever shape the *next* hit: voices already sounding are
@@ -37,7 +36,7 @@ in the instrument list. Insert it on a track and send it MIDI notes.
   number is ignored (55 Hz = A1 reproduces the reference sound). *MIDI Note*: the played note sets
   the end frequency of the sweep, so the kick can be played melodically.
 - **Velocity.** On (default): the MIDI velocity scales the level linearly, a velocity-96 note plays
-  at 96/127 of the level. Off: every note plays at full level, as the hardware did.
+  at 96/127 of the level. Off: every note plays at full level.
 - **Audition** fires an A1 hit at full velocity through the same realtime path as a MIDI note.
 - **Knobs.** Drag, mouse wheel, Shift for fine control, double-click to reset, click the value to
   type it (`440`, `440 Hz`, or a note name such as `A1` or `C#2` for the frequency knobs). The arc
@@ -98,10 +97,8 @@ the whole block); MIDI notes are sample-accurate within the block. All Sound Off
 every voice with a short declick and All Notes Off (CC 123) is a deliberate no-op, but VST3 hosts
 do not deliver raw CC messages to the plug-in (see [docs/architecture.md](docs/architecture.md)).
 
-Project state is XML with a schema number. Every schema since 1.0 is still read; older documents
-are migrated on load (Pitch Source order, Velocity switch, preset identity). Host-side copies of
-parameter values, such as automation lanes written by an older version, are not migrated: the
-[changelog](CHANGELOG.md) lists what to check when opening old projects.
+Projects saved by earlier versions load as they were; the [changelog](CHANGELOG.md) lists the few
+controls to check when a parameter's meaning changed.
 
 ## Known limitations
 
@@ -109,14 +106,14 @@ parameter values, such as automation lanes written by an older version, are not 
 - Automation is block-accurate, not sample-accurate.
 - No pitch bend, MPE, LFOs, multi-point envelopes, sample import, sequencer, kit or WAV export.
 - The naive square wavetable aliases at high start frequencies (about 21 dB below the harmonics at
-  44.1/48 kHz, 25 dB at 96 kHz); this is deliberate fidelity to the hardware. Use Shape below 100 %
-  or a higher sample rate for cleaner square-heavy sounds.
+  44.1/48 kHz, 25 dB at 96 kHz), by design. Use Shape below 100 % or a higher sample rate for
+  cleaner square-heavy sounds.
 - The 16-voice steal policy cuts the tail closest to its end (declicked) rather than dropping the new note.
 
 ## Documentation
 
 - [docs/architecture.md](docs/architecture.md): the synthesis block diagram, the per-hit
-  snapshot rule, the gain and limiting topology, state and preset formats, deviations from the hardware.
+  snapshot rule, the realtime rules, state and preset formats.
 - [docs/development.md](docs/development.md): building, the test suites, the VST3 validator, the
   REAPER host validation harness, the memory-leak gate and packaging.
 - [CHANGELOG.md](CHANGELOG.md).
@@ -124,6 +121,6 @@ parameter values, such as automation lanes written by an older version, are not 
 ## Licence
 
 KickCrafter is free software under the GNU Affero General Public License, version 3 or later
-(`LICENSE`). It uses JUCE under its AGPLv3 option, the Steinberg VST3 SDK under GPLv3, IBM Plex
-fonts under the SIL Open Font License and a formula from DaisySP (MIT); see
-`THIRD_PARTY_NOTICES.md`. VST is a trademark of Steinberg Media Technologies GmbH.
+(`LICENSE`). It uses JUCE under its AGPLv3 option, the Steinberg VST3 SDK under GPLv3 and the
+IBM Plex fonts under the SIL Open Font License; see `THIRD_PARTY_NOTICES.md`. VST is a trademark of
+Steinberg Media Technologies GmbH.
