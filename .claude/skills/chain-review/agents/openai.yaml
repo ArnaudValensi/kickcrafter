@@ -1,0 +1,4 @@
+interface:
+  display_name: "Chain Review"
+  short_description: "Coordinate one persistent chain reviewer"
+  default_prompt: "Use $chain-review to start or coordinate the persistent reviewer for this epic."
