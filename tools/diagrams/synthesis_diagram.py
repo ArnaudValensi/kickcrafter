@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-# Generates docs/diagrams/synthesis.svg, the synthesis block diagram of docs/architecture.md, in the
+# Generates docs/diagrams/synthesis.svg, the synthesis block diagram of the README ("How it works"), in the
 # style of a synthesizer manual: audio path on the top row (solid arrows), modulators on the bottom
 # row (dashed arrows going up into the module they control), MIDI input on the left.
 # The SVG is the artefact, this script is its source: edit here, run it, check the render (see
