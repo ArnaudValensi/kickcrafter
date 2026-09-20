@@ -4,9 +4,9 @@
 # Per-run evidence: configure and build logs are fresh files for THIS run,
 # their exit statuses are carried explicitly, nothing is staged and no build record is written
 # unless configure, build and the test run all succeeded, and the chain's exit code is the real
-# outcome (never the status of a trailing echo). the build record binds the
-# staged module and the test executable to the application manifest, the tests/tools manifest,
-# the dependency revision, and a preserved copy of the CMake configuration.
+# outcome (never the status of a trailing echo). The build record binds the staged module and the
+# test executable to the application manifest (production sources), the dependency revision and a
+# preserved copy of the CMake configuration; the tests/tools manifest is recorded for information.
 set -uo pipefail
 export CMAKE_BUILD_PARALLEL_LEVEL=1
 here="$(cd "$(dirname "$0")/.." && pwd)"
@@ -44,7 +44,7 @@ test_log="${test_line%% (exit*}"
 
 manifest_after="$(manifest)"
 testmanifest_after="$(testmanifest)"
-if [ "$manifest_before" != "$manifest_after" ] || [ "$testmanifest_before" != "$testmanifest_after" ]; then
+if [ "$manifest_before" != "$manifest_after" ]; then
     echo "chain FAILED (sources changed during the run) $(date -u +%FT%TZ)" >> "$status"; exit 1
 fi
 

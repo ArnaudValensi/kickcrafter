@@ -144,10 +144,11 @@ tools/validate-bundle.sh         # Steinberg validator on the staged bundle; the
 ```
 
 The build record binds the staged module's SHA-256 to a manifest hash of the production sources
-(`engine/ plugin/ resources/ CMakeLists.txt`), a manifest of `tests/ tools/`, the git commit and the
-JUCE commit. `tools/package-preflight.sh` refuses to package when any of them no longer matches or
-when the archived paths are not committed; `tools/package-negative-controls.sh` proves those refusals
-with 13 fixtures in a scratch repository. `tools/package.sh` then builds three archives under
+(`engine/ plugin/ resources/ CMakeLists.txt`), the git commit and the JUCE commit (the `tests/ tools/`
+manifest is recorded for information only). `tools/package-preflight.sh` refuses to package when the
+production sources no longer match the record, when the newest test or validator logs do not name the
+recorded binaries, or when the archived paths are not committed; `tools/package-negative-controls.sh`
+proves those refusals with fixtures in a scratch repository. `tools/package.sh` then builds three archives under
 `artifacts/dist/` (binary with all licence texts, source with the pinned JUCE tree, evidence) plus
 `SHA256SUMS`.
 
@@ -249,7 +250,11 @@ demand; a project remembers its preset by kind and name and shows "(missing)" wh
 - Presets, A/B and state save/restore are message-thread transactions under one lock, so a saved
   project always holds a coherent combination of current values, other slot and preset identity. No
   host "Program" parameter is published: presets live in the editor and in the saved state.
-- Any change under `engine/`, `plugin/`, `resources/` or `CMakeLists.txt` changes the production
-  manifest: rerun the chain, the validator, the host stages and both memory passes before
-  packaging. Changes under `tests/` or `tools/` need the chain and the affected evidence.
+- Validate what a change affects, not the folder it lives in:
+  - `engine/`, `plugin/`, `resources/`, `CMakeLists.txt`: the binary changes, so everything (chain,
+    validator, host stages, both memory passes) before packaging or release;
+  - a unit test: that test binary; a REAPER harness script or analyzer: the stage or fixtures it
+    serves; the chain or packaging scripts: the chain and the package fixtures;
+  - documentation, diagrams, helper scripts (displays, generators), `CLAUDE.md`: nothing.
+  A CI run on every commit is the safety net for judgement errors here.
 - Keep failed logs; never treat a trailing `echo` as a test status.

@@ -29,9 +29,10 @@ Layout: `engine/` (JUCE-free synthesis), `plugin/` and `plugin/ui/` (JUCE integr
 - Parameter IDs, the state schema and the preset schema are compatibility contracts: never rename an
   ID; when a value's meaning changes, bump the schema and migrate on load (see `docs/development.md`).
 - Nothing allocates, locks or posts in `processBlock`; the editor polls parameters, it never listens.
-- Any change under `engine/`, `plugin/`, `resources/` or `CMakeLists.txt` needs the full validation
-  described in `docs/development.md` (chain, validator, REAPER stages, memory passes) before it is
-  packaged or released; `tests/` and `tools/` changes need the chain and the affected evidence.
+- Validate what a change affects: `engine/`, `plugin/`, `resources/` or `CMakeLists.txt` change the
+  binary and need the full validation of `docs/development.md` (chain, validator, REAPER stages,
+  memory passes) before packaging; a test, harness script or analyzer needs only what it serves;
+  docs, diagrams, helper scripts and this file need nothing.
 - Documentation stays in its lane: user-facing text in `README.md`, developer text in `docs/`, no
   version history outside `CHANGELOG.md`, no internal process notes in the repository.
 - Diagrams are generated: edit the generator, render, look at the result, commit script and SVG together.

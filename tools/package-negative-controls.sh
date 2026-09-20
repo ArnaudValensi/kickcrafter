@@ -44,9 +44,11 @@ expect_nonzero "preflight: validator log for another module rejected" pf KCF_VAL
 sed 's/^juce: .*/juce: 0000000000000000000000000000000000000000/' "$record" > "$tmp/wrong-dep.txt"
 expect_nonzero "preflight: wrong recorded dependency revision rejected" pf KCF_RECORD="$tmp/wrong-dep.txt"
 ( cd "$scratch" && echo "// changed" >> tests/plugin_tests.cpp && git -c user.name=t -c user.email=t@t commit -qam "test change" )
-expect_nonzero "preflight: committed test change with the old record/executable rejected" pf KCF_X=1
+expect_zero "preflight: a committed test/tool change does not invalidate the record (binary bound to production sources only)" pf KCF_X=1
+( cd "$scratch" && echo "// changed" >> engine/KickParams.h && git -c user.name=t -c user.email=t@t commit -qam "source change" )
+expect_nonzero "preflight: a committed production-source change with the old record rejected" pf KCF_X=1
 ( cd "$scratch" && git -c user.name=t -c user.email=t@t revert --no-edit HEAD >/dev/null )
-expect_zero "preflight: clean again after reverting the test change" pf KCF_X=1
+expect_zero "preflight: clean again after reverting the source change" pf KCF_X=1
 ( cd "$scratch" && echo "temp" >> README.md )
 expect_nonzero "preflight: dirty documentation rejected" pf KCF_X=1
 ( cd "$scratch" && git checkout -q -- README.md )

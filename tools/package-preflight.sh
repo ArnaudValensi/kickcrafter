@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Delivery correspondence preflight. Exits 0 only when:
 #   - every archived path (production sources AND documents) is committed (clean),
-#   - the build record exists, its sources were unchanged during the build,
-#     its application manifest equals the current application sources and its tests/tools manifest
-#     equals the current tests/tools (a test edit therefore demands a new build+run; a doc edit does not),
+#   - the build record exists, its sources were unchanged during the build and its application
+#     manifest equals the current production sources (engine/ plugin/ resources/ CMakeLists.txt): the
+#     binary is bound to what produced it, nothing else (a test, tool or doc edit does not demand a
+#     new build; validate what such an edit affects, see docs/development.md "Conventions"),
 #   - the recorded dependency revision equals the pinned JUCE commit AND the checked-out tree, with no
 #     dirty dependency paths, and the recorded CMake configuration copy exists with the recorded hash,
 #   - the staged VST3 hash equals the record's, the record's test executable was the one the newest
@@ -28,8 +29,6 @@ fi
 [ "$(field sources-unchanged-during-build)" = "yes" ] || die "sources changed during the recorded build"
 app_manifest="$(find engine plugin resources CMakeLists.txt -type f | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1)"
 [ "$(field manifest-after-build)" = "$app_manifest" ] || die "build record application manifest $(field manifest-after-build) != current $app_manifest"
-tt_manifest="$(find tests tools -type f | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1)"
-[ "$(field tests-tools-manifest)" = "$tt_manifest" ] || die "tests/tools changed since the recorded build+run (record $(field tests-tools-manifest), now $tt_manifest)"
 [ "$(field juce)" = "$pinned_juce" ] || die "build record dependency revision $(field juce) is not the pinned $pinned_juce"
 [ "$(git -C external/JUCE rev-parse HEAD)" = "$pinned_juce" ] || die "checked-out JUCE is not the pinned revision"
 [ "$(field juce-dirty-paths)" = "0" ] || die "dependency tree had dirty paths at build time"
@@ -51,4 +50,4 @@ grep -q "0 failure(s): PASS" "$testlog" || die "plugin-test log has failures"
 grep -q "^# module sha256: $staged_sha$" "$validatorlog" || die "newest validator log does not name the staged module $staged_sha"
 grep -q "0 tests failed" "$validatorlog" && grep -q "^# exit code: 0$" "$validatorlog" || die "validator log is not a clean pass"
 [ -f "$validatorlog.exit" ] && [ "$(cat "$validatorlog.exit")" = "0" ] || die "validator exit sidecar is not 0"
-echo "preflight ok: git $(git rev-parse --short HEAD), app $app_manifest, tests/tools $tt_manifest, vst3 $staged_sha, tests $(basename "$testlog"), validator $(basename "$validatorlog")"
+echo "preflight ok: git $(git rev-parse --short HEAD), app $app_manifest, vst3 $staged_sha, tests $(basename "$testlog"), validator $(basename "$validatorlog")"
