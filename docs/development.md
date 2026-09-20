@@ -12,8 +12,13 @@ and one run through `./run` (or by CI) do exactly the same thing. Two commands a
 
 ```sh
 ./run check       # the daily gate: build chain, engine tests, Steinberg validator (minutes once JUCE is built)
-./run validate    # the full gate: check, ASan engine tests, REAPER stages, harness controls, both memory passes, package controls
+./run validate    # the full gate: check, ASan engine tests, REAPER stages, harness controls, package controls (about 20 minutes)
+./run memory      # the leak gate, pass A; ./run memory --diag builds build-leak/ and runs pass B. On demand, local only, both before a release
 ```
+
+The memory gate is outside `validate` on purpose: its two passes cost as much as the rest of the
+gate together (pass B rebuilds JUCE instrumented), so they run when a developer asks for them and
+before every release, never in CI.
 
 A gate stops at its first failing step and records every step's exit code under
 `artifacts/logs/gates/` (a fresh file per run, plus `artifacts/logs/gate-<name>.txt` for the last
@@ -99,8 +104,8 @@ executable (default `/usr/sbin/reaper`). The harness runs REAPER with its own co
 set in the environment.
 
 Long jobs (the build chain, the host stages, the memory passes) take 5 to 20 minutes each, and
-`./run validate` an hour or more at one job: run them in a persistent shell (tmux, screen) so they
-survive a closed terminal.
+`./run validate` about 20 minutes at one job once JUCE is built: run them in a persistent shell
+(tmux, screen) so they survive a closed terminal.
 
 ## Building from source
 
@@ -280,11 +285,15 @@ demand; a project remembers its preset by kind and name and shows "(missing)" wh
 - Presets, A/B and state save/restore are message-thread transactions under one lock, so a saved
   project always holds a coherent combination of current values, other slot and preset identity. No
   host "Program" parameter is published: presets live in the editor and in the saved state.
-- Validate what a change affects, not the folder it lives in. What to run before committing:
+- Validate what a change affects, not the folder it lives in. The table below is a floor for
+  changes to the binary and a guide for everything else: use judgement. A change that cannot alter
+  behaviour on a path (a comment, a help text, a step removed from a gate) needs a syntax check and
+  a run of the changed path, not a rerun of what a green gate proved minutes earlier. What to run
+  before committing:
 
   | Changed | Run |
   |---|---|
-  | `engine/`, `plugin/`, `resources/`, `CMakeLists.txt` (the binary changes) | `./run validate` (the build chain, validator, ASan engine tests, REAPER stages, harness controls, both memory passes, package controls); then `./run package` if a release is due |
+  | `engine/`, `plugin/`, `resources/`, `CMakeLists.txt` (the binary changes) | `./run validate` (the build chain, validator, ASan engine tests, REAPER stages, harness controls, package controls); `./run memory` when the change touches a lifecycle (editor, processor, presets, dialogs); then `./run memory`, `./run memory --diag` and `./run package` if a release is due |
   | `tests/engine_tests.cpp`, `tests/plugin_tests.cpp` | `./run build kcf_plugin_tests && ./run test-plugin` (or the engine equivalents) |
   | `tests/leak_tests.cpp`, `tests/vst3_host_lifecycle.cpp` | `./run build kcf_leak_tests kcf_vst3_host && ./run memory` (pass A is enough unless the change is about instrumentation) |
   | `tools/reaper/kcf_*.lua`, `analyze_render.py`, `check_saved_state.py`, `drive_mouse.py`, `find_highlight.py`, `image_check.py`, `run_reaper_validation.sh` | `./run reaper` (a single stage, `./run reaper-stage <stage>`, only when the earlier stages' outputs already exist) and `./run reaper-controls` |

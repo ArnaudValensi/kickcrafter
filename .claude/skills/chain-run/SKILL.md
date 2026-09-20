@@ -22,10 +22,11 @@ it lives here and not retyped per epic.
 
 - **Self-validate after every change, in priority order.** (1) Automated checks,
   preferred: add or update tests, run `./run check` while working, and run
-  `./run validate` (the full gate: REAPER stages, memory passes, controls) before
-  every milestone claim, or the smaller set `docs/development.md` names for what
-  changed. (2) Manual verification, only when the model genuinely cannot automate
-  it: read the logs under `artifacts/logs/`, read the REAPER captures under
+  `./run validate` (the full gate: REAPER stages and controls) before every
+  milestone claim, or the smaller set `docs/development.md` names for what
+  changed; `./run memory` when the change touches a lifecycle. (2) Manual
+  verification, only when the model genuinely cannot automate it: read the logs
+  under `artifacts/logs/`, read the REAPER captures under
   `artifacts/screenshots/` (a green stage only proves the run finished; the
   judgement is in the picture). (3) Ask the user to test, only when manual
   verification is impossible either. A step is not done until it is validated at
@@ -139,8 +140,8 @@ Catch and act on these stalls:
   handoff never completed.
 - **A successor was launched but its window errored on boot.**
 - **A link stalled** (no commits, no events for many minutes; a full gate takes
-  an hour or more on the development machine, so allow for that before calling
-  it a stall).
+  about twenty minutes on the development machine, so allow for that before
+  calling it a stall).
 - **A dirty tree** blocking the handoff guard.
 
 Nudge the stuck session, or escalate to the user with a push notification when it

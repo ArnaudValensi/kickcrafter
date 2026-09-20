@@ -4,6 +4,8 @@
 # environment variable always wins over .env. Every command below calls the scripts under tools/,
 # which keep their own logs under artifacts/ with real exit codes; this script adds the gates
 # (`check`, `validate`) and records each gate's steps and exit codes in artifacts/logs/gates/.
+# The memory gate (`memory`, `memory --diag`) is deliberately outside `validate`: it is run on
+# demand on a development machine and before a release, never in CI.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -133,8 +135,6 @@ cmd_validate() {
     step "engine tests under ASan/UBSan" cmd_asan || return
     step "REAPER host stages" cmd_reaper || return
     step "harness negative controls" cmd_reaper_controls || return
-    step "memory gate pass A (leak-test binaries, then LeakSanitizer preloaded)" cmd_memory || return
-    step "memory gate pass B (diagnostic build-leak tree, then ASan/LSan)" cmd_memory --diag || return
     step "package negative controls" cmd_package_controls || return
     gate_end
 }
@@ -158,7 +158,8 @@ cmd_help() {
     printf '%bKickCrafter task runner%b   Usage: ./run <command> [args]\n' "$M" "$R"
     sec "Gates"
     row check     "the daily gate: build chain + engine tests + Steinberg validator (minutes)"
-    row validate  "the full gate: check + ASan engine tests + REAPER stages + harness controls + both memory passes + package controls (an hour or more)"
+    row validate  "the full gate: check + ASan engine tests + REAPER stages + harness controls + package controls (about 20 minutes)"
+    row "memory [--diag]" "the leak gate, on demand and local only, never in CI: pass A (LeakSanitizer preloaded); --diag builds build-leak/ and runs pass B. Both before a release"
     sec "Setup"
     row setup     "fetch the pinned JUCE, start both displays, list the external tools"
     row juce      "fetch JUCE 8.0.9 into external/JUCE (idempotent)"
@@ -174,7 +175,7 @@ cmd_help() {
     row "reaper [from-stage]" "every REAPER host stage in order (or from one stage on), stop at the first failure"
     row "reaper-stage <stage>" "a single stage (earlier stages' outputs must exist); reaper-stop stops REAPER"
     row reaper-controls "the harness negative controls (no REAPER, no display)"
-    row "memory [--diag]" "leak gate pass A (builds the leak-test binaries first); --diag builds build-leak/ and runs pass B"
+    row "memory [--diag]" "see Gates: pass A builds kcf_leak_tests and kcf_vst3_host first; pass B builds build-leak/ (12 min at one job)"
     sec "Packaging"
     row package-controls "the package preflight negative controls (scratch repository)"
     row preflight        "the delivery preflight alone (clean tree, record, logs, hashes)"

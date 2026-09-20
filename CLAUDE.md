@@ -23,8 +23,9 @@ scripts it calls are described in `docs/development.md`).
 - **The daily gate**: `./run check` (build chain with plugin tests and build record, engine tests,
   Steinberg validator). Minutes once JUCE is built.
 - **The full gate**: `./run validate` (check, ASan engine tests, REAPER host stages, harness
-  negative controls, both memory passes, package negative controls). An hour or more at one job.
-  Run it in tmux.
+  negative controls, package negative controls). About 20 minutes at one job. Run it in tmux.
+- **The leak gate**: `./run memory` (pass A) and `./run memory --diag` (pass B, rebuilds JUCE
+  instrumented). On demand, on a development machine only, never in CI; both before a release.
 - **Pieces**: `./run build [targets]`, `./run test`, `./run test-plugin "<case substring>"`,
   `./run reaper [from-stage]`, `./run memory [--diag]`, `./run package` (refuses without a green,
   committed, recorded build).
@@ -84,7 +85,9 @@ The reasoning is in `docs/development.md` (Conventions, Memory-leak gate) and `R
 ## Self-validation
 
 Work is not done until the gate that covers the change has run green: `./run check` while
-working, the row of the conventions table before a commit. A green run is not a verdict on
+working, the row of the conventions table before a commit. Apply the table with judgement: it
+names what a change can break, and a rerun of what a green gate proved minutes earlier, for an edit
+that cannot alter that path, is waste, not rigour. A green run is not a verdict on
 its own: read the log it names, and read the REAPER captures under `artifacts/screenshots/` when
 a stage produced them (the harness only proves they are not uniform). Keep every log the tools
 write; never delete `artifacts/`.
