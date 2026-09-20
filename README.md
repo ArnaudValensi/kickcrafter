@@ -5,7 +5,8 @@ moment it starts.
 
 ![KickCrafter editor](docs/screenshots/editor.png)
 
-KickCrafter is a Linux VST3 instrument. The sound is a wavetable oscillator morphing between sine
+KickCrafter is a VST3 instrument for Linux, macOS and Windows, and an Audio Unit on macOS. The
+sound is a wavetable oscillator morphing between sine
 and square, a pitch sweep with an adjustable curve, an attack / hold / fade envelope, per-hit drive
 and a soft limiter. Every Note On snapshots all parameters into the new voice, so knobs, graph
 handles, automation, presets and A/B switching only ever shape the *next* hit: voices already
@@ -18,12 +19,36 @@ sounding are never retuned.
 
 ## Installation
 
-Binary releases are on their way. Until then, build the plug-in from source: it takes a few
-minutes, see [docs/development.md](docs/development.md#building-from-source).
+Download the archive for your platform from the
+[releases page](https://github.com/ArnaudValensi/kickcrafter/releases) (or build from source, a
+few minutes: [docs/development.md](docs/development.md#building-from-source)), extract it, copy the
+bundle where your host looks for plug-ins, and rescan plug-ins. Every archive holds an
+`INSTALL.txt` with the same instructions, the licences and the changelog. The plug-in appears as
+**KickCrafter Fable** (vendor Arnaud Valensi) in the instrument list; insert it on a track and send
+it MIDI notes.
 
-Copy the `KickCrafter Fable.vst3` bundle into a folder your host scans, for example `~/.vst3/`, and
-rescan plug-ins. The plug-in appears as **KickCrafter Fable** (vendor Arnaud Valensi) in the
-instrument list. Insert it on a track and send it MIDI notes.
+### Linux (x86_64, VST3)
+
+`kickcrafter-fable-<version>-linux-x86_64.tar.gz`. Copy `KickCrafter Fable.vst3` into a folder your
+host scans, for example `~/.vst3/`. This is the build the maintainer validates before a release:
+the Steinberg validator, the plug-in tests, the REAPER host harness and the memory gate
+([docs/development.md](docs/development.md)).
+
+### macOS (Apple Silicon and Intel, VST3 and Audio Unit)
+
+`kickcrafter-fable-<version>-macos-universal.zip`, macOS 11 or later. Copy `KickCrafter Fable.vst3`
+into `~/Library/Audio/Plug-Ins/VST3/` and `KickCrafter Fable.component` into
+`~/Library/Audio/Plug-Ins/Components/` (Logic and GarageBand load the Audio Unit, most other hosts
+the VST3). Releases are signed with a Developer ID and notarized; `INSTALL.txt` says so, or says
+what to do when a build is not. This build is compiled and unit-tested by the project's continuous
+integration; it has not yet been validated in a host by the maintainer.
+
+### Windows (x64, VST3)
+
+`kickcrafter-fable-<version>-windows-x86_64.zip`. Copy `KickCrafter Fable.vst3` into
+`C:\Program Files\Common Files\VST3\`. This build is compiled and unit-tested by the project's
+continuous integration; it has not yet been validated in a host by the maintainer, and it is not
+code-signed.
 
 ## Playing it
 
@@ -96,12 +121,17 @@ band-limited, on purpose.
 
 The preset list has a *Factory* section (eight presets shipped in the plug-in) and a *User* section
 (your own). The `...` button saves, renames, deletes, opens the user presets folder and rescans it.
-User presets are plain XML files in `~/.config/KickCrafterFable/Presets/`, one per preset, easy to
-back up or share; "• edited" after a name means the current values differ from the loaded preset.
+User presets are plain XML files, one per preset, easy to back up or share, in
+`~/.config/KickCrafterFable/Presets/` on Linux, `~/Library/Application Support/KickCrafterFable/Presets/`
+on macOS and `%APPDATA%\KickCrafterFable\Presets\` on Windows (the `KCF_PRESET_DIR` environment
+variable overrides the folder); "• edited" after a name means the current values differ from the
+loaded preset.
 
 ## Known limitations
 
-- Linux x86_64 VST3 only. macOS, Windows, AU, LV2 and CLAP are not built or validated.
+- Linux x86_64 VST3, macOS universal VST3 and AU, Windows x64 VST3. No LV2, CLAP, AUv3 or AAX.
+  Only the Linux build is validated in a host by the maintainer; the macOS and Windows builds are
+  compiled and unit-tested by continuous integration (see Installation).
 - No pitch bend, MPE, LFOs, multi-point envelopes, sample import, sequencer, kit or WAV export.
 - The square waveform is not band-limited (about 21 dB of aliasing below the harmonics at
   44.1/48 kHz, 25 dB at 96 kHz), by design. Use Shape below 100 % or a higher sample rate for

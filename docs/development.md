@@ -118,8 +118,17 @@ cmake --build build --target KickCrafterFable_VST3
 mkdir -p ~/.vst3 && cp -r "build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3" ~/.vst3/
 ```
 
-Requirements: section 1 of "Setting up" above. `./run build` configures and builds every target
-below into `build/`; the equivalent by hand:
+Requirements: section 1 of "Setting up" above. On macOS: the Xcode Command Line Tools
+(`xcode-select --install`), CMake and Ninja (`brew install cmake ninja`); the build is universal
+(`arm64;x86_64`, macOS 11 or later) by default, `-DCMAKE_OSX_ARCHITECTURES=arm64` makes it native
+only, and the AU component lands next to the VST3 under `build/KickCrafterFable_artefacts/Release/AU/`.
+On Windows: Visual Studio 2022 Build Tools with the "Desktop development with C++" workload, CMake,
+Ninja and Git for Windows; run `./run` from Git Bash inside a "x64 Native Tools" developer prompt
+(or after `vcvars64.bat`), so that `cl.exe` is on `PATH` for Ninja. The default targets of `./run
+build` follow the platform: the plug-in tests, the leak tests and the VST3 host are Linux only (X11,
+pkg-config libraries, a window manager), the AU is macOS only; the engine tests build everywhere.
+`./run build` configures and builds every target below into `build/`; the equivalent by hand on
+Linux:
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -263,6 +272,28 @@ own sources with AddressSanitizer instrumentation; JUCE module translation units
 -g1` without instrumentation because the instrumented `juce_gui_basics` unity build needs more than
 2 GB per compiler process. No suppression file exists. Finite cycles cannot prove universal leak
 freedom; they do exercise every lifecycle the plug-in has.
+
+## Continuous integration and releases
+
+CI builds, it does not validate. `.github/workflows/build.yml` runs on every push to `main` and
+every pull request that touches what can change a binary or the build (`engine/`, `plugin/`,
+`resources/`, `tests/`, `CMakeLists.txt`, `run`, `tools/`, the workflows themselves), one job per
+platform on `ubuntu-latest`, `macos-15` and `windows-latest`. Each job types exactly what a
+developer would: `./run juce`, `./run build`, `./run test-engine`, `./run dist`, under `bash`
+(Git Bash on Windows, bash 3.2 on macOS; the MSVC developer environment comes from
+`ilammy/msvc-dev-cmd`, the Linux packages from the apt list of "Setting up", macOS needs nothing
+beyond the runner image) with `KCF_JOBS=4`. The macOS job also prints `lipo -archs` for both
+bundles, which must read `x86_64 arm64`. The engine tests are the only tests CI runs: they are
+JUCE-free, six seconds, and the only proof that the three binaries make the same sound; the plug-in
+tests, the validator, the REAPER harness and the memory gate need this development machine.
+
+Each job uploads one workflow artifact, `kickcrafter-fable-<platform>`, kept 14 days, holding
+`artifacts/dist/` (the archive `dist.sh` made, with `-<short sha>` after the version when the run
+is not on a tag) and `artifacts/logs/` (the configure, build, engine-test and dist logs with their
+`.exit` sidecars, the evidence convention of this project). A superseded run of the same branch is
+cancelled. The workflow grants itself `contents: read` only and is also `workflow_call`-able, so
+the release workflow reuses it unchanged. Minutes: a macOS minute costs ten Linux minutes on a
+private repository, which is why the triggers are filtered.
 
 ## Preset files
 

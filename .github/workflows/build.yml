@@ -1,0 +1,113 @@
+# Build KickCrafter Fable on the three platforms and run the JUCE-free engine tests on each: the
+# only proof that every binary makes the same sound. CI builds, it does not validate: the gates
+# (`./run check`, `./run validate`, `./run memory`, the REAPER harness) run on the development
+# machine only (docs/development.md, "Continuous integration and releases").
+#
+# Runs on every push to main and every pull request that can change a binary or the build (the
+# path filter below), and on workflow_call so that release.yml reuses these jobs unchanged. Each
+# job goes through `./run` only: juce, build, test-engine, dist (the same commands a developer
+# types), then uploads the archive and the logs (with their .exit sidecars) as a workflow artifact
+# kept 14 days. A superseded run of the same ref is cancelled. Nothing here signs or releases.
+name: Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'engine/**'
+      - 'plugin/**'
+      - 'resources/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - 'run'
+      - 'tools/**'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - 'engine/**'
+      - 'plugin/**'
+      - 'resources/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - 'run'
+      - 'tools/**'
+      - '.github/workflows/**'
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  KCF_JOBS: 4   # the runners' core count (docs/development.md, "Environment variables")
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false   # one platform's failure must not hide the evidence of the other two
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x86_64
+          - os: macos-15
+            platform: macos-universal
+          - os: windows-latest
+            platform: windows-x86_64
+    defaults:
+      run:
+        shell: bash   # Git Bash on Windows, bash 3.2 on macOS: `run` and the tools stay compatible
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build pkg-config git \
+            libfreetype-dev libfontconfig-dev libasound2-dev \
+            libx11-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev
+
+      # macOS: Xcode's Apple Clang, CMake and Ninja are on the runner image; nothing to install.
+
+      - name: MSVC developer environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: JUCE (pinned commit)
+        run: ./run juce
+
+      - name: Build
+        run: ./run build
+
+      - name: Engine tests
+        run: ./run test-engine
+
+      - name: Architectures of the macOS bundles
+        if: runner.os == 'macOS'
+        run: |
+          for bundle in "build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3" \
+                        "build/KickCrafterFable_artefacts/Release/AU/KickCrafter Fable.component"; do
+            printf '%s: ' "$bundle"
+            lipo -archs "$bundle/Contents/MacOS/KickCrafter Fable"
+          done
+
+      - name: Archive
+        run: ./run dist
+
+      - name: Upload the archive and the logs
+        uses: actions/upload-artifact@v7
+        with:
+          name: kickcrafter-fable-${{ matrix.platform }}
+          path: |
+            artifacts/dist/
+            artifacts/logs/
+          retention-days: 14
+          if-no-files-found: error

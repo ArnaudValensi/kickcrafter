@@ -45,7 +45,7 @@ binarchive="$(tools/dist.sh archive "$bin" "$out")"
 # 2. source archive
 src="$stage/$base-source"
 mkdir -p "$src"
-git archive --format=tar HEAD -- engine plugin tests tools resources docs run CMakeLists.txt README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md .gitignore | tar -C "$src" -xf -
+git archive --format=tar HEAD -- engine plugin tests tools resources docs run .github CMakeLists.txt README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md .gitignore | tar -C "$src" -xf -
 mkdir -p "$src/external"
 git -C external/JUCE archive --format=tar --prefix=JUCE/ HEAD | tar -C "$src/external" -xf -
 echo "$juce_commit" > "$src/external/JUCE/.kcf-pinned-commit"

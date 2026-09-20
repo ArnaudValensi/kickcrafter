@@ -21,7 +21,7 @@ testlog="${KCF_TESTLOG:-$(ls -t artifacts/logs/runs/*-plugin-tests.log 2>/dev/nu
 validatorlog="${KCF_VALIDATORLOG:-$(ls -t artifacts/logs/runs/*-validator.log 2>/dev/null | head -1)}"
 die() { echo "PREFLIGHT FAIL: $*" >&2; exit 1; }
 field() { grep "^$1:" "$record" | head -1 | cut -d' ' -f2; }
-archived="engine plugin tests tools resources docs run CMakeLists.txt README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md .gitignore"
+archived="engine plugin tests tools resources docs run .github CMakeLists.txt README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md .gitignore"
 if [ "${KCF_SKIP_GIT_CLEAN:-0}" != "1" ] && [ -n "$(git status --porcelain -- $archived)" ]; then
     git status --porcelain -- $archived >&2; die "archived paths are not committed"
 fi
