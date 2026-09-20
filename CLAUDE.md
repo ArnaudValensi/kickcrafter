@@ -5,8 +5,9 @@ points to when the work needs them; nothing below duplicates what those document
 
 ## What this is
 
-A kick-drum instrument plug-in (JUCE 8, C++20, CMake, AGPL-3.0-or-later): Linux x86_64 VST3 today,
-one kick per instance, every Note On freezes all parameters into its voice. The plug-in is named
+A kick-drum instrument plug-in (JUCE 8, C++20, CMake, AGPL-3.0-or-later): Linux x86_64 VST3,
+macOS universal VST3 and AU, Windows x64 VST3; one kick per instance, every Note On freezes all
+parameters into its voice. The plug-in is named
 "KickCrafter Fable" inside hosts (bundle, plug-in code); the project and repository are
 "KickCrafter".
 
@@ -27,8 +28,9 @@ scripts it calls are described in `docs/development.md`).
 - **The leak gate**: `./run memory` (pass A) and `./run memory --diag` (pass B, rebuilds JUCE
   instrumented). On demand, on a development machine only, never in CI; both before a release.
 - **Pieces**: `./run build [targets]`, `./run test`, `./run test-plugin "<case substring>"`,
-  `./run reaper [from-stage]`, `./run memory [--diag]`, `./run package` (refuses without a green,
-  committed, recorded build).
+  `./run reaper [from-stage]`, `./run memory [--diag]`, `./run dist` (the per-platform archive of
+  what `build/` holds, CI's last step), `./run package` (the Linux delivery: refuses without a
+  green, committed, recorded build).
 - **Setup on a new machine**: `./run setup`, then `.env` from `.env.example` for the validator and
   REAPER paths (`docs/development.md`, "Setting up").
 
@@ -65,8 +67,12 @@ scripts it calls are described in `docs/development.md`).
 
 The reasoning is in `docs/development.md` (Conventions, Memory-leak gate) and `README.md`.
 
-- Linux x86_64 VST3 first. macOS (Intel and ARM, VST3 and AU) and Windows are planned work, done
-  as an epic, not assumed anywhere in the current tree.
+- Three platforms, one validation asymmetry: Linux x86_64 VST3, macOS universal (`arm64;x86_64`,
+  macOS 11 or later) VST3 and AU, Windows x64 VST3. Only the Linux build goes through the gates
+  (`check`, `validate`, `memory`, the REAPER harness) on the development machine; the macOS and
+  Windows binaries are built and engine-tested by CI, and the README says so to users. No AUv3,
+  CLAP, LV2 or AAX. The plug-in tests, leak tests and VST3 host are Linux-only executables; the
+  sanitizer options are refused off Linux.
 - JUCE 8.0.9 pinned by commit and cloned by `tools/fetch-juce.sh`: not vendored, not a submodule.
 - Every Note On snapshots all parameters into the new voice; sounding voices are never retuned.
 - No host "Program" parameter: presets live in the editor and in the saved state. Presets, A/B and

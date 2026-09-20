@@ -25,4 +25,4 @@ directory (JUCE, VST3 SDK, HarfBuzz, SheenBidi, zlib, pnglib, jpglib, FLAC, Ogg 
 The original KickCrafter Daisy firmware and SDL/ImGui desktop application by Arnaud Valensi are the
 behavioural references (private repositories); no code from them is copied verbatim except the
 mathematical definitions (wavetable generation, sweep, envelope and gain topology) described in
-`docs/architecture.md`.
+`README.md` ("How it works").

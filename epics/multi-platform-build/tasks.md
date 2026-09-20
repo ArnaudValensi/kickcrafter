@@ -7,6 +7,12 @@ milestone **Done** here, with a short record of what is in place, in the commit 
 
 ## M1: A portable build, proven on Linux
 
+**Done** (2026-09-20, link 1): guards by compiler and by `CMAKE_SYSTEM_NAME`, Apple defaults
+before `project()`, `AU` in `FORMATS`, the Linux module byte-identical under the guards
+(`72fb25b6...`), version 1.4.0 with `./run check` green, `tools/dist.sh` with the licence list,
+`package.sh` on top of it, the `sha256` helper, the platform-aware `run`. Details and the
+validation logs: `journal/2026-09-20.md`.
+
 The CMake project compiles with GCC, Apple Clang and MSVC without changing what the Linux build
 does. `CMakeLists.txt`: version 1.4.0, `FORMATS VST3 AU Standalone`, the Apple architecture and
 deployment-target defaults, warning options by compiler, the two sanitizer options refused off

@@ -28,7 +28,17 @@ export CMAKE_BUILD_PARALLEL_LEVEL="$KCF_JOBS"
 export DISPLAY="${DISPLAY:-:104}"          # the test display (GUI tests, memory gate)
 export KCF_DISPLAY="${KCF_DISPLAY:-:102}"  # the REAPER harness display
 
-ALL_TARGETS="KickCrafterFable_VST3 KickCrafterFable_Standalone kcf_engine_tests kcf_plugin_tests kcf_leak_tests kcf_vst3_host"
+# The platform decides the default build targets (docs/development.md): the plug-in tests, the
+# leak tests and the VST3 host need X11 and exist on Linux only; the AU exists on macOS only.
+# CI (Linux, macOS, Windows) reaches only juce, build, test-engine and dist, so everything on
+# those paths stays bash 3.2 (macOS) and Git Bash (Windows) compatible.
+ALL_TARGETS="KickCrafterFable_VST3 KickCrafterFable_Standalone kcf_engine_tests"
+EXE=""                                     # executable suffix of the test binaries
+case "$(uname -s)" in
+    Linux)        ALL_TARGETS="$ALL_TARGETS kcf_plugin_tests kcf_leak_tests kcf_vst3_host" ;;
+    Darwin)       ALL_TARGETS="$ALL_TARGETS KickCrafterFable_AU" ;;
+    MINGW*|MSYS*) EXE=".exe" ;;
+esac
 LEAK_TARGETS="KickCrafterFable_VST3 kcf_plugin_tests kcf_leak_tests kcf_vst3_host"
 
 # --- helpers ------------------------------------------------------------------
@@ -94,8 +104,8 @@ cmd_build() {   # build [targets...]   (default: every target, Release, into bui
     local targets="${*:-$ALL_TARGETS}"
     configure build -DCMAKE_BUILD_TYPE=Release && logged build ninja -C build -j"$KCF_JOBS" $targets
 }
-cmd_test_engine() { logged engine-tests ./build/tests/kcf_engine_tests "$@"; }
-cmd_test_plugin() { logged plugin-tests ./build/tests/kcf_plugin_tests "$@"; }
+cmd_test_engine() { logged engine-tests "./build/tests/kcf_engine_tests$EXE" "$@"; }
+cmd_test_plugin() { logged plugin-tests "./build/tests/kcf_plugin_tests$EXE" "$@"; }
 cmd_test()        { cmd_test_engine && cmd_test_plugin; }
 cmd_asan() {   # engine-only ASan/UBSan build and its tests (no JUCE)
     configure build-asan -DKCF_ENGINE_ONLY=ON -DKCF_SANITIZE=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -118,6 +128,7 @@ cmd_memory() {   # memory [--diag] [--cycles N]: builds the binaries the pass ne
 }
 
 # --- packaging ------------------------------------------------------------------
+cmd_dist()             { tools/dist.sh "$@"; }   # the per-platform archive of what build/ holds (CI's last step)
 cmd_package_controls() { logged package-negative-controls tools/package-negative-controls.sh; }
 cmd_preflight()        { tools/package-preflight.sh; }
 cmd_package()          { tools/package.sh; }
@@ -165,7 +176,7 @@ cmd_help() {
     row juce      "fetch JUCE 8.0.9 into external/JUCE (idempotent)"
     row displays  "start Xvfb + Openbox on \$DISPLAY (:104, tests) and \$KCF_DISPLAY (:102, REAPER)"
     sec "Build and test"
-    row "build [targets]" "configure + build into build/ (Release; default: every target; KCF_JOBS jobs)"
+    row "build [targets]" "configure + build into build/ (Release; default: every target of this platform; KCF_JOBS jobs)"
     row test        "engine tests then plugin tests (plugin tests need the test display)"
     row "test-engine / test-plugin [filter]" "one test binary; a substring selects a single case"
     row asan        "engine-only ASan/UBSan build in build-asan/ and its tests"
@@ -177,6 +188,7 @@ cmd_help() {
     row reaper-controls "the harness negative controls (no REAPER, no display)"
     row "memory [--diag]" "see Gates: pass A builds kcf_leak_tests and kcf_vst3_host first; pass B builds build-leak/ (12 min at one job)"
     sec "Packaging"
+    row dist             "the per-platform archive of what build/ holds, under artifacts/dist/ (no gate; what CI publishes)"
     row package-controls "the package preflight negative controls (scratch repository)"
     row preflight        "the delivery preflight alone (clean tree, record, logs, hashes)"
     row package          "the three archives + SHA256SUMS under artifacts/dist/ (runs the preflight)"
@@ -191,7 +203,7 @@ cmd_help() {
 cmd="${1:-help}"; shift || true
 case "$cmd" in
     help|-h|--help) cmd_help ;;
-    check|validate|setup|juce|displays|build|test|asan|validator|reaper|memory|preflight|package|diagram|clean) "cmd_$cmd" "$@" ;;
+    check|validate|setup|juce|displays|build|test|asan|validator|reaper|memory|dist|preflight|package|diagram|clean) "cmd_$cmd" "$@" ;;
     test-engine)      cmd_test_engine "$@" ;;
     test-plugin)      cmd_test_plugin "$@" ;;
     build-chain)      cmd_build_chain "$@" ;;

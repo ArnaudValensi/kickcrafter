@@ -2,7 +2,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 cmake_minimum_required(VERSION 3.22)
 
-project(KickCrafterFable VERSION 1.3.0 LANGUAGES C CXX)
+# macOS: one universal binary (Apple Silicon and Intel) that runs from macOS 11, the first release
+# with Apple Silicon. Both variables must be set before project() and only when the caller set
+# nothing (cache, -D or environment). APPLE does not exist yet at this point; CMAKE_HOST_APPLE
+# does, and the macOS build is native (no cross-compilation), so the host is the target.
+if(CMAKE_HOST_APPLE)
+    if(NOT DEFINED CMAKE_OSX_ARCHITECTURES AND NOT DEFINED ENV{CMAKE_OSX_ARCHITECTURES})
+        set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "macOS architectures (universal by default)")
+    endif()
+    if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET AND NOT DEFINED ENV{CMAKE_OSX_DEPLOYMENT_TARGET})
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS version")
+    endif()
+endif()
+
+project(KickCrafterFable VERSION 1.4.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,6 +35,20 @@ option(KCF_ENGINE_ONLY "Only build the engine and engine tests (no JUCE)" OFF)
 # executable. Frame pointers kept, LTO off (tools/memory-check.sh; never the delivered binary).
 option(KCF_SANITIZE_PLUGIN "Instrument engine + plugin + JUCE + tests with ASan/LSan" OFF)
 
+# Both sanitizer builds are the memory gate, which runs on Linux only (LeakSanitizer preload,
+# GCC options, the X11 test executables): refuse them anywhere else rather than fail obscurely.
+if((KCF_SANITIZE OR KCF_SANITIZE_PLUGIN) AND NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(FATAL_ERROR "KCF_SANITIZE and KCF_SANITIZE_PLUGIN are Linux-only (the memory gate, docs/development.md)")
+endif()
+
+# Warning options follow the compiler, not the platform: Apple Clang takes the GCC-style set,
+# MSVC has its own. The tests' options live in tests/CMakeLists.txt with the same rule.
+if(MSVC)
+    set(KCF_WARNING_OPTIONS /W4)
+else()
+    set(KCF_WARNING_OPTIONS -Wall -Wextra -Wpedantic -Wshadow -Wconversion)
+endif()
+
 # Pinned dependency: JUCE 8.0.9 (tag f72bad64d29715216226685810c5196bd0d79d77).
 # The tree is expected at external/JUCE; tools/fetch-juce.sh clones it.
 set(KCF_JUCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/JUCE" CACHE PATH "JUCE source tree")
@@ -34,7 +61,7 @@ add_library(kcf_engine STATIC
     engine/KickParams.h
     engine/SoftClip.h)
 target_include_directories(kcf_engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_options(kcf_engine PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wconversion)
+target_compile_options(kcf_engine PRIVATE ${KCF_WARNING_OPTIONS})
 
 if(KCF_SANITIZE)
     foreach(t kcf_engine)
@@ -107,7 +134,7 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
         BUNDLE_ID "com.arnaudvalensi.kickcrafter-fable"
         PLUGIN_MANUFACTURER_CODE Arnv
         PLUGIN_CODE Kcfb
-        FORMATS VST3 Standalone
+        FORMATS VST3 AU Standalone   # AU only exists on macOS: JUCE drops it elsewhere
         IS_SYNTH TRUE
         NEEDS_MIDI_INPUT TRUE
         NEEDS_MIDI_OUTPUT FALSE
@@ -144,10 +171,10 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
         # v1.1: no synthetic "MIDI CC c|n" parameters (2080 rows in the host's parameter
-        # list, deliberately removed). Consequence, documented in README and
-        # docs/architecture.md: VST3 has no raw MIDI CC events, so CC 120/123 no longer reach the
-        # plug-in from a VST3 host; the processor still handles them (tests) and one-shot
-        # hits end by themselves anyway.
+        # list, deliberately removed). Consequence: VST3 has no raw MIDI CC events, so CC 120/123
+        # no longer reach the plug-in from a VST3 host; the processor still handles them (tests,
+        # and the REAPER `panic` stage of docs/development.md) and one-shot hits end by
+        # themselves anyway.
         JUCE_VST3_EMULATE_MIDI_CC_WITH_PARAMETERS=0
         JUCE_DISPLAY_SPLASH_SCREEN=0
         JUCE_REPORT_APP_USAGE=0

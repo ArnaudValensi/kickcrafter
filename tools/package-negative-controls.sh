@@ -16,7 +16,7 @@ record="artifacts/logs/build-record.txt"; testlog="$(ls -t artifacts/logs/runs/*
 
 # --- scratch repository mirroring the archived paths + evidence, committed clean
 scratch="$tmp/repo"; mkdir -p "$scratch"
-for p in engine plugin tests tools resources docs CMakeLists.txt README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md .gitignore; do [ -e "$p" ] && cp -r "$p" "$scratch/"; done
+for p in engine plugin tests tools resources docs run CMakeLists.txt README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md .gitignore; do [ -e "$p" ] && cp -r "$p" "$scratch/"; done
 mkdir -p "$scratch/artifacts/logs/runs" "$scratch/artifacts/vst3" "$scratch/external"
 cp "$record" "$scratch/artifacts/logs/build-record.txt"
 cp "$testlog" "$testlog.exit" "$vlog" "$vlog.exit" "$scratch/artifacts/logs/runs/"

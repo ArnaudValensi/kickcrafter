@@ -182,8 +182,18 @@ manifest is recorded for information only). `tools/package-preflight.sh` refuses
 production sources no longer match the record, when the newest test or validator logs do not name the
 recorded binaries, or when the archived paths are not committed; `tools/package-negative-controls.sh`
 proves those refusals with fixtures in a scratch repository. `tools/package.sh` then builds three archives under
-`artifacts/dist/` (binary with all licence texts, source with the pinned JUCE tree, evidence) plus
+`artifacts/dist/`, named `kickcrafter-fable-<version>-...` after the `project()` version (binary with
+all licence texts and `BUILD-RECORD.txt`, source with the pinned JUCE tree, evidence) plus
 `SHA256SUMS`.
+
+`tools/dist.sh` (`./run dist`) is the platform-neutral part of that: it packs what `build/` holds
+into `artifacts/dist/kickcrafter-fable-<version>-<platform>.tar.gz` on Linux (`.zip` on macOS,
+with the AU component, and on Windows) with `README.md`, `CHANGELOG.md`, `LICENSE`,
+`THIRD_PARTY_NOTICES.md`, an `INSTALL.txt` naming the platform's install path, and `licenses/`
+(the licence list lives there only; `package.sh` calls it). It is CI's last step on every
+platform, runs under macOS's bash 3.2 and Git Bash, and, off a tag in CI, appends the short commit
+to the version so two pushes never share a file name. It is not a gate: it packs, it proves
+nothing.
 
 `tools/run-logged.sh <name> <command...>` runs a command with its output under
 `artifacts/logs/runs/<UTC stamp>-<pid>-<name>.log` and a `.exit` sidecar holding the real exit code.
@@ -298,6 +308,7 @@ demand; a project remembers its preset by kind and name and shows "(missing)" wh
   | `tests/leak_tests.cpp`, `tests/vst3_host_lifecycle.cpp` | `./run build kcf_leak_tests kcf_vst3_host && ./run memory` (pass A is enough unless the change is about instrumentation) |
   | `tools/reaper/kcf_*.lua`, `analyze_render.py`, `check_saved_state.py`, `drive_mouse.py`, `find_highlight.py`, `image_check.py`, `run_reaper_validation.sh` | `./run reaper` (a single stage, `./run reaper-stage <stage>`, only when the earlier stages' outputs already exist) and `./run reaper-controls` |
   | `tools/build-and-test.sh`, `tools/package*.sh`, `tools/validate-bundle.sh`, `tools/run-logged.sh`, `run` | `./run check` then `./run package-controls` and `./run preflight` |
+  | `tools/dist.sh` | `./run dist` and read the listing it prints; `./run package` if the staging it does for `package.sh` changed |
   | `tools/memory-check.sh` | `./run memory` and `./run memory --diag` |
   | `tools/xvfb-display.sh`, `tools/fetch-juce.sh`, `tools/diagrams/` | run the script once and look at what it produced (`./run displays`, `./run juce`, `./run diagram`) |
   | `README.md`, `docs/`, `CHANGELOG.md`, `CLAUDE.md`, `THIRD_PARTY_NOTICES.md`, `.claude/`, `epics/` | nothing (render a diagram if you changed its generator) |

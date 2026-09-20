@@ -3,6 +3,18 @@
 All notable changes to KickCrafter. Versions follow the `project()` version in `CMakeLists.txt`.
 State documents carry a schema number; every schema since 1 is still read.
 
+## 1.4.0 — 2026-09-20
+
+- Builds on macOS (VST3 and Audio Unit, one universal binary for Apple Silicon and Intel, macOS 11
+  or later) and on Windows (VST3, x64) besides Linux (VST3, x86_64). The macOS and Windows builds
+  come from GitHub Actions, which also runs the engine tests on each platform; they are not yet
+  validated in a host by the maintainer, unlike the Linux build.
+- The user preset folder follows each platform's convention: `~/.config/KickCrafterFable/Presets/`
+  on Linux (unchanged), `~/Library/Application Support/KickCrafterFable/Presets/` on macOS,
+  `%APPDATA%\KickCrafterFable\Presets\` on Windows. `KCF_PRESET_DIR` still overrides it.
+- Binary releases on GitHub: one archive per platform, named after the version, with the licence
+  texts and an `INSTALL.txt`. No state or preset schema change.
+
 ## 1.3.0 — 2026-09-20
 
 - Velocity Sensitivity is a switch (On/Off, default On) instead of a 0–100 % amount. Off plays

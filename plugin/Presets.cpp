@@ -147,8 +147,13 @@ juce::File Library::defaultDirectory()
 {
     const auto env = juce::SystemStats::getEnvironmentVariable ("KCF_PRESET_DIR", {});
     if (env.isNotEmpty()) return juce::File (env);
-    return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)   // ~/.config on Linux
-               .getChildFile ("KickCrafterFable").getChildFile ("Presets");
+    // Linux: $XDG_CONFIG_HOME or ~/.config; Windows: %APPDATA%; macOS: ~/Library, where JUCE leaves
+    // out the "Application Support" component that Apple's convention requires.
+    auto base = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory);
+   #if JUCE_MAC
+    base = base.getChildFile ("Application Support");
+   #endif
+    return base.getChildFile ("KickCrafterFable").getChildFile ("Presets");
 }
 
 Library::Library (const juce::File& directory) : dir (directory)

@@ -1,10 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# kcf_engine_tests builds and runs on every platform (no JUCE): it is what CI runs on each of them,
+# the only proof that every binary makes the same sound. Warning options follow the compiler.
 add_executable(kcf_engine_tests engine_tests.cpp)
 target_link_libraries(kcf_engine_tests PRIVATE kcf_engine)
-target_compile_options(kcf_engine_tests PRIVATE -Wall -Wextra)
+if(MSVC)
+    target_compile_options(kcf_engine_tests PRIVATE /W4)
+else()
+    target_compile_options(kcf_engine_tests PRIVATE -Wall -Wextra)
+endif()
 add_test(NAME engine_tests COMMAND kcf_engine_tests)
 
-if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
+# The three executables below are Linux only: they need X11, the pkg-config libraries JUCE loads
+# on Linux, a display with a window manager (the plug-in tests, the host lifecycle) and
+# LeakSanitizer (the memory gate). Porting them is future work (epics/).
+if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # The plugin tests drive the real KickCrafterProcessor/Editor. They reuse the
     # already compiled shared-code static library of the plugin (same objects the
     # VST3 links) instead of recompiling the JUCE modules a second time, so the
