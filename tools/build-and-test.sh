@@ -22,7 +22,7 @@ testmanifest() { find tests tools -type f | LC_ALL=C sort | xargs sha256sum | sh
 manifest_before="$(manifest)"
 testmanifest_before="$(testmanifest)"
 
-( cd build && cmake .. ) > "$cfg_log" 2>&1
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release > "$cfg_log" 2>&1   # creates build/ on a fresh checkout
 cfg_exit=$?
 echo "configure exit=$cfg_exit ($cfg_log)" >> "$status"
 if [ "$cfg_exit" -ne 0 ]; then echo "chain FAILED (configure) $(date -u +%FT%TZ)" >> "$status"; exit 1; fi
