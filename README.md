@@ -125,13 +125,6 @@ on macOS and `%APPDATA%\KickCrafterFable\Presets\` on Windows (the `KCF_PRESET_D
 variable overrides the folder); "• edited" after a name means the current values differ from the
 loaded preset.
 
-## Known limitations
-
-- Formats: VST3 on the three platforms and Audio Unit on macOS. No LV2, CLAP, AUv3 or AAX.
-- The square waveform is not band-limited (about 21 dB of aliasing below the harmonics at
-  44.1/48 kHz, 25 dB at 96 kHz), by design. Use Shape below 100 % or a higher sample rate for
-  cleaner square-heavy sounds.
-
 ## Documentation
 
 - [docs/development.md](docs/development.md): building, tests, validation and packaging.
