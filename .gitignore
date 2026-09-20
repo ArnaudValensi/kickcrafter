@@ -7,3 +7,5 @@ external/JUCE/
 __pycache__/
 *.o
 *.tmp
+# git-ignored, machine-specific (see .env.example)
+.env

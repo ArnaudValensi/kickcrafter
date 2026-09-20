@@ -4,6 +4,23 @@ Everything below runs from the repository root. All tool scripts write their out
 `artifacts/` (git-ignored) and keep every run's log with the real exit code, so evidence is never
 overwritten by a later run.
 
+## The run script
+
+`./run <command>` is the single entry point for every development command; `./run help` lists
+them. It calls the scripts under `tools/` described in this document, so a command typed by hand
+and one run through `./run` (or by CI) do exactly the same thing. Two commands are gates:
+
+```sh
+./run check       # the daily gate: build chain, engine tests, Steinberg validator (minutes once JUCE is built)
+./run validate    # the full gate: check, ASan engine tests, REAPER stages, harness controls, both memory passes, package controls
+```
+
+A gate stops at its first failing step and records every step's exit code under
+`artifacts/logs/gates/` (a fresh file per run, plus `artifacts/logs/gate-<name>.txt` for the last
+run). Machine-specific values (validator path, REAPER path, job count) live in `.env` at the
+repository root, copied from `.env.example` and git-ignored; a variable set in the real environment
+wins over `.env`.
+
 ## Setting up a development machine
 
 Nothing here assumes a particular machine: every external tool is found on `PATH` or named by an
@@ -75,10 +92,15 @@ executable (default `/usr/sbin/reaper`). The harness runs REAPER with its own co
 | `KCF_PRESET_DIR` | plug-in, tests, harness | user preset folder; tests and harness always set a private one |
 | `KCF_ENGINE_TESTS` | `analyze` stage | engine test binary for the reference hit (`build/tests/kcf_engine_tests`) |
 | `KCF_RESULTS`, `KCF_SHOTS` | REAPER harness | output folders (`artifacts/reaper`, `artifacts/screenshots`) |
-| `CMAKE_BUILD_PARALLEL_LEVEL` | CMake, JUCE's `juceaide` | parallel jobs; set to `1` on a machine with 8 GB or less (a JUCE unity build with LTO is memory hungry) |
+| `KCF_JOBS` | `run`, `build-and-test.sh` | parallel compiler jobs (`1`: what a machine with 8 GB or less affords with a JUCE unity build and LTO; a CI runner sets its core count) |
+| `CMAKE_BUILD_PARALLEL_LEVEL` | CMake, JUCE's `juceaide` | set from `KCF_JOBS` by `run` and the build chain; set it yourself when calling CMake by hand |
 
-Long jobs (the chain, the host stages, the memory passes) take 5 to 20 minutes each: run them in a
-persistent shell (tmux, screen) so they survive a closed terminal.
+`./run` reads these from `.env` at the repository root (see `.env.example`) unless they are already
+set in the environment.
+
+Long jobs (the build chain, the host stages, the memory passes) take 5 to 20 minutes each, and
+`./run validate` an hour or more at one job: run them in a persistent shell (tmux, screen) so they
+survive a closed terminal.
 
 ## Building from source
 
@@ -91,7 +113,8 @@ cmake --build build --target KickCrafterFable_VST3
 mkdir -p ~/.vst3 && cp -r "build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3" ~/.vst3/
 ```
 
-Requirements: section 1 of "Setting up" above. The full set of targets:
+Requirements: section 1 of "Setting up" above. `./run build` configures and builds every target
+below into `build/`; the equivalent by hand:
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -118,6 +141,9 @@ the diagnostic build of the memory gate (see below).
 DISPLAY=:104 ./build/tests/kcf_plugin_tests    # real processor + editor: 28 cases, needs an X display with a window manager
 ```
 
+`./run test` runs both through `tools/run-logged.sh` (`./run test-engine`, `./run test-plugin
+[filter]` for one of them); `./run asan` is the ASan/UBSan engine build and its tests below.
+
 `tools/xvfb-display.sh` starts the `:104` display with Openbox for the GUI cases (see "Setting up").
 Both test binaries point the user preset
 folder at a private temporary directory unless `KCF_PRESET_DIR` is set, so they never read or write
@@ -143,6 +169,8 @@ tools/build-and-test.sh          # configure, build, plugin tests on :104, layou
 tools/validate-bundle.sh         # Steinberg validator on the staged bundle; the log records the module hash and real exit code
 ```
 
+(`./run build-chain` and `./run validator`; `./run check` runs both plus the engine tests.)
+
 The build record binds the staged module's SHA-256 to a manifest hash of the production sources
 (`engine/ plugin/ resources/ CMakeLists.txt`), the git commit and the JUCE commit (the `tests/ tools/`
 manifest is recorded for information only). `tools/package-preflight.sh` refuses to package when the
@@ -157,10 +185,10 @@ proves those refusals with fixtures in a scratch repository. `tools/package.sh` 
 
 ## REAPER host validation
 
-`tools/reaper/run_reaper_validation.sh` drives a scratch REAPER instance (its own `reaper.ini` with
+`tools/reaper/run_reaper_validation.sh` (`./run reaper-stage <stage>`) drives a scratch REAPER instance (its own `reaper.ini` with
 the dummy audio device at 48 kHz, `vstpath` pointing at `artifacts/vst3`; the user's own REAPER
 settings are never touched) on `Xvfb :102` with Openbox, and checks the plug-in from the host's point
-of view. `tools/reaper/run_all_stages.sh` runs every stage in order and stops at the first failure
+of view. `tools/reaper/run_all_stages.sh` (`./run reaper`) runs every stage in order and stops at the first failure
 (`artifacts/reaper/stage-status.txt`, `artifacts/reaper/all-stages.log`, a stamped copy of the log
 when a run fails):
 
@@ -175,7 +203,7 @@ when a run fails):
 | `panic`, `program` | CC 120/123 behaviour and the absence of a Program parameter |
 | `resize`, `captures` | window scaling and the final screenshots (never uniform, inspected by eye) |
 
-`tools/reaper/harness_negative_controls.sh` runs 22 fixtures that make sure the harness itself fails
+`tools/reaper/harness_negative_controls.sh` (`./run reaper-controls`) runs 22 fixtures that make sure the harness itself fails
 when it should (a FAIL line beats a DONE line, a missing PASS line fails the stage, stale renders are
 rejected, unchanged host values are not counted as changes, xdotool failures propagate).
 
@@ -198,14 +226,16 @@ Things learned the hard way, kept here so nobody rediscovers them:
   (`kcf_plugin_tests --layout <percent>`), so the timing parameters must be at their reference
   values first, and geometry changes must be followed by a host run.
 - Never rebuild `kcf_plugin_tests` while host stages run: the layout dump uses that binary.
+- On the development machine `sed -i` rewrites a script without its executable bit (the file
+  system does not carry the mode over): check `git diff --summary` after editing a script in place.
 
 ## Memory-leak gate
 
 ```sh
-tools/memory-check.sh                     # pass A: LeakSanitizer preloaded into the ordinary binaries
+tools/memory-check.sh                     # pass A: LeakSanitizer preloaded into the ordinary binaries   (./run memory)
 cmake -S . -B build-leak -G Ninja -DCMAKE_BUILD_TYPE=Release -DKCF_SANITIZE_PLUGIN=ON
 ninja -C build-leak KickCrafterFable_VST3 kcf_plugin_tests kcf_leak_tests kcf_vst3_host
-tools/memory-check.sh --diag              # pass B: diagnostic build
+tools/memory-check.sh --diag              # pass B: diagnostic build                                    (./run memory --diag builds build-leak first)
 ```
 
 Both passes run `tests/leak_tests.cpp` (engine, processor, editor, multi-instance, preset library,
@@ -254,14 +284,14 @@ demand; a project remembers its preset by kind and name and shows "(missing)" wh
 
   | Changed | Run |
   |---|---|
-  | `engine/`, `plugin/`, `resources/`, `CMakeLists.txt` (the binary changes) | `tools/build-and-test.sh`, `tools/validate-bundle.sh`, `tools/reaper/run_all_stages.sh`, `tools/memory-check.sh` and `tools/memory-check.sh --diag` (after the `build-leak` build); then `tools/package.sh` if a release is due. `engine/` alone: also the ASan build of the engine tests |
-  | `tests/engine_tests.cpp`, `tests/plugin_tests.cpp` | rebuild and run that test binary (`cmake --build build --target kcf_plugin_tests && DISPLAY=:104 ./build/tests/kcf_plugin_tests`) |
-  | `tests/leak_tests.cpp`, `tests/vst3_host_lifecycle.cpp` | `tools/memory-check.sh` (pass A is enough unless the change is about instrumentation) |
-  | `tools/reaper/kcf_*.lua`, `analyze_render.py`, `check_saved_state.py`, `drive_mouse.py`, `find_highlight.py`, `image_check.py`, `run_reaper_validation.sh` | `tools/reaper/run_all_stages.sh` (a single stage, `tools/reaper/run_reaper_validation.sh <stage>`, only when the earlier stages' outputs already exist) and `tools/reaper/harness_negative_controls.sh` |
-  | `tools/build-and-test.sh`, `tools/package*.sh`, `tools/validate-bundle.sh`, `tools/run-logged.sh` | `tools/build-and-test.sh` then `tools/package-negative-controls.sh` and `tools/package-preflight.sh` |
-  | `tools/memory-check.sh` | both memory passes |
-  | `tools/xvfb-display.sh`, `tools/fetch-juce.sh`, `tools/diagrams/` | run the script once and look at what it produced |
-  | `README.md`, `docs/`, `CHANGELOG.md`, `CLAUDE.md`, `THIRD_PARTY_NOTICES.md` | nothing (render a diagram if you changed its generator) |
+  | `engine/`, `plugin/`, `resources/`, `CMakeLists.txt` (the binary changes) | `./run validate` (the build chain, validator, ASan engine tests, REAPER stages, harness controls, both memory passes, package controls); then `./run package` if a release is due |
+  | `tests/engine_tests.cpp`, `tests/plugin_tests.cpp` | `./run build kcf_plugin_tests && ./run test-plugin` (or the engine equivalents) |
+  | `tests/leak_tests.cpp`, `tests/vst3_host_lifecycle.cpp` | `./run build kcf_leak_tests kcf_vst3_host && ./run memory` (pass A is enough unless the change is about instrumentation) |
+  | `tools/reaper/kcf_*.lua`, `analyze_render.py`, `check_saved_state.py`, `drive_mouse.py`, `find_highlight.py`, `image_check.py`, `run_reaper_validation.sh` | `./run reaper` (a single stage, `./run reaper-stage <stage>`, only when the earlier stages' outputs already exist) and `./run reaper-controls` |
+  | `tools/build-and-test.sh`, `tools/package*.sh`, `tools/validate-bundle.sh`, `tools/run-logged.sh`, `run` | `./run check` then `./run package-controls` and `./run preflight` |
+  | `tools/memory-check.sh` | `./run memory` and `./run memory --diag` |
+  | `tools/xvfb-display.sh`, `tools/fetch-juce.sh`, `tools/diagrams/` | run the script once and look at what it produced (`./run displays`, `./run juce`, `./run diagram`) |
+  | `README.md`, `docs/`, `CHANGELOG.md`, `CLAUDE.md`, `THIRD_PARTY_NOTICES.md`, `.claude/`, `epics/` | nothing (render a diagram if you changed its generator) |
 
   When in doubt, run more: a CI run on every commit is the safety net for judgement errors here.
 - Keep failed logs; never treat a trailing `echo` as a test status.

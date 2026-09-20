@@ -1,0 +1,202 @@
+#!/usr/bin/env bash
+# KickCrafter task runner. One place for every development command; `./run` or `./run help` lists them.
+# Machine-specific configuration comes from .env at the repository root (copy .env.example); a real
+# environment variable always wins over .env. Every command below calls the scripts under tools/,
+# which keep their own logs under artifacts/ with real exit codes; this script adds the gates
+# (`check`, `validate`) and records each gate's steps and exit codes in artifacts/logs/gates/.
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT"
+
+# --- configuration ----------------------------------------------------------
+# .env holds the values that differ between machines (validator path, REAPER path, job count).
+# Lines are KEY=VALUE; blank lines and # comments are skipped; surrounding quotes are stripped.
+if [ -f .env ]; then
+    while IFS='=' read -r k v; do
+        case "$k" in ''|\#*) continue ;; esac
+        v="${v%\"}"; v="${v#\"}"; v="${v%\'}"; v="${v#\'}"
+        [ -n "${!k:-}" ] || export "$k=$v"
+    done < .env
+fi
+# KCF_JOBS: parallel compiler jobs. The default of 1 is what the 8 GB development machine can
+# afford with a JUCE unity build and LTO; a CI runner sets it to its core count.
+export KCF_JOBS="${KCF_JOBS:-1}"
+export CMAKE_BUILD_PARALLEL_LEVEL="$KCF_JOBS"
+export DISPLAY="${DISPLAY:-:104}"          # the test display (GUI tests, memory gate)
+export KCF_DISPLAY="${KCF_DISPLAY:-:102}"  # the REAPER harness display
+
+ALL_TARGETS="KickCrafterFable_VST3 KickCrafterFable_Standalone kcf_engine_tests kcf_plugin_tests kcf_leak_tests kcf_vst3_host"
+LEAK_TARGETS="KickCrafterFable_VST3 kcf_plugin_tests kcf_leak_tests kcf_vst3_host"
+
+# --- helpers ------------------------------------------------------------------
+logged() { tools/run-logged.sh "$@"; }     # output to artifacts/logs/runs/<stamp>-<name>.log, real exit code
+say() { printf '\n==> %s\n' "$*"; }
+
+# A gate is a named sequence of steps. Every step's exit code goes to the gate file, the gate
+# stops at the first failure, and the file is kept under artifacts/logs/gates/ (a fresh file per
+# run) with a copy at artifacts/logs/gate-<name>.txt for readers of a fixed path.
+gate_file=""; gate_name=""
+gate_begin() {
+    gate_name="$1"
+    local stamp; stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    mkdir -p artifacts/logs/gates
+    gate_file="artifacts/logs/gates/$stamp-$gate_name.txt"
+    echo "gate $gate_name start $stamp git $(git rev-parse --short HEAD 2>/dev/null || echo none)" | tee "$gate_file"
+}
+step() {   # step <label> <command...>
+    local label="$1"; shift
+    say "$label"
+    "$@"
+    local code=$?
+    echo "$label exit=$code $(date -u +%FT%TZ)" >> "$gate_file"
+    if [ "$code" -ne 0 ]; then
+        echo "gate $gate_name FAILED at $label (exit $code)" | tee -a "$gate_file"
+        cp "$gate_file" "artifacts/logs/gate-$gate_name.txt"
+        return "$code"
+    fi
+}
+gate_end() {
+    echo "gate $gate_name done $(date -u +%FT%TZ)" | tee -a "$gate_file"
+    cp "$gate_file" "artifacts/logs/gate-$gate_name.txt"
+}
+
+configure() {   # configure <build dir> [cmake options...]
+    local dir="$1"; shift
+    logged "configure-${dir}" cmake -S . -B "$dir" -G Ninja "$@"
+}
+build_leak_tree() {
+    configure build-leak -DCMAKE_BUILD_TYPE=Release -DKCF_SANITIZE_PLUGIN=ON \
+        && logged build-leak ninja -C build-leak -j"$KCF_JOBS" $LEAK_TARGETS
+}
+
+# --- setup --------------------------------------------------------------------
+cmd_juce()     { tools/fetch-juce.sh; }
+cmd_displays() { tools/xvfb-display.sh "$DISPLAY" && tools/xvfb-display.sh "$KCF_DISPLAY"; }
+cmd_setup() {
+    cmd_juce && cmd_displays || return 1
+    say "external tools"
+    local t missing=0
+    for t in cmake ninja gcc pkg-config uv xdotool xprop xwininfo; do
+        command -v "$t" >/dev/null && echo "  $t: $(command -v "$t")" || { echo "  $t: MISSING"; missing=1; }
+    done
+    local validator="${KCF_VALIDATOR:-$(command -v validator || true)}"
+    [ -n "$validator" ] && [ -x "$validator" ] && echo "  validator: $validator" || { echo "  validator: MISSING (set KCF_VALIDATOR in .env)"; missing=1; }
+    local reaper="${KCF_REAPER:-/usr/sbin/reaper}"
+    [ -x "$reaper" ] && echo "  reaper: $reaper" || { echo "  reaper: MISSING (set KCF_REAPER in .env)"; missing=1; }
+    [ "$missing" -eq 0 ] || { echo "some tools are missing: docs/development.md, section Setting up"; return 1; }
+}
+
+# --- build and test -----------------------------------------------------------
+cmd_build() {   # build [targets...]   (default: every target, Release, into build/)
+    local targets="${*:-$ALL_TARGETS}"
+    configure build -DCMAKE_BUILD_TYPE=Release && logged build ninja -C build -j"$KCF_JOBS" $targets
+}
+cmd_test_engine() { logged engine-tests ./build/tests/kcf_engine_tests "$@"; }
+cmd_test_plugin() { logged plugin-tests ./build/tests/kcf_plugin_tests "$@"; }
+cmd_test()        { cmd_test_engine && cmd_test_plugin; }
+cmd_asan() {   # engine-only ASan/UBSan build and its tests (no JUCE)
+    configure build-asan -DKCF_ENGINE_ONLY=ON -DKCF_SANITIZE=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        && logged build-asan ninja -C build-asan -j"$KCF_JOBS" \
+        && logged engine-tests-asan ./build-asan/tests/kcf_engine_tests
+}
+cmd_build_chain() { tools/build-and-test.sh; }
+cmd_validator()   { tools/validate-bundle.sh "$@"; }
+
+# --- host and memory ------------------------------------------------------------
+cmd_reaper()          { tools/reaper/run_all_stages.sh "$@"; }   # reaper [from-stage]
+cmd_reaper_stage()    { tools/reaper/run_reaper_validation.sh "$@"; }
+cmd_reaper_stop()     { tools/reaper/run_reaper_validation.sh stop; }
+cmd_reaper_controls() { logged harness-negative-controls tools/reaper/harness_negative_controls.sh; }
+cmd_memory() {   # memory [--diag] [--cycles N]: builds the binaries the pass needs first
+    case " $* " in
+        *" --diag "*) build_leak_tree && tools/memory-check.sh "$@" ;;
+        *) cmd_build kcf_leak_tests kcf_vst3_host && tools/memory-check.sh "$@" ;;
+    esac
+}
+
+# --- packaging ------------------------------------------------------------------
+cmd_package_controls() { logged package-negative-controls tools/package-negative-controls.sh; }
+cmd_preflight()        { tools/package-preflight.sh; }
+cmd_package()          { tools/package.sh; }
+
+# --- gates ----------------------------------------------------------------------
+check_steps() {
+    step "build chain (configure, build, plugin tests, staging, build record)" cmd_build_chain || return
+    step "engine tests" cmd_test_engine || return
+    step "Steinberg validator" cmd_validator || return
+}
+cmd_check() { gate_begin check; check_steps && gate_end; }
+cmd_validate() {
+    gate_begin validate
+    check_steps || return
+    step "engine tests under ASan/UBSan" cmd_asan || return
+    step "REAPER host stages" cmd_reaper || return
+    step "harness negative controls" cmd_reaper_controls || return
+    step "memory gate pass A (leak-test binaries, then LeakSanitizer preloaded)" cmd_memory || return
+    step "memory gate pass B (diagnostic build-leak tree, then ASan/LSan)" cmd_memory --diag || return
+    step "package negative controls" cmd_package_controls || return
+    gate_end
+}
+
+# --- misc -----------------------------------------------------------------------
+cmd_diagram() { tools/diagrams/synthesis_diagram.py && echo "render it and look: rsvg-convert -w 1400 docs/diagrams/synthesis.svg -o /tmp/synthesis.png"; }
+cmd_clean() {   # clean [-y]: the build trees. artifacts/ (evidence) and external/JUCE are kept.
+    echo "This removes the build trees: build/ build-asan/ build-leak/. Kept: artifacts/, external/JUCE, .env."
+    if [ "${1:-}" != "-y" ] && [ "${1:-}" != "--yes" ]; then
+        printf "Proceed? [y/N] "; read -r ans || ans=""
+        case "$ans" in y|Y|yes|YES) ;; *) echo "aborted"; return 0 ;; esac
+    fi
+    rm -rf build build-asan build-leak && echo "cleaned"
+}
+
+cmd_help() {
+    local M G R W=20
+    if [ -t 1 ]; then M=$'\e[1;35m'; G=$'\e[1;32m'; R=$'\e[0m'; else M=''; G=''; R=''; fi
+    sec() { printf '\n%b%s%b\n' "$M" "$1" "$R"; }
+    row() { printf '  %b%-*s%b %s\n' "$G" "$W" "$1" "$R" "$2"; }
+    printf '%bKickCrafter task runner%b   Usage: ./run <command> [args]\n' "$M" "$R"
+    sec "Gates"
+    row check     "the daily gate: build chain + engine tests + Steinberg validator (minutes)"
+    row validate  "the full gate: check + ASan engine tests + REAPER stages + harness controls + both memory passes + package controls (an hour or more)"
+    sec "Setup"
+    row setup     "fetch the pinned JUCE, start both displays, list the external tools"
+    row juce      "fetch JUCE 8.0.9 into external/JUCE (idempotent)"
+    row displays  "start Xvfb + Openbox on \$DISPLAY (:104, tests) and \$KCF_DISPLAY (:102, REAPER)"
+    sec "Build and test"
+    row "build [targets]" "configure + build into build/ (Release; default: every target; KCF_JOBS jobs)"
+    row test        "engine tests then plugin tests (plugin tests need the test display)"
+    row "test-engine / test-plugin [filter]" "one test binary; a substring selects a single case"
+    row asan        "engine-only ASan/UBSan build in build-asan/ and its tests"
+    row build-chain "tools/build-and-test.sh: configure, build, plugin tests, layout dump, staging, build record"
+    row validator   "Steinberg validator on the staged bundle (KCF_VALIDATOR)"
+    sec "Host and memory"
+    row "reaper [from-stage]" "every REAPER host stage in order (or from one stage on), stop at the first failure"
+    row "reaper-stage <stage>" "a single stage (earlier stages' outputs must exist); reaper-stop stops REAPER"
+    row reaper-controls "the harness negative controls (no REAPER, no display)"
+    row "memory [--diag]" "leak gate pass A (builds the leak-test binaries first); --diag builds build-leak/ and runs pass B"
+    sec "Packaging"
+    row package-controls "the package preflight negative controls (scratch repository)"
+    row preflight        "the delivery preflight alone (clean tree, record, logs, hashes)"
+    row package          "the three archives + SHA256SUMS under artifacts/dist/ (runs the preflight)"
+    sec "Misc"
+    row diagram   "regenerate docs/diagrams/synthesis.svg from its generator"
+    row "clean [-y]" "remove the build trees (keeps artifacts/ and external/JUCE)"
+    printf '\n%s\n' "Configuration: .env at the repository root (copy .env.example); a real environment variable wins."
+    printf '%s\n' "Every run's log is kept under artifacts/logs/ with its real exit code; gates under artifacts/logs/gates/."
+}
+
+# --- dispatch -------------------------------------------------------------------
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+    help|-h|--help) cmd_help ;;
+    check|validate|setup|juce|displays|build|test|asan|validator|reaper|memory|preflight|package|diagram|clean) "cmd_$cmd" "$@" ;;
+    test-engine)      cmd_test_engine "$@" ;;
+    test-plugin)      cmd_test_plugin "$@" ;;
+    build-chain)      cmd_build_chain "$@" ;;
+    reaper-stage)     cmd_reaper_stage "$@" ;;
+    reaper-stop)      cmd_reaper_stop ;;
+    reaper-controls)  cmd_reaper_controls ;;
+    package-controls) cmd_package_controls ;;
+    *) echo "unknown command: $cmd" >&2; echo >&2; cmd_help >&2; exit 1 ;;
+esac
