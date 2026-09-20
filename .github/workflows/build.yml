@@ -102,12 +102,22 @@ jobs:
       - name: Archive
         run: ./run dist
 
-      - name: Upload the archive and the logs
+      - name: Upload the archive
         uses: actions/upload-artifact@v7
         with:
           name: kickcrafter-fable-${{ matrix.platform }}
-          path: |
-            artifacts/dist/
-            artifacts/logs/
+          path: artifacts/dist/
           retention-days: 14
           if-no-files-found: error
+
+      # The logs (with their .exit sidecars) are kept even when a step failed: a failed run's
+      # evidence is what one needs to read, and run-logged.sh prints only the log's path to the
+      # console. A run that fails before the first logged step has nothing to upload, hence warn.
+      - name: Upload the logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: kickcrafter-fable-${{ matrix.platform }}-logs
+          path: artifacts/logs/
+          retention-days: 14
+          if-no-files-found: warn

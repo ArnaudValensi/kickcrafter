@@ -287,11 +287,12 @@ bundles, which must read `x86_64 arm64`. The engine tests are the only tests CI 
 JUCE-free, six seconds, and the only proof that the three binaries make the same sound; the plug-in
 tests, the validator, the REAPER harness and the memory gate need this development machine.
 
-Each job uploads one workflow artifact, `kickcrafter-fable-<platform>`, kept 14 days, holding
+Each job uploads two workflow artifacts kept 14 days: `kickcrafter-fable-<platform>` holds
 `artifacts/dist/` (the archive `dist.sh` made, with `-<short sha>` after the version when the run
-is not on a tag) and `artifacts/logs/` (the configure, build, engine-test and dist logs with their
-`.exit` sidecars, the evidence convention of this project). A superseded run of the same branch is
-cancelled. The workflow grants itself `contents: read` only and is also `workflow_call`-able, so
+is not on a tag), and `kickcrafter-fable-<platform>-logs` holds `artifacts/logs/` (the configure,
+build, engine-test and dist logs with their `.exit` sidecars, the evidence convention of this
+project) and is uploaded even when a step failed, since the console only shows the logs' paths.
+A superseded run of the same branch is cancelled. The workflow grants itself `contents: read` only and is also `workflow_call`-able, so
 the release workflow reuses it unchanged. Minutes: a macOS minute costs ten Linux minutes on a
 private repository, which is why the triggers are filtered.
 
