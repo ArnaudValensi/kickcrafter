@@ -5,27 +5,25 @@ moment it starts.
 
 ![KickCrafter editor](docs/screenshots/editor.png)
 
-KickCrafter is a Linux VST3 instrument. The sound is a 2048-point wavetable oscillator morphing between sine and square, a pitch sweep with an
-adjustable curve, a linear attack / hold / fade envelope, per-hit drive and a soft limiter on the
-bus. Every Note On snapshots all synthesis parameters into the new voice, so knobs, graph handles,
-automation, presets and A/B switching only ever shape the *next* hit: voices already sounding are
-never retuned.
+KickCrafter is a Linux VST3 instrument. The sound is a wavetable oscillator morphing between sine
+and square, a pitch sweep with an adjustable curve, an attack / hold / fade envelope, per-hit drive
+and a soft limiter. Every Note On snapshots all parameters into the new voice, so knobs, graph
+handles, automation, presets and A/B switching only ever shape the *next* hit: voices already
+sounding are never retuned.
 
-- Linux x86_64, VST3 (and a Standalone build for UI work). Built with JUCE 8, C++20, CMake.
-- Twelve host-automatable parameters with stable IDs, block-accurate automation, sample-accurate MIDI.
-- Sixteen voices with declicked voice stealing; nothing is allocated or locked on the audio thread.
-- Interactive pitch, amplitude and waveform graphs that draw the next hit and can be dragged.
-- Eight factory presets, unlimited user presets as plain XML files, A/B comparison, resizable UI.
-- Free software: AGPL-3.0-or-later.
+- Sixteen voices, so fast rolls and long tails overlap without cutting each other.
+- Pitch, amplitude and waveform graphs that draw the next hit and can be dragged.
+- Factory and user presets, A/B comparison, a resizable window.
+- Free software, AGPL-3.0-or-later.
 
 ## Installation
 
-Binary releases are on their way (built and tested by CI). Until then, build the plug-in from
-source: it takes a few minutes, see [docs/development.md](docs/development.md#building-from-source).
+Binary releases are on their way. Until then, build the plug-in from source: it takes a few
+minutes, see [docs/development.md](docs/development.md#building-from-source).
 
-Install by copying the `KickCrafter Fable.vst3` bundle into a folder your host scans, for example
-`~/.vst3/`, and rescan plug-ins. The plug-in appears as **KickCrafter Fable** (vendor Arnaud Valensi)
-in the instrument list. Insert it on a track and send it MIDI notes.
+Copy the `KickCrafter Fable.vst3` bundle into a folder your host scans, for example `~/.vst3/`, and
+rescan plug-ins. The plug-in appears as **KickCrafter Fable** (vendor Arnaud Valensi) in the
+instrument list. Insert it on a track and send it MIDI notes.
 
 ## Playing it
 
@@ -33,11 +31,11 @@ in the instrument list. Insert it on a track and send it MIDI notes.
   channel. Note Off is ignored: hits are one-shot and end by themselves. A Note On with velocity 0
   does not trigger.
 - **Pitch Source.** *Fixed* (default): the **End** knob is the note of the kick and the played note
-  number is ignored (55 Hz = A1 reproduces the reference sound). *MIDI Note*: the played note sets
-  the end frequency of the sweep, so the kick can be played melodically.
+  number is ignored (55 Hz = A1). *MIDI Note*: the played note sets the end frequency of the sweep,
+  so the kick can be played melodically.
 - **Velocity.** On (default): the MIDI velocity scales the level linearly, a velocity-96 note plays
   at 96/127 of the level. Off: every note plays at full level.
-- **Audition** fires an A1 hit at full velocity through the same realtime path as a MIDI note.
+- **Audition** fires an A1 hit at full velocity through the same path as a MIDI note.
 - **Knobs.** Drag, mouse wheel, Shift for fine control, double-click to reset, click the value to
   type it (`440`, `440 Hz`, or a note name such as `A1` or `C#2` for the frequency knobs). The arc
   colour of a knob is the colour of the graph that edits the same value: copper = pitch graph,
@@ -51,71 +49,46 @@ in the instrument list. Insert it on a track and send it MIDI notes.
 - **Window size.** Drag the host window corner (80–160 %) or pick a size in the `%` menu. The size
   is saved with the project.
 
-### Presets
-
-The preset list has two sections. *Factory* holds the eight presets shipped in the plug-in (read
-only). *User* holds your own, one plain XML file each in `~/.config/KickCrafterFable/Presets/`
-(set `KCF_PRESET_DIR` to use another folder). The `...` button offers Save (overwrites the loaded
-user preset; on a factory preset it behaves as Save as), Save as…, Rename…, Delete, Open user
-presets folder and Rescan. "• edited" after the name means the current values differ from the
-loaded preset.
-
-A project remembers its preset by kind and name. If the file has been removed, the name shows
-"(missing)" and the sound is unchanged: the values live in the project. A preset file looks like
-this; values are in the units the knobs display, out-of-range values are clamped and malformed files
-are skipped (the list shows how many, Rescan tells why):
-
-```xml
-<KickCrafterPreset version="4" name="Deep Sub">
-  <Params startFreq="140" endFreq="55" sweep="38" hold="820" fade="88" attack="0.4"
-          curve="2.5" shape="0" drive="1.15" velocity="1" pitchSource="0"/>
-</KickCrafterPreset>
-```
-
-Factory presets are the files under `resources/presets/`; edit or add files there (the numeric
-prefix fixes the order) and rebuild to change the bank.
-
 ## Parameters
 
-| ID | Name | Range | Default | Notes |
-|---|---|---|---|---|
-| `startFreq` | Start Frequency | 20–2000 Hz, log | 250 Hz | sweep start |
-| `endFreq` | End Frequency | 20–440 Hz, log | 55 Hz | the note, in Fixed mode |
-| `sweep` | Sweep Time | 0–250 ms | 47 ms | |
-| `hold` | Hold Time | 0–1000 ms | 132 ms | hit length = sweep + hold |
-| `fade` | Fade Out | 0–100 % | 50 % | fraction of the hit: 0 % = 10 ms fade, 100 % = whole hit |
-| `attack` | Attack | 0.4–50 ms | 0.4 ms | linear ramp-in |
-| `curve` | Sweep Curve | 1–30, log | 1 | pitch = start + (end − start)·(1 − (1 − t)^curve) |
-| `shape` | Shape | 0–100 % | 0 % | 0 = sine, 100 = square (table morph) |
-| `drive` | Drive | 0–4 × | 1 × | per-hit gain before the bus limiter |
-| `velocity` | Velocity Sensitivity | Off / On | On | |
-| `pitchSource` | Pitch Source | Fixed / MIDI Note | Fixed | |
-| `midiChannel` | MIDI Channel | Omni, 1–16 | Omni | not a synthesis parameter |
+| Name | Range | Default | What it does |
+|---|---|---|---|
+| Start Frequency | 20–2000 Hz | 250 Hz | where the pitch sweep starts |
+| End Frequency | 20–440 Hz | 55 Hz | the note of the kick (Pitch Source = Fixed) |
+| Sweep Time | 0–250 ms | 47 ms | how long the pitch takes to reach End |
+| Sweep Curve | 1–30 | 1 | 1 = straight pitch drop, higher = the pitch drops faster at first |
+| Hold Time | 0–1000 ms | 132 ms | how long the hit continues after the sweep (hit = sweep + hold) |
+| Attack | 0.4–50 ms | 0.4 ms | ramp-in at the start of the hit |
+| Fade Out | 0–100 % | 50 % | fade-out length as a fraction of the hit (0 % = 10 ms, 100 % = the whole hit) |
+| Shape | 0–100 % | 0 % | 0 = sine, 100 = square |
+| Drive | 0–4 × | 1 × | per-hit gain before the limiter; above 1 × it saturates |
+| Velocity Sensitivity | Off / On | On | whether MIDI velocity scales the level |
+| Pitch Source | Fixed / MIDI Note | Fixed | where the end frequency comes from |
+| MIDI Channel | Omni, 1–16 | Omni | input channel filter |
 
-Automation is applied at block boundaries (the last automation point of a block is in effect for
-the whole block); MIDI notes are sample-accurate within the block. All Sound Off (CC 120) stops
-every voice with a short declick and All Notes Off (CC 123) is a deliberate no-op, but VST3 hosts
-do not deliver raw CC messages to the plug-in (see [docs/architecture.md](docs/architecture.md)).
+All twelve can be automated. Automation is applied at block boundaries; MIDI notes are
+sample-accurate. Projects saved by earlier versions load as they were; the
+[changelog](CHANGELOG.md) lists the few controls to check when a parameter's meaning changed.
 
-Projects saved by earlier versions load as they were; the [changelog](CHANGELOG.md) lists the few
-controls to check when a parameter's meaning changed.
+## Presets
+
+The preset list has a *Factory* section (eight presets shipped in the plug-in) and a *User* section
+(your own). The `...` button saves, renames, deletes, opens the user presets folder and rescans it.
+User presets are plain XML files in `~/.config/KickCrafterFable/Presets/`, one per preset, easy to
+back up or share; "• edited" after a name means the current values differ from the loaded preset.
 
 ## Known limitations
 
-- Linux x86_64 VST3 and Standalone only. macOS, Windows, AU, LV2 and CLAP are not built or validated.
-- Automation is block-accurate, not sample-accurate.
+- Linux x86_64 VST3 only. macOS, Windows, AU, LV2 and CLAP are not built or validated.
 - No pitch bend, MPE, LFOs, multi-point envelopes, sample import, sequencer, kit or WAV export.
-- The naive square wavetable aliases at high start frequencies (about 21 dB below the harmonics at
+- The square waveform is not band-limited (about 21 dB of aliasing below the harmonics at
   44.1/48 kHz, 25 dB at 96 kHz), by design. Use Shape below 100 % or a higher sample rate for
   cleaner square-heavy sounds.
-- The 16-voice steal policy cuts the tail closest to its end (declicked) rather than dropping the new note.
 
 ## Documentation
 
-- [docs/architecture.md](docs/architecture.md): the synthesis block diagram, the per-hit
-  snapshot rule, the realtime rules, state and preset formats.
-- [docs/development.md](docs/development.md): building, the test suites, the VST3 validator, the
-  REAPER host validation harness, the memory-leak gate and packaging.
+- [docs/architecture.md](docs/architecture.md): how the synthesis works, in one diagram.
+- [docs/development.md](docs/development.md): building, tests, validation and packaging.
 - [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence

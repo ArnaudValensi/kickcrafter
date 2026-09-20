@@ -157,12 +157,37 @@ own sources with AddressSanitizer instrumentation; JUCE module translation units
 2 GB per compiler process. No suppression file exists. Finite cycles cannot prove universal leak
 freedom; they do exercise every lifecycle the plug-in has.
 
+## Preset files
+
+A preset is one XML file; the eleven synthesis values are in the units the knobs display,
+out-of-range values are clamped on load and malformed files are skipped (the UI lists how many and
+Rescan reports why):
+
+```xml
+<KickCrafterPreset version="4" name="Deep Sub">
+  <Params startFreq="140" endFreq="55" sweep="38" hold="820" fade="88" attack="0.4"
+          curve="2.5" shape="0" drive="1.15" velocity="1" pitchSource="0"/>
+</KickCrafterPreset>
+```
+
+The factory bank is the set of files under `resources/presets/`, compiled into the binary (the
+numeric prefix fixes the order): edit or add files there and rebuild to change it. The user library
+is `~/.config/KickCrafterFable/Presets/`, or the folder named by `KCF_PRESET_DIR`, scanned on
+demand; a project remembers its preset by kind and name and shows "(missing)" when the file is gone.
+
 ## Conventions
 
 - The parameter IDs, the state schema and the preset schema are compatibility contracts: never
-  rename an ID; bump the schema and migrate on load when a value's meaning changes.
-- Nothing may allocate, lock, log or touch the file system in `processBlock`; the editor polls,
-  it never listens.
+  rename an ID; bump the schema and migrate on load when a value's meaning changes. Only the
+  plug-in's own state and preset files are migrated; host-side copies of a value (automation lanes,
+  stored parameter values) keep their numbers.
+- `processBlock` reads the parameter atomics once, renders straight into the host buffer and
+  parses MIDI at sample offsets: nothing may allocate, lock, log, post or touch the file system there.
+- The editor polls the parameters from its timer and never installs listeners; its edits go through
+  begin / value / end gestures.
+- Presets, A/B and state save/restore are message-thread transactions under one lock, so a saved
+  project always holds a coherent combination of current values, other slot and preset identity. No
+  host "Program" parameter is published: presets live in the editor and in the saved state.
 - Any change under `engine/`, `plugin/`, `resources/` or `CMakeLists.txt` changes the production
   manifest: rerun the chain, the validator, the host stages and both memory passes before
   packaging. Changes under `tests/` or `tools/` need the chain and the affected evidence.
