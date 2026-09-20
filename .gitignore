@@ -1,0 +1,9 @@
+# build trees and generated evidence (the tools write under artifacts/)
+build*/
+artifacts/
+# pinned JUCE checkout, fetched by tools/fetch-juce.sh
+external/JUCE/
+# scratch
+__pycache__/
+*.o
+*.tmp

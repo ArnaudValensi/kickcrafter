@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KickCrafterPreset version="4" name="Tight Click">
+  <Params startFreq="950" endFreq="55" sweep="11" hold="95" fade="55" attack="0.4"
+          curve="9" shape="28" drive="1" velocity="1" pitchSource="0"/>
+</KickCrafterPreset>
