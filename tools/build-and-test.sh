@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Team-owned build+test chain (single compiler job). Run inside tmux so it survives CLI exit.
+# Build + test chain (single compiler job). Long: run it inside tmux or another persistent shell.
 #
 # Per-run evidence: configure and build logs are fresh files for THIS run,
 # their exit statuses are carried explicitly, nothing is staged and no build record is written

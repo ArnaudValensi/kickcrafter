@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Second team-owned display for headless test executables (:104, Xvfb + Openbox), so the
+# Display for headless test executables (:104, Xvfb + Openbox), separate from :102 so the
 # plugin/leak tests never share :102 with the REAPER mouse-driven stages. Idempotent.
 # Openbox is started with a task-local XDG_CACHE_HOME and the system rc.xml (no user settings).
 set -uo pipefail

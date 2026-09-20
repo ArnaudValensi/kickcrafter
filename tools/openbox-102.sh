@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start Openbox on this team's display :102 with a task-local cache (never touches user settings).
+# Start Openbox on the REAPER harness display :102 with a task-local cache (never touches user settings).
 set -uo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 export DISPLAY="${KCF_DISPLAY:-:102}"
