@@ -34,7 +34,7 @@ green after the commit, the journal entry written.
 
 ## M2: The build workflow on the three platforms
 
-**Done, awaiting the owner's push and CI** (2026-09-20, link 1): `build.yml` with the path filter,
+**Done** (2026-09-20, link 1; proven by Build run 35537119617 on `d412b56`, three green jobs): `build.yml` with the path filter,
 concurrency, `workflow_call`, one job per platform through `./run juce`, `build`, `test-engine`,
 `dist`, `lipo -archs` on macOS, artifacts kept 14 days; README installation per platform with the
 preset folders; the guide's CI section and the macOS and Windows prerequisites; `.github` in the
