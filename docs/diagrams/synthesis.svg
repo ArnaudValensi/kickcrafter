@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="470" viewBox="0 0 1260 470" font-family="Inter, Helvetica, Arial, sans-serif">
+<rect width="1260" height="470" rx="12" fill="#ffffff"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#222222"/></marker><marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#666666"/></marker></defs>
+<rect x="230" y="100" width="210" height="100" rx="8" fill="#ffffff" stroke="#222222" stroke-width="1.6"/>
+<text x="335.0" y="126" text-anchor="middle" font-size="15" font-weight="600" fill="#222222" letter-spacing="0.3">WAVETABLE OSCILLATOR</text>
+<text x="335.0" y="146" text-anchor="middle" font-size="12" fill="#666666">sine ↔ square · Shape</text>
+<polyline points="265.0,172.0 266.0,170.6 267.0,169.2 268.0,167.9 269.0,166.7 270.0,165.6 271.0,164.7 272.0,164.0 273.0,163.4 274.0,163.1 275.0,163.0 276.0,163.1 277.0,163.4 278.0,164.0 279.0,164.7 280.0,165.6 281.0,166.7 282.0,167.9 283.0,169.2 284.0,170.6 285.0,172.0 286.0,173.4 287.0,174.8 288.0,176.1 289.0,177.3 290.0,178.4 291.0,179.3 292.0,180.0 293.0,180.6 294.0,180.9 295.0,181.0 296.0,180.9 297.0,180.6 298.0,180.0 299.0,179.3 300.0,178.4 301.0,177.3 302.0,176.1 303.0,174.8 304.0,173.4 305.0,172.0 306.0,170.6 307.0,169.2 308.0,167.9 309.0,166.7 310.0,165.6 311.0,164.7 312.0,164.0 313.0,163.4 314.0,163.1 315.0,163.0 316.0,163.1 317.0,163.4 318.0,164.0 319.0,164.7 320.0,165.6 321.0,166.7 322.0,167.9 323.0,169.2 324.0,170.6 325.0,172.0 326.0,173.4 327.0,174.8 328.0,176.1 329.0,177.3 330.0,178.4 331.0,179.3 332.0,180.0 333.0,180.6 334.0,180.9 335.0,181.0 336.0,180.9 337.0,180.6 338.0,180.0 339.0,179.3 340.0,178.4 341.0,177.3 342.0,176.1 343.0,174.8 344.0,173.4 345.0,172.0" fill="none" stroke="#222222" stroke-width="1.5"/>
+<path d="M355.0,172 L355.0,163 L375.0,163 L375.0,181 L395.0,181 L395.0,163 L405.0,163" fill="none" stroke="#222222" stroke-width="1.5"/>
+<rect x="500" y="100" width="200" height="100" rx="8" fill="#ffffff" stroke="#222222" stroke-width="1.6"/>
+<text x="600.0" y="126" text-anchor="middle" font-size="15" font-weight="600" fill="#222222" letter-spacing="0.3">AMPLIFIER</text>
+<text x="600.0" y="146" text-anchor="middle" font-size="12" fill="#666666">envelope × velocity</text>
+<rect x="760" y="100" width="130" height="100" rx="8" fill="#ffffff" stroke="#222222" stroke-width="1.6"/>
+<text x="825.0" y="126" text-anchor="middle" font-size="15" font-weight="600" fill="#222222" letter-spacing="0.3">DRIVE</text>
+<text x="825.0" y="146" text-anchor="middle" font-size="12" fill="#666666">0 – 4 ×</text>
+<rect x="950" y="100" width="170" height="100" rx="8" fill="#ffffff" stroke="#222222" stroke-width="1.6"/>
+<text x="1035.0" y="126" text-anchor="middle" font-size="15" font-weight="600" fill="#222222" letter-spacing="0.3">SOFT LIMITER</text>
+<text x="1035.0" y="146" text-anchor="middle" font-size="12" fill="#666666">sum of all voices</text>
+<line x1="440" y1="150.0" x2="500" y2="150.0" stroke="#222222" stroke-width="2" marker-end="url(#a)"/>
+<line x1="700" y1="150.0" x2="760" y2="150.0" stroke="#222222" stroke-width="2" marker-end="url(#a)"/>
+<line x1="890" y1="150.0" x2="950" y2="150.0" stroke="#222222" stroke-width="2" marker-end="url(#a)"/>
+<line x1="1120" y1="150.0" x2="1190" y2="150.0" stroke="#222222" stroke-width="2" marker-end="url(#a)"/>
+<text x="1193" y="138.0" text-anchor="end" font-size="12" font-weight="600" fill="#222222">OUT</text>
+<rect x="230" y="300" width="210" height="100" rx="8" fill="#ffffff" stroke="#222222" stroke-width="1.6"/>
+<text x="335.0" y="326" text-anchor="middle" font-size="15" font-weight="600" fill="#222222" letter-spacing="0.3">PITCH ENVELOPE</text>
+<text x="335.0" y="346" text-anchor="middle" font-size="12" fill="#666666">Start → End · Sweep · Curve</text>
+<polyline points="275.0,356.0 276.0,356.9 277.0,357.7 278.0,358.6 279.0,359.4 280.0,360.2 281.0,361.0 282.0,361.7 283.0,362.5 284.0,363.2 285.0,363.9 286.0,364.6 287.0,365.3 288.0,366.0 289.0,366.6 290.0,367.3 291.0,367.9 292.0,368.5 293.0,369.0 294.0,369.6 295.0,370.2 296.0,370.7 297.0,371.2 298.0,371.7 299.0,372.2 300.0,372.7 301.0,373.1 302.0,373.6 303.0,374.0 304.0,374.4 305.0,374.8 306.0,375.2 307.0,375.5 308.0,375.9 309.0,376.2 310.0,376.5 311.0,376.8 312.0,377.1 313.0,377.4 314.0,377.6 315.0,377.9 316.0,378.1 317.0,378.3 318.0,378.5 319.0,378.7 320.0,378.9 321.0,379.0 322.0,379.2 323.0,379.3 324.0,379.4 325.0,379.5 326.0,379.6 327.0,379.7 328.0,379.8 329.0,379.8 330.0,379.9 331.0,379.9 332.0,380.0 333.0,380.0 334.0,380.0 335.0,380.0 336.0,380.0 337.0,380.0 338.0,380.0 339.0,380.0 340.0,380.0 341.0,380.0 342.0,380.0 343.0,380.0 344.0,380.0 345.0,380.0 346.0,380.0 347.0,380.0 348.0,380.0 349.0,380.0 350.0,380.0 351.0,380.0 352.0,380.0 353.0,380.0 354.0,380.0 355.0,380.0 356.0,380.0 357.0,380.0 358.0,380.0 359.0,380.0 360.0,380.0 361.0,380.0 362.0,380.0 363.0,380.0 364.0,380.0 365.0,380.0 366.0,380.0 367.0,380.0 368.0,380.0 369.0,380.0 370.0,380.0 371.0,380.0 372.0,380.0 373.0,380.0 374.0,380.0 375.0,380.0 376.0,380.0 377.0,380.0 378.0,380.0 379.0,380.0 380.0,380.0 381.0,380.0 382.0,380.0 383.0,380.0 384.0,380.0 385.0,380.0 386.0,380.0 387.0,380.0 388.0,380.0 389.0,380.0 390.0,380.0 391.0,380.0 392.0,380.0 393.0,380.0 394.0,380.0 395.0,380.0" fill="none" stroke="#222222" stroke-width="1.5"/>
+<line x1="271.0" y1="384" x2="399.0" y2="384" stroke="#666666" stroke-width="1"/>
+<rect x="500" y="300" width="200" height="100" rx="8" fill="#ffffff" stroke="#222222" stroke-width="1.6"/>
+<text x="600.0" y="326" text-anchor="middle" font-size="15" font-weight="600" fill="#222222" letter-spacing="0.3">AMPLITUDE ENVELOPE</text>
+<text x="600.0" y="346" text-anchor="middle" font-size="12" fill="#666666">Attack · Hold · Fade</text>
+<path d="M540.0,382 L548.0,358 L600.0,358 L660.0,382" fill="none" stroke="#222222" stroke-width="1.5"/>
+<line x1="536.0" y1="384" x2="664.0" y2="384" stroke="#666666" stroke-width="1"/>
+<rect x="20" y="300" width="130" height="100" rx="8" fill="#ffffff" stroke="#222222" stroke-width="1.6"/>
+<text x="85.0" y="326" text-anchor="middle" font-size="15" font-weight="600" fill="#222222" letter-spacing="0.3">MIDI IN</text>
+<text x="85.0" y="346" text-anchor="middle" font-size="12" fill="#666666">note · velocity</text>
+<path d="M335,300 L335,200" fill="none" stroke="#666666" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#c)"/>
+<text x="345" y="262" text-anchor="start" font-size="11.5" fill="#666666" font-style="italic">pitch</text>
+<path d="M600,300 L600,200" fill="none" stroke="#666666" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#c)"/>
+<text x="610" y="262" text-anchor="start" font-size="11.5" fill="#666666" font-style="italic">level</text>
+<path d="M150,340 L230,340" fill="none" stroke="#666666" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#c)"/>
+<text x="190" y="330" text-anchor="middle" font-size="11.5" fill="#666666" font-style="italic">trigger · note</text>
+<path d="M150,370 L185,370 L185,430 L600,430 L600,400" fill="none" stroke="#666666" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#c)"/>
+<text x="392" y="445" text-anchor="middle" font-size="11.5" fill="#666666" font-style="italic">trigger · velocity</text>
+<line x1="900" y1="40" x2="940" y2="40" stroke="#222222" stroke-width="2"/><text x="948" y="44" font-size="12" fill="#222222">audio</text>
+<line x1="1000" y1="40" x2="1040" y2="40" stroke="#666666" stroke-width="1.6" stroke-dasharray="6 4"/><text x="1048" y="44" font-size="12" fill="#666666">control, frozen at Note On</text>
+<text x="40" y="46" font-size="13" fill="#666666">One voice: every Note On starts a new one with the parameters of that moment.</text>
+</svg>

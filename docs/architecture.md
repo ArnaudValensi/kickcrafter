@@ -1,19 +1,6 @@
 # Architecture
 
-```mermaid
-flowchart LR
-    classDef audio fill:#fbe9d7,stroke:#b5651d,stroke-width:1.5px
-    classDef mod fill:#e9eef9,stroke:#4a6fa5
-    classDef trig fill:#eeeeee,stroke:#777777
-    OSC["Wavetable oscillator<br/>2048-point sine and square tables"]:::audio --> VCA["Amplifier"]:::audio --> DRIVE["Drive<br/>0–4 ×"]:::audio --> LIM["Soft limiter<br/>x·(27+x²)/(27+9x²), clamped"]:::audio --> OUT(["Output"]):::audio
-    GATE(["Note On"]):::trig -. "trigger" .-> PENV["Pitch envelope<br/>Start → End · Sweep time · Curve"]:::mod
-    GATE -. "trigger" .-> AENV["Amplitude envelope<br/>Attack · Hold · Fade"]:::mod
-    NOTE["MIDI note<br/>Pitch Source = MIDI Note"]:::mod -. "end frequency" .-> PENV
-    PENV -. "frequency" .-> OSC
-    SHAPE["Shape<br/>sine ↔ square morph"]:::mod -. "waveform" .-> OSC
-    AENV -. "level" .-> VCA
-    VEL["MIDI velocity<br/>Velocity switch On"]:::mod -. "level" .-> VCA
-```
+![Synthesis block diagram](diagrams/synthesis.svg)
 
 The audio path is the classic one-oscillator kick: an oscillator, an amplifier, a gain stage and a
 limiter. Everything that shapes a hit is a modulation source, and every Note On freezes all of them
