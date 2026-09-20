@@ -57,6 +57,13 @@ engine tests report 23 cases and 0 failures in the three logs; the journal entry
 
 ## M3: The release workflow, signed macOS bundles, version 1.4.0
 
+**Done, awaiting the owner's push, the six secrets and the dispatch rehearsal** (2026-09-20,
+link 1): `release.yml` (tag and CHANGELOG check, `build.yml` reused, the signing job, `SHA256SUMS`,
+the draft release with `fail_on_unmatched_files`, the dispatch that uploads instead), `tools/macos-sign.sh`
+(keychain, codesign with hardened runtime and timestamp, notarytool `--wait`, stapler, the
+`INSTALL.txt` line, the final zip after stapling, `codesign --verify` and `spctl` in the summary,
+the ad hoc fallback), the guide's release procedure. Owner actions: `journal/2026-09-20.md`.
+
 `.github/workflows/release.yml` per decision 9 and `tools/macos-sign.sh` per decision 10: the
 tag and CHANGELOG check, the reused build, the signing and notarization job with the ad hoc
 fallback, `SHA256SUMS`, the draft release, the `workflow_dispatch` rehearsal that uploads instead
