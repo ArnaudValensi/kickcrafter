@@ -215,15 +215,4 @@ void drawPanel (juce::Graphics& g, juce::Rectangle<float> bounds, const juce::St
     }
 }
 
-juce::Path diamond (juce::Point<float> c, float r)
-{
-    juce::Path p;
-    p.startNewSubPath (c.x, c.y - r);
-    p.lineTo (c.x + r, c.y);
-    p.lineTo (c.x, c.y + r);
-    p.lineTo (c.x - r, c.y);
-    p.closeSubPath();
-    return p;
-}
-
 } // namespace kcf::ui

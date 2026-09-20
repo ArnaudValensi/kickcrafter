@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <KickCrafterPreset version="4" name="Techno Punch">
   <Params startFreq="420" endFreq="55" sweep="24" hold="240" fade="62" attack="0.4"
-          curve="4" shape="12" drive="1.6" velocity="1" pitchSource="0"/>
+          curve="4" shape="12" drive="1.6" velocity="0" pitchSource="0"/>
 </KickCrafterPreset>

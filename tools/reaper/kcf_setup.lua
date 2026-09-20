@@ -115,6 +115,15 @@ local function run()
   check(reaper.InsertEnvelopePoint(holdEnv, 4.0, 1.0, 1, 0, false, true), "hold point 4 failed")
   reaper.Envelope_SortPoints(holdEnv)
 
+  -- v1.5: Velocity Sensitivity is Off by default. The control render (the analyze stage
+  -- expects a quieter velocity-40 note) needs it On, set through the host; the default is
+  -- read back first so the harness also proves what a fresh instance does.
+  local velocitySwitch = findParam(track, fx, "Velocity Sensitivity")
+  check(velocitySwitch, "velocity switch parameter missing")
+  local _, defaultText = reaper.TrackFX_GetFormattedParamValue(track, fx, velocitySwitch, "")
+  check(defaultText == "Off", "velocity switch default is not Off: " .. defaultText)
+  check(reaper.TrackFX_SetParamNormalized(track, fx, velocitySwitch, 1.0), "set velocity switch on failed")
+
   -- Control project: no Start Frequency envelope.
   setRender("control", 4, 48000)
   local controlProject = directory .. "/control.rpp"
@@ -126,8 +135,6 @@ local function run()
 
   -- v1.3: the same project with the Velocity Sensitivity switch Off, set through
   -- the host: the velocity-40 note must then be as loud as the velocity-127 ones (analyze stage).
-  local velocitySwitch = findParam(track, fx, "Velocity Sensitivity")
-  check(velocitySwitch, "velocity switch parameter missing")
   check(reaper.TrackFX_SetParamNormalized(track, fx, velocitySwitch, 0.0), "set velocity switch off failed")
   local _, offText = reaper.TrackFX_GetFormattedParamValue(track, fx, velocitySwitch, "")
   check(offText == "Off", "velocity switch text before the off render: " .. offText)

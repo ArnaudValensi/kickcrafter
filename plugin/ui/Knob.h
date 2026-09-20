@@ -14,15 +14,13 @@ namespace kcf::ui
 class Knob final : public juce::Component
 {
 public:
+    // Kind decides text parsing (note names for frequencies) and the note caption.
+    // Every arc has the same colour (v1.5, user request: the per-graph colours and
+    // the unit marks next to the titles read as unexplained legends).
     enum class Kind { time, frequency, ratio, plain };
-    // Colour family (v1.1): the arc takes the colour of the graph that edits the same
-    // value: copper = pitch graph, amber = amplitude graph, ivory = level/tone
-    // (the waveform). Kind still decides text parsing and the unit mark.
-    enum class Family { pitch, envelope, level };
-    static juce::Colour colourFor (Family family);
 
     Knob (juce::AudioProcessorValueTreeState& state, const juce::String& parameterId, const juce::String& title,
-          Kind kind, Family family, const juce::String& tooltip);
+          Kind kind, const juce::String& tooltip);
     ~Knob() override;
 
     void resized() override;
@@ -43,7 +41,6 @@ private:
     juce::RangedAudioParameter& parameter;
     juce::String title;
     Kind kind;
-    Family family;
     std::unique_ptr<juce::LookAndFeel> dial;   // declared before the slider: outlives it
     juce::Slider slider;
     PolledBinding binding;

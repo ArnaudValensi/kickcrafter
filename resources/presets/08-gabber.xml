@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <KickCrafterPreset version="4" name="Gabber">
   <Params startFreq="640" endFreq="55" sweep="34" hold="260" fade="42" attack="0.4"
-          curve="1.6" shape="100" drive="4" velocity="1" pitchSource="0"/>
+          curve="1.6" shape="100" drive="4" velocity="0" pitchSource="0"/>
 </KickCrafterPreset>

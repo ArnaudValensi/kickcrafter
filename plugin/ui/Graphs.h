@@ -36,10 +36,11 @@ public:
     {
         juce::String id;                 // parameter this handle edits (primary)
         juce::String secondaryId;        // optional second parameter (x/y)
-        enum class Shape { circle, diamond, square } shape = Shape::circle;
         juce::Point<float> position;     // pixels, updated in layoutHandles()
         juce::String tooltip;
         bool lockedVertical = false;     // horizontal-only handle (tooltip/tests; drawn like the others)
+        // Every handle is a circle (v1.5): the former square knee and diamond time handles
+        // looked like a legend nobody could read. The tooltip says which way a handle drags.
     };
 
     GraphPanel (juce::AudioProcessorValueTreeState& state, const PreviewModel& model);
@@ -134,7 +135,7 @@ protected:
     void paintPlot (juce::Graphics&, juce::Rectangle<float>) override;
     void layoutHandles() override { handles.clear(); }
     void applyDrag (const Handle&, juce::Point<float>, juce::Point<float>) override {}
-    juce::String title() const override { return juce::String::fromUTF8 ("Waveform  \xc2\xb7  next hit"); }
+    juce::String title() const override { return juce::String::fromUTF8 ("Waveform  \xc2\xb7  Next hit"); }
     juce::String caption() const override;
 private:
     float flash = 0.0f;

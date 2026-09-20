@@ -33,22 +33,21 @@ KickCrafterEditor::KickCrafterEditor (KickCrafterProcessor& p)
 
     auto& state = processor.getState();
     using Kind = Knob::Kind;
-    using Family = Knob::Family;      // arc colour = the graph that edits the same value
-    struct Spec { const char* id; const char* title; Kind kind; Family family; const char* tip; };
+    struct Spec { const char* id; const char* title; Kind kind; const char* tip; };
     const Spec specs[] = {
-        { params::startFreq, "Start", Kind::frequency, Family::pitch,    "Start frequency of the pitch sweep (20 Hz to 2 kHz, logarithmic). Next hit only. Copper = pitch graph." },
-        { params::endFreq,   "End",   Kind::frequency, Family::pitch,    "End frequency (the note) when Pitch Source is Fixed. In MIDI Note mode the played note sets it." },
-        { params::sweep,     "Sweep", Kind::time,      Family::pitch,    "Time to sweep from the start to the end frequency (0 to 250 ms). Also the square handle of the pitch graph." },
-        { params::hold,      "Hold",  Kind::time,      Family::envelope, "Time the hit continues after the sweep (0 to 1000 ms). Hit length = sweep + hold. Amber = amplitude graph." },
-        { params::fade,      "Fade",  Kind::ratio,     Family::envelope, "Fade-out length as a fraction of the hit: 0 % = 10 ms fade, 100 % = the whole hit. Amber = amplitude graph." },
-        { params::attack,    "Attack", Kind::time,     Family::envelope, "Linear ramp-in at the start of the hit (0.4 to 50 ms). Amber = amplitude graph." },
-        { params::curve,     "Curve", Kind::plain,     Family::pitch,    "Sweep curve exponent: 1 = linear pitch drop, higher bends the pitch down faster. Copper = pitch graph." },
-        { params::shape,     "Shape", Kind::ratio,     Family::level,    "Oscillator morph: 0 % sine, 100 % square (2048-point wavetables, as the Daisy original). Ivory = waveform." },
-        { params::drive,     "Drive", Kind::ratio,     Family::level,    "Per-hit gain before the bus soft limiter (0 to 4x). Frozen when the note starts. Ivory = waveform." },
+        { params::startFreq, "Start", Kind::frequency, "Start frequency of the pitch sweep (20 Hz to 2 kHz, logarithmic). Next hit only. Also the first handle of the pitch graph." },
+        { params::endFreq,   "End",   Kind::frequency, "End frequency (the note) when Pitch Source is Fixed. In MIDI Note mode the played note sets it." },
+        { params::sweep,     "Sweep", Kind::time,      "Time to sweep from the start to the end frequency (0 to 250 ms). Also the knee handle of the pitch graph." },
+        { params::hold,      "Hold",  Kind::time,      "Time the hit continues after the sweep (0 to 1000 ms). Hit length = sweep + hold. Also the end handle of the amplitude graph." },
+        { params::fade,      "Fade",  Kind::ratio,     "Fade-out length as a fraction of the hit: 0 % = 10 ms fade, 100 % = the whole hit. Also the fade handle of the amplitude graph." },
+        { params::attack,    "Attack", Kind::time,     "Linear ramp-in at the start of the hit (0.4 to 50 ms). Also the attack handle of the amplitude graph." },
+        { params::curve,     "Curve", Kind::plain,     "Sweep curve exponent: 1 = linear pitch drop, higher bends the pitch down faster. Also the middle handle of the pitch graph." },
+        { params::shape,     "Shape", Kind::ratio,     "Oscillator morph: 0 % sine, 100 % square (2048-point wavetables, as the Daisy original)." },
+        { params::drive,     "Drive", Kind::ratio,     "Per-hit gain before the bus soft limiter (0 to 4x). Frozen when the note starts." },
     };
     for (const auto& s : specs)
     {
-        knobs.push_back (std::make_unique<Knob> (state, s.id, s.title, s.kind, s.family, s.tip));
+        knobs.push_back (std::make_unique<Knob> (state, s.id, s.title, s.kind, s.tip));
         content.addAndMakeVisible (*knobs.back());
     }
 
@@ -128,7 +127,8 @@ KickCrafterEditor::KickCrafterEditor (KickCrafterProcessor& p)
     channelBox.setComponentID ("channelBox");
     content.addAndMakeVisible (channelBox);
 
-    footer.setText (juce::String::fromUTF8 ("Knobs and graphs describe the next hit; sounding hits keep their frozen settings.   \xc2\xb7   knob colour = its graph (copper pitch, amber amplitude, ivory level and tone)   \xc2\xb7   Shift-drag: fine   \xc2\xb7   double-click: reset   \xc2\xb7   click a value to type"),
+    // Every segment starts with a capital, like the graph captions (v1.5).
+    footer.setText (juce::String::fromUTF8 ("Knobs and graphs describe the next hit; sounding hits keep their frozen settings.   \xc2\xb7   Shift-drag: fine   \xc2\xb7   Double-click: reset   \xc2\xb7   Click a value to type it"),
                     juce::dontSendNotification);
     footer.setFont (font (12.0f));
     footer.setColour (juce::Label::textColourId, Palette::textDim);

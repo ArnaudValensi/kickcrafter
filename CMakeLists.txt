@@ -17,7 +17,7 @@ if(CMAKE_HOST_APPLE)
     endif()
 endif()
 
-project(KickCrafterFable VERSION 1.4.0 LANGUAGES C CXX)
+project(KickCrafterFable VERSION 1.5.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

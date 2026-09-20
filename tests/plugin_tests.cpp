@@ -167,10 +167,10 @@ TEST_CASE ("published parameters: IDs, names, defaults, ranges, units and choice
         CHECK (p.isAutomatable());
         CHECK (! p.isDiscrete());
     }
-    auto& vel = host.param ("velocity");                    // v1.3: a switch, default on
+    auto& vel = host.param ("velocity");                    // v1.3: a switch; v1.5: default off
     CHECK (vel.getName (64) == "Velocity Sensitivity");
     CHECK (vel.isDiscrete() && vel.isBoolean() && vel.isAutomatable());
-    CHECK (vel.getDefaultValue() == 1.0f);
+    CHECK (vel.getDefaultValue() == 0.0f);
     CHECK (vel.getText (1.0f, 32) == "On" && vel.getText (0.0f, 32) == "Off");
     CHECK (vel.getNormalisableRange().start == 0.0f && vel.getNormalisableRange().end == 1.0f);
     CHECK (vel.getLabel().isEmpty());
@@ -281,8 +281,10 @@ TEST_CASE ("MIDI timing: sample offsets, several notes per block, velocity zero,
     CHECK (peakAbs (silent) == 0.0f);
     CHECK (quiet.processor->getNoteCounter() == 0);
 
-    // Velocity sensitivity: 64 is quieter than 127; Note Off changes nothing.
+    // Velocity sensitivity (switched On: the default is Off since v1.5): 64 is quieter than 127;
+    // Note Off changes nothing.
     Host a, b, c;
+    for (Host* h : { &a, &b, &c }) h->setDisplay (params::velocity, 1.0f);
     const auto loud = a.render (8192, { noteOn (0, 33, 127) });
     const auto soft = b.render (8192, { noteOn (0, 33, 64) });
     const auto withOff = c.render (8192, { noteOn (0, 33, 127), noteOff (1000, 33) });
@@ -369,7 +371,7 @@ TEST_CASE ("strict snapshot regression: each parameter changed by the host mid-v
     const Change changes[] = {
         { params::startFreq, 1200.0f }, { params::endFreq, 300.0f }, { params::sweep, 20.0f }, { params::hold, 300.0f },
         { params::fade, 100.0f }, { params::attack, 0.4f }, { params::curve, 20.0f }, { params::shape, 100.0f },
-        { params::drive, 4.0f }, { params::velocity, 0.0f }, { params::pitchSource, 1.0f },
+        { params::drive, 4.0f }, { params::velocity, 1.0f }, { params::pitchSource, 1.0f },
     };
     const int block = 256, total = 60000, changeAt = 1024, secondNote = 30208;
     REQUIRE (changeAt % block == 0 && secondNote % block == 0);
@@ -1134,25 +1136,45 @@ TEST_CASE ("editor graphs (v1.1): knee only edits the sweep, curve handle spans 
     host.setDisplay (params::sweep, 47.0f);
     kc->pollNow(); pump();
 
-    // 2. Curve handle: dragging up over the whole plot height reaches the knob's maximum (30),
-    //    dragging down over it reaches the minimum (1).
+    // 2. Curve handle follows the mouse (v1.5): on the falling default sweep (250 -> 55 Hz) a
+    //    steeper exponent pulls the mid-sweep pitch DOWN, so dragging down over the whole plot
+    //    height reaches the knob's maximum (30) and dragging up over it reaches the minimum (1).
     const auto plot = pitch.plotArea();
     auto curveHandle = pitch.getHandles()[2];
     CHECK (curveHandle.id == juce::String (params::curve));
+    const float midBefore = curveHandle.position.y;
+    pitch.mouseDown (makeEvent (pitch, curveHandle.position, true));
+    pitch.mouseDrag (makeEvent (pitch, curveHandle.position.translated (0.0f, plot.getHeight()), true));
+    pitch.mouseUp (makeEvent (pitch, curveHandle.position.translated (0.0f, plot.getHeight()), false));
+    CHECK_NEAR (host.getDisplay (params::curve), 30.0f, 0.05f);
+    kc->pollNow(); pump();
+    curveHandle = pitch.getHandles()[2];
+    CHECK (curveHandle.position.y > midBefore + 10.0f);          // the handle moved the way the mouse went
+    pitch.mouseDown (makeEvent (pitch, curveHandle.position, true));
+    pitch.mouseDrag (makeEvent (pitch, curveHandle.position.translated (0.0f, -plot.getHeight()), true));
+    pitch.mouseUp (makeEvent (pitch, curveHandle.position.translated (0.0f, -plot.getHeight()), false));
+    CHECK_NEAR (host.getDisplay (params::curve), 1.0f, 0.05f);
+    host.setDisplay (params::curve, 1.0f);
+    kc->pollNow(); pump();
+    // Rising sweep (start below end): the same rule, mirrored. Dragging UP steepens (20 -> 440 Hz:
+    // the mid-sweep pitch goes from 230 Hz at exponent 1 to about 440 Hz at 30, a visible climb).
+    host.setDisplay (params::startFreq, 20.0f);
+    host.setDisplay (params::endFreq, 440.0f);
+    kc->pollNow(); pump();
+    curveHandle = pitch.getHandles()[2];
+    const float risingBefore = curveHandle.position.y;
     pitch.mouseDown (makeEvent (pitch, curveHandle.position, true));
     pitch.mouseDrag (makeEvent (pitch, curveHandle.position.translated (0.0f, -plot.getHeight()), true));
     pitch.mouseUp (makeEvent (pitch, curveHandle.position.translated (0.0f, -plot.getHeight()), false));
     CHECK_NEAR (host.getDisplay (params::curve), 30.0f, 0.05f);
     kc->pollNow(); pump();
-    curveHandle = pitch.getHandles()[2];
-    pitch.mouseDown (makeEvent (pitch, curveHandle.position, true));
-    pitch.mouseDrag (makeEvent (pitch, curveHandle.position.translated (0.0f, plot.getHeight()), true));
-    pitch.mouseUp (makeEvent (pitch, curveHandle.position.translated (0.0f, plot.getHeight()), false));
-    CHECK_NEAR (host.getDisplay (params::curve), 1.0f, 0.05f);
+    CHECK (pitch.getHandles()[2].position.y < risingBefore - 8.0f);
     host.setDisplay (params::curve, 1.0f);
+    host.setDisplay (params::startFreq, 250.0f);
+    host.setDisplay (params::endFreq, 55.0f);
     kc->pollNow(); pump();
 
-    // 3. Hold diamond dragged past the plot's right edge keeps growing beyond the visible axis.
+    // 3. Hold handle dragged past the plot's right edge keeps growing beyond the visible axis.
     auto& amp = kc->getAmplitudeGraph();
     REQUIRE (amp.getHandles().size() == 3);
     const auto end = amp.getHandles()[2];
@@ -1212,7 +1234,7 @@ TEST_CASE ("factory bank is embedded XML and equals the v1.1 C++ table exactly")
         CHECK (p.params.sweepSec == r.sw / 1000.0f && p.params.holdSec == r.ho / 1000.0f);
         CHECK (p.params.fadeFraction == r.fa / 100.0f && p.params.attackSec == r.at / 1000.0f);
         CHECK (p.params.slope == r.cu && p.params.morph == r.sh / 100.0f && p.params.gain == r.dr);
-        CHECK (p.params.velocitySensitive && p.params.pitchSource == PitchSource::fixed);
+        CHECK (! p.params.velocitySensitive && p.params.pitchSource == PitchSource::fixed);   // v1.5: Off in every factory preset
     }
     CHECK (bank[0].params == KickParams {});                     // Reference is the engine default
     CHECK (presets::findFactory ("Gabber") == &bank[7] && presets::findFactory ("nope") == nullptr);
@@ -1909,26 +1931,26 @@ TEST_CASE ("editor: default and restored sizes, first-open handle geometry, host
             CHECK (velocityButton->getTitle() == "Velocity sensitivity");
         }
         const int velocityIndex = open.param (params::velocity).getParameterIndex();
-        CHECK (velocityButton->getToggleState() && velocityButton->getButtonText() == "On");
+        CHECK (! velocityButton->getToggleState() && velocityButton->getButtonText() == "Off");   // v1.5: Off by default
         spy.begins.clear(); spy.ends.clear();
         velocityButton->triggerClick();
         pump();
         kc->pollNow();
-        CHECK (open.getDisplay (params::velocity) == 0.0f);
-        CHECK (! velocityButton->getToggleState() && velocityButton->getButtonText() == "Off");
+        CHECK (open.getDisplay (params::velocity) == 1.0f);
+        CHECK (velocityButton->getToggleState() && velocityButton->getButtonText() == "On");
         CHECK (std::count (spy.begins.begin(), spy.begins.end(), velocityIndex) == 1 && std::count (spy.ends.begin(), spy.ends.end(), velocityIndex) == 1);
         velocityButton->triggerClick();
         pump();
         kc->pollNow();
-        CHECK (open.getDisplay (params::velocity) == 1.0f && velocityButton->getToggleState());
+        CHECK (open.getDisplay (params::velocity) == 0.0f && ! velocityButton->getToggleState());
         spy.begins.clear(); spy.ends.clear();
-        open.setDisplay (params::velocity, 0.0f);                                  // host refresh: no gesture
+        open.setDisplay (params::velocity, 1.0f);                                  // host refresh: no gesture
         kc->pollNow();
-        CHECK (! velocityButton->getToggleState() && velocityButton->getButtonText() == "Off");
+        CHECK (velocityButton->getToggleState() && velocityButton->getButtonText() == "On");
         CHECK (spy.begins.empty() && spy.ends.empty());
-        open.setDisplay (params::velocity, 1.0f);
+        open.setDisplay (params::velocity, 0.0f);
         kc->pollNow();
-        CHECK (velocityButton->getToggleState());
+        CHECK (! velocityButton->getToggleState());
         // uniform knob size: every dial is the same square, frequency knobs included (v1.3, user request)
         int dial = -1;
         for (auto* id : { params::startFreq, params::endFreq, params::sweep, params::hold, params::fade, params::attack, params::curve, params::shape, params::drive })

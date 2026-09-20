@@ -66,6 +66,5 @@ public:
 
 // Shared drawing helpers.
 void drawPanel (juce::Graphics&, juce::Rectangle<float> bounds, const juce::String& title, const juce::String& caption = {});
-juce::Path diamond (juce::Point<float> centre, float radius);
 
 } // namespace kcf::ui

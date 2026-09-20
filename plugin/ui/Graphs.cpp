@@ -229,26 +229,11 @@ void GraphPanel::drawHandles (juce::Graphics& g)
         const float r = hot ? handleRadius + 1.5f : handleRadius;
         const auto colour = hot ? Palette::copperBright : Palette::ivory;   // every handle drags along at least one axis
         g.setColour (juce::Colours::black.withAlpha (0.4f));
-        switch (h.shape)
-        {
-            case Handle::Shape::circle:  g.fillEllipse (h.position.x - r, h.position.y - r + 1.5f, 2 * r, 2 * r); break;
-            case Handle::Shape::diamond: g.fillPath (diamond (h.position.translated (0.0f, 1.5f), r * 1.25f)); break;
-            case Handle::Shape::square:  g.fillRoundedRectangle (h.position.x - r, h.position.y - r + 1.5f, 2 * r, 2 * r, 2.5f); break;
-        }
+        g.fillEllipse (h.position.x - r, h.position.y - r + 1.5f, 2 * r, 2 * r);
         g.setColour (colour);
-        switch (h.shape)
-        {
-            case Handle::Shape::circle:  g.fillEllipse (h.position.x - r, h.position.y - r, 2 * r, 2 * r); break;
-            case Handle::Shape::diamond: g.fillPath (diamond (h.position, r * 1.25f)); break;
-            case Handle::Shape::square:  g.fillRoundedRectangle (h.position.x - r, h.position.y - r, 2 * r, 2 * r, 2.5f); break;
-        }
+        g.fillEllipse (h.position.x - r, h.position.y - r, 2 * r, 2 * r);
         g.setColour (Palette::background);
-        switch (h.shape)
-        {
-            case Handle::Shape::circle:  g.drawEllipse (h.position.x - r, h.position.y - r, 2 * r, 2 * r, 1.5f); break;
-            case Handle::Shape::diamond: g.strokePath (diamond (h.position, r * 1.25f), juce::PathStrokeType (1.5f)); break;
-            case Handle::Shape::square:  g.drawRoundedRectangle (h.position.x - r, h.position.y - r, 2 * r, 2 * r, 2.5f, 1.5f); break;
-        }
+        g.drawEllipse (h.position.x - r, h.position.y - r, 2 * r, 2 * r, 1.5f);
     }
 }
 
@@ -282,8 +267,8 @@ juce::String PitchGraph::caption() const
 {
     const auto& s = model.snapshot;
     if (model.params.pitchSource == PitchSource::midiNote)
-        return "MIDI note" + dot + "ends at " + params::formatHz ((float) s.endHz) + " (" + params::noteNameForHz ((float) s.endHz) + ")";
-    return "Fixed" + dot + "ends at " + params::formatHz ((float) s.endHz) + " (" + params::noteNameForHz ((float) s.endHz) + ")";
+        return "MIDI note" + dot + "Ends at " + params::formatHz ((float) s.endHz) + " (" + params::noteNameForHz ((float) s.endHz) + ")";
+    return "Fixed" + dot + "Ends at " + params::formatHz ((float) s.endHz) + " (" + params::noteNameForHz ((float) s.endHz) + ")";
 }
 
 void PitchGraph::paintPlot (juce::Graphics& g, juce::Rectangle<float> plot)
@@ -331,7 +316,7 @@ void PitchGraph::paintPlot (juce::Graphics& g, juce::Rectangle<float> plot)
     g.drawVerticalLine ((int) sweepX, plot.getY(), plot.getBottom());
     g.setColour (Palette::textMuted);
     g.setFont (font (11.0f, Weight::mono));
-    g.drawText ("sweep " + seconds (s.sweepSec) + dot + "start " + params::formatHz ((float) s.startHz),
+    g.drawText ("Sweep " + seconds (s.sweepSec) + dot + "Start " + params::formatHz ((float) s.startHz),
                 (int) plot.getRight() - 200, (int) plot.getY() + 3, 196, 12, juce::Justification::centredRight);
 }
 
@@ -343,7 +328,6 @@ void PitchGraph::layoutHandles()
     handles.clear();
     Handle start;
     start.id = params::startFreq;
-    start.shape = Handle::Shape::circle;
     start.position = { xForSeconds (0.0), yForHz (s.startHz, plot) };
     start.tooltip = "Start frequency (drag up/down). Double-click resets. Applies to the next hit.";
     handles.push_back (start);
@@ -353,7 +337,6 @@ void PitchGraph::layoutHandles()
     // and the other elements are shaped afterwards.
     Handle knee;
     knee.id = params::sweep;
-    knee.shape = Handle::Shape::square;
     knee.position = { xForSeconds (s.sweepSec), yForHz (s.endHz, plot) };
     knee.lockedVertical = true;
     knee.tooltip = midi ? "Sweep time (drag left/right). The end frequency follows the played MIDI note."
@@ -364,7 +347,6 @@ void PitchGraph::layoutHandles()
     {
         Handle curve;
         curve.id = params::curve;
-        curve.shape = Handle::Shape::circle;
         curve.position = { xForSeconds (s.sweepSec * 0.5), yForHz (s.frequencyAt (s.sweepSec * 0.5), plot) };
         curve.tooltip = "Sweep curve (drag up/down, whole plot height = 1 to 30): bends the pitch trajectory between start and end.";
         handles.push_back (curve);
@@ -390,13 +372,18 @@ void PitchGraph::applyDrag (const Handle& h, juce::Point<float> position, juce::
     }
     else if (h.id == params::curve)
     {
-        // Relative, logarithmic: dragging up over the whole plot height multiplies
-        // the exponent by maxSlope/minSlope, so the handle reaches the full 1..30
-        // range of the knob (mapping the mid-sweep frequency directly saturated at
-        // about 13 because f(sweep/2) = start + (end-start) * (1 - 0.5^slope)
-        // becomes indistinguishable from `end` for large exponents).
+        // Relative, logarithmic: dragging over the whole plot height multiplies or divides
+        // the exponent by maxSlope/minSlope, so the handle reaches the full 1..30 range of
+        // the knob (mapping the mid-sweep frequency directly saturated at about 13 because
+        // f(sweep/2) = start + (end-start) * (1 - 0.5^slope) becomes indistinguishable from
+        // `end` for large exponents).
+        // The handle follows the mouse (v1.5 fix): a larger exponent pulls the mid-sweep
+        // frequency towards `end`, which is DOWN for a falling sweep and UP for a rising one,
+        // so the sign of the drag depends on the direction of the sweep.
+        const auto& s = model.snapshot;
+        const double towardsEnd = s.endHz < s.startHz ? 1.0 : -1.0;   // screen direction (y grows downwards) of a larger exponent
         const double octaves = std::log ((double) Limits::maxSlope / (double) Limits::minSlope);
-        const double factor = std::exp (-(double) delta.y / (double) plot.getHeight() * octaves);
+        const double factor = std::exp (towardsEnd * (double) delta.y / (double) plot.getHeight() * octaves);
         setParameterValue (params::curve, (float) juce::jlimit ((double) Limits::minSlope, (double) Limits::maxSlope,
                                                                 (double) curveAtDragStart * factor));
     }
@@ -407,7 +394,7 @@ void PitchGraph::applyDrag (const Handle& h, juce::Point<float> position, juce::
 juce::String AmplitudeGraph::caption() const
 {
     const auto& s = model.snapshot;
-    return "attack " + seconds (s.attackSec) + dot + "fade " + seconds (s.fadeSec) + dot + "total " + seconds (s.totalSec);
+    return "Attack " + seconds (s.attackSec) + dot + "Fade " + seconds (s.fadeSec) + dot + "Total " + seconds (s.totalSec);
 }
 
 void AmplitudeGraph::paintPlot (juce::Graphics& g, juce::Rectangle<float> plot)
@@ -449,21 +436,18 @@ void AmplitudeGraph::layoutHandles()
     handles.clear();
     Handle attack;
     attack.id = params::attack;
-    attack.shape = Handle::Shape::diamond;
     attack.position = { xForSeconds (s.attackSec), plot.getY() + 1.0f };
     attack.tooltip = "Attack time (drag left/right): linear ramp-in of the next hit.";
     handles.push_back (attack);
 
     Handle fade;
     fade.id = params::fade;
-    fade.shape = Handle::Shape::diamond;
     fade.position = { xForSeconds (s.fadeStartSec), plot.getY() + 1.0f };
     fade.tooltip = "Fade-out start (drag left/right). Stored as a fraction of the hit length: 0 % = 10 ms fade, 100 % = fades over the whole hit.";
     handles.push_back (fade);
 
     Handle end;
     end.id = params::hold;
-    end.shape = Handle::Shape::diamond;
     end.position = { xForSeconds (s.totalSec), plot.getBottom() - 1.0f };
     end.tooltip = "Hit end (drag left/right): sets the hold time after the sweep.";
     handles.push_back (end);
@@ -493,7 +477,7 @@ juce::String WaveformPreview::caption() const
 {
     const auto& s = model.snapshot;
     const juce::String note = params::noteNameForMidi (model.previewNote);   // same convention as the pitch graph
-    return "preview note " + note + dot + juce::String (s.totalSamples) + " samples @ " + juce::String ((int) model.sampleRate) + " Hz";
+    return "Preview note " + note + dot + juce::String (s.totalSamples) + " samples @ " + juce::String ((int) model.sampleRate) + " Hz";
 }
 
 void WaveformPreview::paintPlot (juce::Graphics& g, juce::Rectangle<float> plot)
@@ -537,9 +521,9 @@ void WaveformPreview::paintPlot (juce::Graphics& g, juce::Rectangle<float> plot)
         const auto& s = model.snapshot;
         struct Marker { double t; const char* label; juce::Colour colour; bool skip; };
         std::array<Marker, 3> markers { {
-            { s.attackSec,    "attack", Palette::amber,  s.attackSec < 0.002 },   // 0.4 ms default sits on the origin
-            { s.sweepSec,     "sweep",  Palette::copper, s.sweepSec <= 0.0 },
-            { s.fadeStartSec, "fade",   Palette::amber,  s.fadeStartSec <= 0.0 },
+            { s.attackSec,    "Attack", Palette::amber,  s.attackSec < 0.002 },   // 0.4 ms default sits on the origin
+            { s.sweepSec,     "Sweep",  Palette::copper, s.sweepSec <= 0.0 },
+            { s.fadeStartSec, "Fade",   Palette::amber,  s.fadeStartSec <= 0.0 },
         } };
         std::sort (markers.begin(), markers.end(), [] (const Marker& a, const Marker& b) { return a.t < b.t; });
         g.setFont (font (10.0f, Weight::mono));

@@ -352,7 +352,8 @@ TEST_CASE ("velocity scales loudness once when sensitivity is on; off plays ever
 {
     const double sr = 48000.0;
     KickParams p;
-    REQUIRE (p.velocitySensitive);                                 // default: on
+    REQUIRE (! p.velocitySensitive);                               // default: off (v1.5)
+    p.velocitySensitive = true;
     const auto full = renderHit (p, sr, 33, 1.0f);
     const auto half = renderHit (p, sr, 33, 0.5f);
     const auto quarter = renderHit (p, sr, 33, 0.25f);
@@ -450,6 +451,7 @@ TEST_CASE ("voice steal is declicked: no step larger than the ramp bound")
     p.fadeFraction = 0.0f;
     p.attackSec = 0.05f;
     p.sweepSec = 0.0f;
+    p.velocitySensitive = true;                                              // the velocity sets the level (Off by default since v1.5)
     std::vector<Event> ev;
     for (int i = 0; i < 16; ++i) ev.push_back ({ i * 10, 40, 0.06f, p });   // low level: limiter ~ linear
     ev.push_back ({ 6000, 40, 0.06f, p });                                   // steals voice 0 mid-cycle

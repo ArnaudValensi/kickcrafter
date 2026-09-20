@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <KickCrafterPreset version="4" name="Deep Sub">
   <Params startFreq="140" endFreq="55" sweep="38" hold="820" fade="88" attack="0.4"
-          curve="2.5" shape="0" drive="1.15" velocity="1" pitchSource="0"/>
+          curve="2.5" shape="0" drive="1.15" velocity="0" pitchSource="0"/>
 </KickCrafterPreset>

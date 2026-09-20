@@ -63,14 +63,14 @@ code-signed.
 - **Pitch Source.** *Fixed* (default): the **End** knob is the note of the kick and the played note
   number is ignored (55 Hz = A1). *MIDI Note*: the played note sets the end frequency of the sweep,
   so the kick can be played melodically.
-- **Velocity.** On (default): the MIDI velocity scales the level linearly, a velocity-96 note plays
-  at 96/127 of the level. Off: every note plays at full level.
+- **Velocity.** Off (default): every note plays at full level, as the original. On: the MIDI
+  velocity scales the level linearly, a velocity-96 note plays at 96/127 of the level. The top
+  bar shows the last note received and its velocity (`A1 vel 100`).
 - **Audition** fires an A1 hit at full velocity through the same path as a MIDI note.
 - **Knobs.** Drag, mouse wheel, Shift for fine control, double-click to reset, click the value to
-  type it (`440`, `440 Hz`, or a note name such as `A1` or `C#2` for the frequency knobs). The arc
-  colour of a knob is the colour of the graph that edits the same value: copper = pitch graph,
-  amber = amplitude graph, ivory = level and tone.
-- **Graphs.** Circles move frequencies, diamonds move times, the square knee moves the sweep time.
+  type it (`440`, `440 Hz`, or a note name such as `A1` or `C#2` for the frequency knobs).
+- **Graphs.** Each handle edits one parameter; its tooltip says which and which way it drags (the
+  pitch graph's start and curve handles move up and down, every other handle left and right).
   Dragging a time handle past the right edge keeps growing the value; the axis rescales on release.
   Shift-drag is fine, double-click resets the handle's parameter. The waveform shows the next hit
   with markers for the attack, the end of the sweep and the start of the fade.
@@ -92,7 +92,7 @@ code-signed.
 | Fade Out | 0–100 % | 50 % | fade-out length as a fraction of the hit (0 % = 10 ms, 100 % = the whole hit) |
 | Shape | 0–100 % | 0 % | 0 = sine, 100 = square |
 | Drive | 0–4 × | 1 × | per-hit gain before the limiter; above 1 × it saturates |
-| Velocity Sensitivity | Off / On | On | whether MIDI velocity scales the level |
+| Velocity Sensitivity | Off / On | Off | whether MIDI velocity scales the level |
 | Pitch Source | Fixed / MIDI Note | Fixed | where the end frequency comes from |
 | MIDI Channel | Omni, 1–16 | Omni | input channel filter |
 

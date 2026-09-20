@@ -3,6 +3,19 @@
 All notable changes to KickCrafter. Versions follow the `project()` version in `CMakeLists.txt`.
 State documents carry a schema number; every schema since 1 is still read.
 
+## 1.5.0 — 2026-09-21
+
+- Velocity Sensitivity is Off by default (every note at full level, as the original); the
+  factory presets follow. Projects saved by earlier versions keep their stored value. No state or
+  preset schema change.
+- Pitch graph: the curve handle follows the mouse (it used to move against it on a falling
+  sweep). Dragging down steepens a falling sweep, dragging up steepens a rising one.
+- Every graph handle is a circle (the square knee and the diamond time handles are gone); every
+  knob arc has the same copper colour and the unit marks next to the knob titles are gone.
+- The wordmark reads "KICKCRAFTER" (no "FABLE"); the plug-in name inside hosts is unchanged.
+- The last-note display reads `A1 vel 100` instead of `A1 v100`; captions and the footer start
+  every segment with a capital.
+
 ## 1.4.0 — 2026-09-20
 
 - Builds on macOS (VST3 and Audio Unit, one universal binary for Apple Silicon and Intel, macOS 11

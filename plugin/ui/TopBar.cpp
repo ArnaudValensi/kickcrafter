@@ -9,6 +9,7 @@ namespace
 {
     const juce::String editedMarker = juce::String::fromUTF8 ("  \xe2\x80\xa2 edited");
     const juce::String missingMarker = " (missing)";
+    constexpr int feedbackWidth = 210;                         // LED + last note + voice count, right of the presets
 }
 
 void PresetBox::showPopup()
@@ -370,14 +371,15 @@ void TopBar::reportError (const juce::String& what)
 void TopBar::resized()
 {
     auto r = getLocalBounds().reduced (16, 12);
-    r.removeFromLeft (200);                                    // wordmark
+    r.removeFromLeft (150);                                    // wordmark (v1.5: no "FABLE" after it)
     scaleButton.setBounds (r.removeFromRight (64));
     r.removeFromRight (12);
     audition.setBounds (r.removeFromRight (92));
-    r.removeFromRight (150);                                   // LED + voices text
+    r.removeFromRight (feedbackWidth);                         // LED + "note vel N   n/16 voices"
     auto centre = r;
     const int presetWidth = 260;
-    auto presetArea = centre.withSizeKeepingCentre (presetWidth + 60 + 12 + 40 + 40 + 64 + 16 + 32, centre.getHeight());
+    // Exactly what the row below consumes, centred in the space left.
+    auto presetArea = centre.withSizeKeepingCentre (28 + 4 + (presetWidth - 60) + 4 + 28 + 4 + 28 + 20 + 36 + 4 + 36 + 8 + 60, centre.getHeight());
     previousPreset.setBounds (presetArea.removeFromLeft (28));
     presetArea.removeFromLeft (4);
     presetBox.setBounds (presetArea.removeFromLeft (presetWidth - 60));
@@ -404,12 +406,10 @@ void TopBar::paint (juce::Graphics& g)
     g.setColour (Palette::text);
     g.setFont (font (17.0f, Weight::semibold));
     g.drawText ("KICKCRAFTER", r.removeFromLeft (128), juce::Justification::centredLeft);
-    g.setColour (Palette::copper);
-    g.setFont (font (11.5f, Weight::semibold));
-    g.drawText ("FABLE", r.removeFromLeft (52).translated (-6, 1), juce::Justification::centredLeft);
 
-    // LED + note/voice feedback, left of the audition button.
-    auto feedback = juce::Rectangle<int> (audition.getX() - 150, 0, 138, getHeight());
+    // LED + note/voice feedback, left of the audition button. The zone holds the widest
+    // text ("C#2 vel 127   16/16 voices", mono 11.5) without truncation.
+    auto feedback = juce::Rectangle<int> (audition.getX() - feedbackWidth, 0, feedbackWidth - 12, getHeight());
     const auto ledCentre = juce::Point<float> ((float) feedback.getRight() - 8.0f, (float) getHeight() * 0.5f);
     g.setColour (Palette::led.withAlpha (0.15f + 0.55f * led));
     g.fillEllipse (ledCentre.x - 9.0f, ledCentre.y - 9.0f, 18.0f, 18.0f);
@@ -418,8 +418,8 @@ void TopBar::paint (juce::Graphics& g)
     g.setColour (Palette::textDim);
     g.setFont (font (11.5f, Weight::mono));
     juce::String text = juce::String (voices) + "/" + juce::String (Limits::maxVoices) + " voices";
-    if (lastNote >= 0)
-        text = params::noteNameForMidi (lastNote) + " v" + juce::String (lastVelocity) + "   " + text;
+    if (lastNote >= 0)   // last note received and its MIDI velocity (1-127)
+        text = params::noteNameForMidi (lastNote) + " vel " + juce::String (lastVelocity) + "   " + text;
     g.drawText (text, feedback.withTrimmedRight (24), juce::Justification::centredRight);
 }
 

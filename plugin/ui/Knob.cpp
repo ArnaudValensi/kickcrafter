@@ -10,8 +10,6 @@ namespace
     constexpr float startAngle = juce::MathConstants<float>::pi * 1.25f;
     constexpr float endAngle   = juce::MathConstants<float>::pi * 2.75f;
 
-    juce::Colour accentFor (Knob::Family family) { return Knob::colourFor (family); }
-
     juce::RangedAudioParameter& requireParameter (juce::AudioProcessorValueTreeState& s, const juce::String& id)
     {
         auto* p = s.getParameter (id);
@@ -25,8 +23,6 @@ namespace
 class Knob::Dial final : public juce::LookAndFeel_V4
 {
 public:
-    explicit Dial (Family f) : family (f) {}
-
     void drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height, float proportion,
                            float, float, juce::Slider& s) override
     {
@@ -35,7 +31,7 @@ public:
         const auto centre = bounds.getCentre();
         const float angle = startAngle + proportion * (endAngle - startAngle);
         const bool hot = s.isMouseOverOrDragging() || s.hasKeyboardFocus (true);
-        const auto accent = accentFor (family);
+        const auto accent = Palette::copper;   // one arc colour for every knob (v1.5)
 
         g.setColour (juce::Colours::black.withAlpha (0.35f));
         g.fillEllipse (centre.x - radius * 0.78f, centre.y - radius * 0.78f + 2.0f, radius * 1.56f, radius * 1.56f);
@@ -62,25 +58,11 @@ public:
         g.setColour (accent);
         g.fillEllipse (tip.x - 2.0f, tip.y - 2.0f, 4.0f, 4.0f);
     }
-
-private:
-    Family family;
 };
 
-juce::Colour Knob::colourFor (Family family)
-{
-    switch (family)
-    {
-        case Family::pitch:    return Palette::copper;
-        case Family::envelope: return Palette::amber;
-        case Family::level:    break;
-    }
-    return Palette::ivory;
-}
-
-Knob::Knob (juce::AudioProcessorValueTreeState& s, const juce::String& id, const juce::String& t, Kind k, Family f,
+Knob::Knob (juce::AudioProcessorValueTreeState& s, const juce::String& id, const juce::String& t, Kind k,
             const juce::String& tooltip)
-    : parameterId (id), parameter (requireParameter (s, id)), title (t), kind (k), family (f), dial (std::make_unique<Dial> (f)),
+    : parameterId (id), parameter (requireParameter (s, id)), title (t), kind (k), dial (std::make_unique<Dial>()),
       binding (parameter, [this] (float normalised)
       {
           slider.setValue (parameter.convertFrom0to1 (normalised), juce::dontSendNotification);
@@ -176,14 +158,6 @@ void Knob::paint (juce::Graphics& g)
         auto r = getLocalBounds();
         r.removeFromBottom (19);
         g.drawText (subCaption, r.removeFromBottom (13), juce::Justification::centred);
-    }
-    // Unit family mark: bar = time (ms), dot = ratio (%, x).
-    if (kind == Kind::time || kind == Kind::ratio)
-    {
-        g.setColour (accentFor (family).withAlpha (0.8f));
-        const float x = (float) getWidth() - 12.0f, y = 7.0f;
-        if (kind == Kind::time) g.fillRect (x, y, 7.0f, 2.0f);
-        else g.fillEllipse (x + 1.5f, y - 1.5f, 4.5f, 4.5f);
     }
 }
 

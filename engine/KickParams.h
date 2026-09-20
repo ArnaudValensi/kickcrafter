@@ -54,7 +54,7 @@ struct KickParams
     float slope               = 1.0f;     // 1 .. 30, log
     float morph               = 0.0f;     // 0 = sine, 1 = square
     float gain                = 1.0f;     // 0 .. 4, applied before the bus limiter
-    bool  velocitySensitive   = true;     // MIDI velocity scales the level (on/off since v1.3; was a 0..1 amount)
+    bool  velocitySensitive   = false;    // MIDI velocity scales the level (on/off since v1.3, Off by default since v1.5; was a 0..1 amount)
     PitchSource pitchSource   = PitchSource::fixed;     // v1.1: the End knob sets the note by default
 
     // Returns a copy where NaN/Inf are replaced by defaults and every value is

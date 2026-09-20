@@ -174,7 +174,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (makeFloat (drive, "Drive", Range (0.0f, 4.0f, 0.0f), 1.0f,
                            [] (float v, int) { return juce::String (v, 2) + " x"; },
                            [] (const juce::String& t) { return parseNumberText (t, 1.0f); }));
-    layout.add (std::make_unique<juce::AudioParameterBool> (juce::ParameterID { velocity, versionHint }, "Velocity Sensitivity", true));   // v1.3: on/off (was 0-100 %)
+    layout.add (std::make_unique<juce::AudioParameterBool> (juce::ParameterID { velocity, versionHint }, "Velocity Sensitivity", false));   // v1.3: on/off (was 0-100 %); v1.5: Off by default
     layout.add (std::make_unique<juce::AudioParameterChoice> (juce::ParameterID { pitchSource, versionHint }, "Pitch Source",
                                                               juce::StringArray { "Fixed", "MIDI Note" }, 0));   // v1.1: Fixed first and default
     juce::StringArray channels { "Omni" };
