@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Inspect the opaque plug-in state saved by REAPER inside an .rpp file.
 
 Decodes the base64 VST chunk, finds the KickCrafterFable XML and prints the

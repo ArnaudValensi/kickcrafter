@@ -15,7 +15,7 @@ if ! DISPLAY="$display" xdotool getdisplaygeometry >/dev/null 2>&1; then
 else
     echo "Xvfb $display already running"
 fi
-/usr/bin/python3 "$here/tools/reaper/x11_screensaver.py" "$display" >/dev/null 2>&1 || true
+"$here/tools/reaper/x11_screensaver.py" "$display" >/dev/null 2>&1 || true
 if ! DISPLAY="$display" xprop -root _NET_SUPPORTING_WM_CHECK 2>/dev/null | grep -q "window id"; then
     export XDG_CACHE_HOME="$here/artifacts/reaper/xdg-cache-${display#:}"
     mkdir -p "$XDG_CACHE_HOME"

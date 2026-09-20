@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["numpy>=1.26", "pillow>=10"]
+# ///
 """Locate the highlighted popup-menu row in a real capture and print its centre "x,y".
 
 usage: find_highlight.py <png> <x0> <y0> <x1> <y1> [r,g,b] [tolerance]

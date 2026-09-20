@@ -1,13 +1,14 @@
 # Diagrams
 
 `synthesis.svg` is the synthesis block diagram shown in [architecture.md](../architecture.md). It is
-generated, not drawn by hand: the source is `tools/diagrams/synthesis_diagram.py` (plain Python 3,
-no dependency). Never edit the SVG directly; edit the script, regenerate, check, commit both.
+generated, not drawn by hand: the source is `tools/diagrams/synthesis_diagram.py`, a self-contained
+[uv](https://docs.astral.sh/uv/) script (PEP 723 metadata, no dependency beyond Python). Never edit
+the SVG directly; edit the script, regenerate, check, commit both.
 
 ## Regenerate
 
 ```sh
-python3 tools/diagrams/synthesis_diagram.py            # writes docs/diagrams/synthesis.svg
+tools/diagrams/synthesis_diagram.py                     # writes docs/diagrams/synthesis.svg (uv runs it)
 rsvg-convert -w 1400 docs/diagrams/synthesis.svg -o /tmp/synthesis.png   # render to look at it
 ```
 

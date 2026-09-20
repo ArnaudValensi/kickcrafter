@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["numpy>=1.26"]
+# ///
 """Measure the REAPER renders produced by the host scripts. Every mode exits nonzero on
 any failed check; every WAV must be PCM24 (REAPER's default), have the expected
 channel count, sample rate and duration, and (with --fresh-since) have been written

@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 # Generates docs/diagrams/synthesis.svg, the synthesis block diagram of docs/architecture.md, in the
 # style of a synthesizer manual: audio path on the top row (solid arrows), modulators on the bottom
 # row (dashed arrows going up into the module they control), MIDI input on the left.

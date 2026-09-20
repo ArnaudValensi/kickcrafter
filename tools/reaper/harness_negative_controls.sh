@@ -48,34 +48,34 @@ T
 EOF
 chmod +x "$tmp/bin/xdotool" "$tmp/bin/xwininfo"
 printf 'editor 1000 640 scale 1.000\nknob startFreq 692.0 132.0\n' > "$tmp/layout-100.txt"
-expect_nonzero "drive_mouse: xdotool failure propagates" env PATH="$tmp/bin:$PATH" /usr/bin/python3 "$here/tools/reaper/drive_mouse.py" drag "$tmp/layout-100.txt" knob:startFreq 0 -40
+expect_nonzero "drive_mouse: xdotool failure propagates" env PATH="$tmp/bin:$PATH" "$here/tools/reaper/drive_mouse.py" drag "$tmp/layout-100.txt" knob:startFreq 0 -40
 printf 'editor 1250 800 scale 1.250\nknob startFreq 865.0 165.0\n' > "$tmp/layout-125.txt"
 cat > "$tmp/bin/xdotool" <<'EOF'
 #!/usr/bin/env bash
 [ "$1" = "search" ] && echo 0x20db47
 exit 0
 EOF
-expect_nonzero "drive_mouse: layout size mismatch (125 % layout on a 1000x640 editor)" env PATH="$tmp/bin:$PATH" /usr/bin/python3 "$here/tools/reaper/drive_mouse.py" drag "$tmp/layout-125.txt" knob:startFreq 0 -40
-expect_zero "drive_mouse: matching layout with a healthy fake xdotool" env PATH="$tmp/bin:$PATH" /usr/bin/python3 "$here/tools/reaper/drive_mouse.py" drag "$tmp/layout-100.txt" knob:startFreq 0 -40
+expect_nonzero "drive_mouse: layout size mismatch (125 % layout on a 1000x640 editor)" env PATH="$tmp/bin:$PATH" "$here/tools/reaper/drive_mouse.py" drag "$tmp/layout-125.txt" knob:startFreq 0 -40
+expect_zero "drive_mouse: matching layout with a healthy fake xdotool" env PATH="$tmp/bin:$PATH" "$here/tools/reaper/drive_mouse.py" drag "$tmp/layout-100.txt" knob:startFreq 0 -40
 cat > "$tmp/bin/xwininfo" <<'EOF'
 #!/usr/bin/env bash
 echo "     0x20001b \"automation - REAPER v7.80\": (\"REAPER\" \"REAPER\")  1560x1100+20+20  +20+20"
 EOF
-expect_nonzero "drive_mouse: editor window absent" env PATH="$tmp/bin:$PATH" /usr/bin/python3 "$here/tools/reaper/drive_mouse.py" locate
+expect_nonzero "drive_mouse: editor window absent" env PATH="$tmp/bin:$PATH" "$here/tools/reaper/drive_mouse.py" locate
 
 # 4. Analyzer: wrong sample rate under the right file name, and stale files.
 src="$here/artifacts/reaper/control.wav"
 if [ -f "$src" ]; then
     mkdir -p "$tmp/wav"
     for n in editor-closed editor-open lifecycle-96000 lifecycle-44100; do cp "$src" "$tmp/wav/$n.wav"; done
-    expect_nonzero "analyze --lifecycle: 48 kHz files named 96000/44100 are rejected" /usr/bin/python3 "$here/tools/reaper/analyze_render.py" "$tmp/wav" --lifecycle
+    expect_nonzero "analyze --lifecycle: 48 kHz files named 96000/44100 are rejected" "$here/tools/reaper/analyze_render.py" "$tmp/wav" --lifecycle
     cp "$src" "$tmp/wav/read-reference.wav"; cp "$src" "$tmp/wav/read-after.wav"
     touch -d '2020-01-01' "$tmp/wav/read-reference.wav" "$tmp/wav/read-after.wav"
-    expect_nonzero "analyze --read: stale renders (older than the run) are rejected" /usr/bin/python3 "$here/tools/reaper/analyze_render.py" "$tmp/wav" --read --fresh-since "$(date +%s)"
+    expect_nonzero "analyze --read: stale renders (older than the run) are rejected" "$here/tools/reaper/analyze_render.py" "$tmp/wav" --read --fresh-since "$(date +%s)"
     touch "$tmp/wav/read-reference.wav" "$tmp/wav/read-after.wav"
-    expect_zero "analyze --read: fresh identical renders pass" /usr/bin/python3 "$here/tools/reaper/analyze_render.py" "$tmp/wav" --read --fresh-since "$(( $(date +%s) - 60 ))"
+    expect_zero "analyze --read: fresh identical renders pass" "$here/tools/reaper/analyze_render.py" "$tmp/wav" --read --fresh-since "$(( $(date +%s) - 60 ))"
     rm -f "$tmp/wav/read-after.wav"
-    expect_nonzero "analyze --read: missing render is rejected" /usr/bin/python3 "$here/tools/reaper/analyze_render.py" "$tmp/wav" --read
+    expect_nonzero "analyze --read: missing render is rejected" "$here/tools/reaper/analyze_render.py" "$tmp/wav" --read
 else
     echo "skip (no control.wav yet): analyzer fixtures"; failures=$((failures + 1))
 fi
@@ -83,9 +83,9 @@ fi
 # 5. Saved-state checker: numeric CLI tolerance and failing comparisons.
 rpp="$here/artifacts/reaper/read-mode.rpp"
 if [ -f "$rpp" ]; then
-    expect_zero "check_saved_state: string CLI tolerance is parsed as a number" /usr/bin/python3 "$here/tools/reaper/check_saved_state.py" "$rpp" startFreq 79.62 0.01
-    expect_nonzero "check_saved_state: wrong expected value fails" /usr/bin/python3 "$here/tools/reaper/check_saved_state.py" "$rpp" startFreq 250 0.001
-    expect_nonzero "check_saved_state: absent parameter fails" /usr/bin/python3 "$here/tools/reaper/check_saved_state.py" "$rpp" nosuchparam 1 0.1
+    expect_zero "check_saved_state: string CLI tolerance is parsed as a number" "$here/tools/reaper/check_saved_state.py" "$rpp" startFreq 79.62 0.01
+    expect_nonzero "check_saved_state: wrong expected value fails" "$here/tools/reaper/check_saved_state.py" "$rpp" startFreq 250 0.001
+    expect_nonzero "check_saved_state: absent parameter fails" "$here/tools/reaper/check_saved_state.py" "$rpp" nosuchparam 1 0.1
 else
     echo "skip (no read-mode.rpp yet): saved-state fixtures"; failures=$((failures + 1))
 fi

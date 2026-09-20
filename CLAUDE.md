@@ -35,6 +35,9 @@ Layout: `engine/` (JUCE-free synthesis), `plugin/` and `plugin/ui/` (JUCE integr
 - Documentation stays in its lane: user-facing text in `README.md`, developer text in `docs/`, no
   version history outside `CHANGELOG.md`, no internal process notes in the repository.
 - Diagrams are generated: edit the generator, render, look at the result, commit script and SVG together.
+- Python scripts are uv scripts: shebang `#!/usr/bin/env -S uv run --script`, a PEP 723 block
+  (`# /// script` … `# ///`) declaring `requires-python` and every dependency with a version bound,
+  executable bit set, run directly (never `python3 script.py`, never a requirements file).
 - Never edit `external/JUCE` (pinned by `tools/fetch-juce.sh`) and never install the plug-in into
   system folders from scripts.
 

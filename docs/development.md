@@ -6,8 +6,10 @@ overwritten by a later run.
 
 ## Prerequisites
 
-For the build: see "Building from source" below. For the GUI tests and the host harness: Python 3 with
-NumPy and Pillow, Xvfb, Openbox, xdotool, xprop/xwininfo. For the host stages: REAPER (tested with
+For the build: see "Building from source" below. For the GUI tests and the host harness:
+[uv](https://docs.astral.sh/uv/) (every Python script in `tools/` is a self-contained uv script with
+inline PEP 723 metadata; run it directly and uv provides its Python and packages), Xvfb, Openbox,
+xdotool, xprop/xwininfo. For the host stages: REAPER (tested with
 7.80). For the bundle check: the Steinberg VST3 SDK `validator` (set `KCF_VALIDATOR` or put it on
 `PATH`).
 

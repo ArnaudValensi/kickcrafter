@@ -31,7 +31,6 @@ shots="${KCF_SHOTS:-$here/artifacts/screenshots}"
 export DISPLAY="$display"
 export KCF_TEST_DIR="$results"
 mkdir -p "$results" "$cfgdir" "$shots"
-python="${KCF_PYTHON:-/usr/bin/python3}"
 reaper="${KCF_REAPER:-/usr/sbin/reaper}"
 xdotool_bin="${KCF_XDOTOOL:-xdotool}"
 vstpath="$here/artifacts/vst3"
@@ -43,16 +42,11 @@ stage_start_epoch="$(date +%s)"
 
 log() { echo "[$(date -u +%H:%M:%S)] $*"; }
 fail() { log "FAIL: $*"; stage_failed=1; return 1; }
-shot() { "$python" "$here/tools/reaper/screenshot.py" "$display" "$@" || fail "screenshot $1 failed"; }
+shot() { "$here/tools/reaper/screenshot.py" "$display" "$@" || fail "screenshot $1 failed"; }
 # A capture that is (nearly) uniform is not evidence of anything: fail loudly.
 shot_checked() {   # shot_checked <png> [region]
     shot "$@" || return 1
-    "$python" - "$1" <<'EOF' || fail "capture $1 is uniform/black (nothing visible on the display)"
-import sys; from PIL import Image; import numpy as np
-a = np.asarray(Image.open(sys.argv[1]).convert("L")).astype(float)
-print("capture std", round(a.std(), 2))
-sys.exit(0 if a.std() > 8 else 1)
-EOF
+    "$here/tools/reaper/image_check.py" uniform "$1" || fail "capture $1 is uniform/black (nothing visible on the display)"
 }
 status_line() {   # status_line <stage> <code>
     echo "$(date -u +%FT%TZ) stage=$1 exit=$2 bundle=$(sha256sum "$vstpath/KickCrafter Fable.vst3/Contents/x86_64-linux/KickCrafter Fable.so" 2>/dev/null | cut -c1-16)" >> "$results/stage-status.txt"
@@ -152,7 +146,7 @@ wait_for_marker() {   # wait_for_marker <file> <timeout-seconds>
 # them (every window, including the editor, became hidden; captures were black).
 dismiss_dialogs() {
     local w
-    "$python" "$here/tools/reaper/x11_screensaver.py" "$display" >/dev/null 2>&1 || true
+    "$here/tools/reaper/x11_screensaver.py" "$display" >/dev/null 2>&1 || true
     for name in "About REAPER" "Render Warning" "Finished in"; do
         for w in $($xdotool_bin search --name "$name" 2>/dev/null); do
             $xdotool_bin windowactivate --sync "$w" 2>/dev/null; sleep 0.3
@@ -187,7 +181,7 @@ raise_editor() {   # raise_editor <x> <y>
     $xdotool_bin windowraise "$ed" && $xdotool_bin windowmove "$ed" "$1" "$2" || { fail "cannot raise/move the editor"; return 1; }
     sleep 1.5
     xwininfo -id "$ed" 2>/dev/null | grep -q "Map State: IsViewable" || { fail "plug-in editor window is not viewable (hidden/iconified)"; return 1; }
-    "$python" "$here/tools/reaper/drive_mouse.py" geometry > "$results/editor-geometry.txt" || { fail "editor geometry unavailable"; return 1; }
+    "$here/tools/reaper/drive_mouse.py" geometry > "$results/editor-geometry.txt" || { fail "editor geometry unavailable"; return 1; }
     log "editor geometry $(cat "$results/editor-geometry.txt")"
 }
 
@@ -240,7 +234,7 @@ stage_analyze() {
     [ -n "$engine_tests" ] || { fail "kcf_engine_tests not built (build/tests or build-engine/tests)"; return 1; }
     [ -f "$results/reference-hit-48k.f32" ] || "$engine_tests" --dump-default-hit "$results/reference-hit-48k.f32" || fail "reference hit dump"
     local since; since="$(cat "$results/setup-start-epoch" 2>/dev/null || echo 0)"
-    "$python" "$here/tools/reaper/analyze_render.py" "$results" "$results/reference-hit-48k.f32" --fresh-since "$since" | tee "$results/analyze-render.txt"
+    "$here/tools/reaper/analyze_render.py" "$results" "$results/reference-hit-48k.f32" --fresh-since "$since" | tee "$results/analyze-render.txt"
     [ "${PIPESTATUS[0]}" -eq 0 ] || fail "render analysis"
     return $stage_failed
 }
@@ -249,7 +243,7 @@ stage_editor() {
     dismiss_dialogs
     raise_editor 300 60 || return 1
     fresh_layout 100 || return 1
-    "$python" "$here/tools/reaper/drive_mouse.py" locate > "$results/editor-locate.txt" || fail "editor locate"
+    "$here/tools/reaper/drive_mouse.py" locate > "$results/editor-locate.txt" || fail "editor locate"
     grep -q "1000, 640)" "$results/editor-locate.txt" || fail "editor is not 1000x640 at 100 %: $(cat "$results/editor-locate.txt")"
     shot_checked "$shots/reaper-editor.png"
     shot_checked "$shots/reaper-editor-crop.png" "$(cat "$results/editor-geometry.txt")"
@@ -322,7 +316,7 @@ focus_editor() {
 # is what a user does; Return-key delivery into the popup proved unreliable under the WM.
 click_highlighted_item() {   # click_highlighted_item <capture.png> <editor-x> <editor-y> [x0 y0 x1 y1 (editor offsets of the search region)]
     local point x0="${4:-228}" y0="${5:-50}" x1="${6:-430}" y1="${7:-400}"
-    point="$("$python" "$here/tools/reaper/find_highlight.py" "$1" $(($2 + x0)) $(($3 + y0)) $(($2 + x1)) $(($3 + y1)))" \
+    point="$("$here/tools/reaper/find_highlight.py" "$1" $(($2 + x0)) $(($3 + y0)) $(($2 + x1)) $(($3 + y1)))" \
         || { fail "no highlighted popup row found in $1"; return 1; }
     log "clicking highlighted popup row at $point"
     $xdotool_bin mousemove "${point%,*}" "${point#*,}" click 1 || { fail "click on the highlighted row"; return 1; }
@@ -337,7 +331,7 @@ stage_menus() {
     raise_editor 300 60 || return 1
     fresh_layout 100 || return 1
     local ed ex ey
-    ed="$("$python" "$here/tools/reaper/drive_mouse.py" editor)" || { fail "editor geometry"; return 1; }
+    ed="$("$here/tools/reaper/drive_mouse.py" editor)" || { fail "editor geometry"; return 1; }
     ex="$(echo "$ed" | cut -d, -f1)"; ey="$(echo "$ed" | cut -d, -f2)"
     [ "$(echo "$ed" | cut -d, -f3-4)" = "1000,640" ] || fail "editor is not at 100 % for the menu test ($ed)"
     envelopes_mode bypass || return 1
@@ -353,16 +347,8 @@ stage_menus() {
     log "preset combo at editor offset $combox,$comboy (from the layout dump); scale button at $scalex,$scaley"
     $xdotool_bin mousemove $((ex + combox)) $((ey + comboy)) click 1 || fail "preset combo click"
     sleep 1.0; shot "$shots/menu-presets-open.png"
-    "$python" - "$shots/menu-presets-open.png" $((ex + combox)) $((ey + comboy)) <<'EOF' || fail "preset popup not visible"
-import sys; from PIL import Image; import numpy as np
-im = np.asarray(Image.open(sys.argv[1]).convert("L")).astype(int)
-cx, cy = int(sys.argv[2]), int(sys.argv[3])
-# the popup hangs below the combo: its rows are text on a dark panel, so the strip under the
-# combo must contain text-like contrast (std) AND be darker on average than the graph area
-box = im[cy + 24 : cy + 120, cx - 80 : cx + 80]
-print("popup region std", round(box.std(), 2), "mean", round(box.mean(), 1))
-sys.exit(0 if box.std() > 12 and box.mean() < 90 else 1)
-EOF
+    # the popup hangs below the combo: its rows are text on a dark panel (image_check.py popup)
+    "$here/tools/reaper/image_check.py" popup "$shots/menu-presets-open.png" $((ex + combox)) $((ey + comboy)) -80 80 || fail "preset popup not visible"
     $xdotool_bin key Up Up || fail "menu key"       # wraps to the last item (the seeded user preset), then Gabber (the "User" header is skipped)
     sleep 0.5; shot "$shots/menu-presets-highlighted.png"
     click_highlighted_item "$shots/menu-presets-highlighted.png" "$ex" "$ey" || { envelopes_mode restore; return 1; }
@@ -442,14 +428,7 @@ EOF
     log "preset actions button at editor offset $menux,$menuy (from the layout dump)"
     $xdotool_bin mousemove $((ex + menux)) $((ey + menuy)) click 1 || fail "preset actions button click"
     sleep 1.0; shot "$shots/menu-actions-open.png"
-    "$python" - "$shots/menu-actions-open.png" $((ex + menux)) $((ey + menuy)) <<'EOF' || fail "preset actions popup not visible"
-import sys; from PIL import Image; import numpy as np
-im = np.asarray(Image.open(sys.argv[1]).convert("L")).astype(int)
-cx, cy = int(sys.argv[2]), int(sys.argv[3])
-box = im[cy + 24 : cy + 120, cx - 40 : cx + 120]
-print("actions popup region std", round(box.std(), 2), "mean", round(box.mean(), 1))
-sys.exit(0 if box.std() > 12 and box.mean() < 90 else 1)
-EOF
+    "$here/tools/reaper/image_check.py" popup "$shots/menu-actions-open.png" $((ex + menux)) $((ey + menuy)) -40 120 || fail "preset actions popup not visible"
     $xdotool_bin key Down Down || fail "menu key"   # second row: "Save as..."
     sleep 0.5; shot "$shots/menu-actions-highlighted.png"
     # search region starts below the "..." button (its own hot highlight shares the colour and
@@ -504,17 +483,17 @@ EOF
     sleep 1.0; shot "$shots/menu-scale-open.png"
     $xdotool_bin key Down Down Down Return || fail "scale menu keys"
     sleep 1.5
-    "$python" "$here/tools/reaper/drive_mouse.py" locate | tee "$results/editor-locate-125.txt" | grep -q "1250, 800)" || fail "scale menu did not resize to 125 %"
+    "$here/tools/reaper/drive_mouse.py" locate | tee "$results/editor-locate-125.txt" | grep -q "1250, 800)" || fail "scale menu did not resize to 125 %"
     shot_checked "$shots/menu-scale-125.png"
     # back to 100 % through the menu
-    ed="$("$python" "$here/tools/reaper/drive_mouse.py" editor)" || { fail "editor geometry at 125 %"; return 1; }
+    ed="$("$here/tools/reaper/drive_mouse.py" editor)" || { fail "editor geometry at 125 %"; return 1; }
     ex="$(echo "$ed" | cut -d, -f1)"; ey="$(echo "$ed" | cut -d, -f2)"
     fresh_layout 125 || return 1
     local scale125; scale125="$(layout_point "$results/layout-125.txt" scaleButton)" || { fail "no 125 % layout for the scale button"; return 1; }
     $xdotool_bin mousemove $((ex + ${scale125%,*})) $((ey + ${scale125#*,})) click 1 || fail "scale button click at 125 %"
     sleep 1.0; $xdotool_bin key Down Down Return || fail "scale menu keys"
     sleep 1.5
-    "$python" "$here/tools/reaper/drive_mouse.py" locate | grep -q "1000, 640)" || fail "scale menu did not return to 100 %"
+    "$here/tools/reaper/drive_mouse.py" locate | grep -q "1000, 640)" || fail "scale menu did not return to 100 %"
     log "PASS: preset and scale popup menus work with real clicks under the window manager"
     return $stage_failed
 }
@@ -538,7 +517,7 @@ stage_touch() {
     run_script "$here/tools/reaper/kcf_touch.lua" || return 1
     wait_for_marker "$results/touch-ready" 30 || fail "touch stage never became ready"
     sleep 2; dismiss_dialogs; raise_editor 300 60 || return 1
-    "$python" "$here/tools/reaper/drive_mouse.py" touch "$layout" 32 | tee "$results/touch-driver.txt"
+    "$here/tools/reaper/drive_mouse.py" touch "$layout" 32 | tee "$results/touch-driver.txt"
     [ "${PIPESTATUS[0]}" -eq 0 ] || fail "touch mouse driver"
     shot_checked "$shots/reaper-touch-during.png"
     touch "$results/touch-driver-done"
@@ -554,15 +533,15 @@ stage_read() {
     run_script "$here/tools/reaper/kcf_read.lua" || return 1
     wait_for_marker "$results/read-ready" 40 || fail "read stage never became ready"
     sleep 2; dismiss_dialogs; raise_editor 300 60 || return 1
-    "$python" "$here/tools/reaper/drive_mouse.py" read "$layout" 14 | tee "$results/read-driver.txt"
+    "$here/tools/reaper/drive_mouse.py" read "$layout" 14 | tee "$results/read-driver.txt"
     [ "${PIPESTATUS[0]}" -eq 0 ] || fail "read mouse driver"
     shot_checked "$shots/reaper-read-during.png"
     touch "$results/read-driver-done"
     wait_for_result "$results/reaper-read-results.txt" 120 "^PASS: host Read envelope" || fail "read stage"
     grep -E "PASS|FAIL|playing" "$results/reaper-read-results.txt"
-    "$python" "$here/tools/reaper/check_saved_state.py" "$results/read-mode.rpp" startFreq 79.62 0.01 | tee -a "$results/reaper-read-results.txt"
+    "$here/tools/reaper/check_saved_state.py" "$results/read-mode.rpp" startFreq 79.62 0.01 | tee -a "$results/reaper-read-results.txt"
     [ "${PIPESTATUS[0]}" -eq 0 ] || fail "saved-state check"
-    "$python" "$here/tools/reaper/analyze_render.py" "$results" --read --fresh-since "$since" | tee -a "$results/reaper-read-results.txt"
+    "$here/tools/reaper/analyze_render.py" "$results" --read --fresh-since "$since" | tee -a "$results/reaper-read-results.txt"
     [ "${PIPESTATUS[0]}" -eq 0 ] || fail "read render comparison"
     return $stage_failed
 }
@@ -573,7 +552,7 @@ stage_lifecycle() {
     run_script "$here/tools/reaper/kcf_lifecycle.lua" || return 1
     wait_for_result "$results/reaper-lifecycle-results.txt" 300 "^PASS: editor close/reopen" || fail "lifecycle stage"
     cat "$results/reaper-lifecycle-results.txt"
-    "$python" "$here/tools/reaper/analyze_render.py" "$results" --lifecycle --fresh-since "$since" | tee -a "$results/reaper-lifecycle-results.txt"
+    "$here/tools/reaper/analyze_render.py" "$results" --lifecycle --fresh-since "$since" | tee -a "$results/reaper-lifecycle-results.txt"
     [ "${PIPESTATUS[0]}" -eq 0 ] || fail "lifecycle render analysis"
     return $stage_failed
 }
@@ -583,7 +562,7 @@ stage_panic() {
     local since; since="$(date +%s)"
     run_script "$here/tools/reaper/kcf_panic.lua" || return 1
     wait_for_result "$results/reaper-panic-results.txt" 300 "^PASS: three panic renders" || fail "panic stage"
-    "$python" "$here/tools/reaper/analyze_render.py" "$results" --panic --fresh-since "$since" | tee -a "$results/reaper-panic-results.txt"
+    "$here/tools/reaper/analyze_render.py" "$results" --panic --fresh-since "$since" | tee -a "$results/reaper-panic-results.txt"
     [ "${PIPESTATUS[0]}" -eq 0 ] || fail "panic render analysis"
     return $stage_failed
 }
@@ -601,23 +580,23 @@ stage_resize() {
     dismiss_dialogs
     raise_editor 300 60 || return 1
     fresh_layout 125 || return 1; fresh_layout 80 || return 1
-    "$python" "$here/tools/reaper/drive_mouse.py" resize 250 160 || fail "resize to 125 %"
-    "$python" "$here/tools/reaper/drive_mouse.py" locate | grep -q "1250, 800)" || fail "editor is not 1250x800 after the corner drag"
+    "$here/tools/reaper/drive_mouse.py" resize 250 160 || fail "resize to 125 %"
+    "$here/tools/reaper/drive_mouse.py" locate | grep -q "1250, 800)" || fail "editor is not 1250x800 after the corner drag"
     shot_checked "$shots/editor-resized.png"
     local b a
     b="$(readback 1)" || return 1
-    "$python" "$here/tools/reaper/drive_mouse.py" drag "$results/layout-125.txt" knob:endFreq 0 -60 || fail "knob drag at 125 %"
+    "$here/tools/reaper/drive_mouse.py" drag "$results/layout-125.txt" knob:endFreq 0 -60 || fail "knob drag at 125 %"
     a="$(readback 1)" || return 1
     log "End Frequency at 125 %: $b -> $a"; value_changed "$b" "$a" || fail "knob drag at 125 % did not change the host value"
-    "$python" "$here/tools/reaper/drive_mouse.py" resize -450 -288 || fail "resize to 80 %"
-    "$python" "$here/tools/reaper/drive_mouse.py" locate | grep -q "800, 512)" || fail "editor is not 800x512 after the corner drag"
+    "$here/tools/reaper/drive_mouse.py" resize -450 -288 || fail "resize to 80 %"
+    "$here/tools/reaper/drive_mouse.py" locate | grep -q "800, 512)" || fail "editor is not 800x512 after the corner drag"
     shot_checked "$shots/editor-min.png"
     b="$(readback 1)" || return 1
-    "$python" "$here/tools/reaper/drive_mouse.py" drag "$results/layout-80.txt" knob:endFreq 0 40 || fail "knob drag at 80 %"
+    "$here/tools/reaper/drive_mouse.py" drag "$results/layout-80.txt" knob:endFreq 0 40 || fail "knob drag at 80 %"
     a="$(readback 1)" || return 1
     log "End Frequency at 80 %: $b -> $a"; value_changed "$b" "$a" || fail "knob drag at 80 % did not change the host value"
-    "$python" "$here/tools/reaper/drive_mouse.py" resize 200 128 || fail "resize back to 100 %"
-    "$python" "$here/tools/reaper/drive_mouse.py" locate | grep -q "1000, 640)" || fail "editor is not back at 1000x640"
+    "$here/tools/reaper/drive_mouse.py" resize 200 128 || fail "resize back to 100 %"
+    "$here/tools/reaper/drive_mouse.py" locate | grep -q "1000, 640)" || fail "editor is not back at 1000x640"
     log "PASS: corner resizes 100 -> 125 -> 80 -> 100 % with correct mouse mapping"
     return $stage_failed
 }

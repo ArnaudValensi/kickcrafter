@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Real mouse input for the REAPER GUI checks (xdotool on the Xvfb display).
 
 Every xdotool/xwininfo call must succeed, the plug-in editor must be found and its
