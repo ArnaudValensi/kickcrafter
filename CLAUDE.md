@@ -14,7 +14,7 @@ Fable" inside hosts (bundle, plug-in code); the project and repository are "Kick
 | Need | Read |
 |---|---|
 | What the plug-in does, for users | `README.md` (users only: no build or internals there) |
-| How the synthesis works | `docs/architecture.md` (one diagram, one table) |
+| How the synthesis works | `README.md`, section "How it works" (one diagram, one table) |
 | Build, tests, VST3 validator, REAPER host harness, memory gate, packaging, conventions | `docs/development.md` |
 | Regenerating the synthesis diagram, and its style rules | `docs/diagrams/README.md` (`tools/diagrams/synthesis_diagram.py` is the source of the SVG) |
 | What changed between versions | `CHANGELOG.md` |

@@ -1,6 +1,6 @@
 # Diagrams
 
-`synthesis.svg` is the synthesis block diagram shown in [architecture.md](../architecture.md). It is
+`synthesis.svg` is the synthesis block diagram shown in the README ("How it works"). It is
 generated, not drawn by hand: the source is `tools/diagrams/synthesis_diagram.py`, a self-contained
 [uv](https://docs.astral.sh/uv/) script (PEP 723 metadata, no dependency beyond Python). Never edit
 the SVG directly; edit the script, regenerate, check, commit both.
@@ -43,4 +43,4 @@ empty).
 Add a `block(x, y, w, h, TITLE, subtitle, glyph)` call on the right row, an `audio(x1, y, x2, y)`
 arrow to its neighbours, and for a modulator a `ctrl([...points...], label, lx, ly)` dashed path up
 into its module. Shift the blocks to its right by the added width, extend `W`, re-run, look at the
-render, and update the module table in `architecture.md` in the same commit.
+render, and update the module table in the README in the same commit.
