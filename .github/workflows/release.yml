@@ -55,11 +55,13 @@ jobs:
           ok=1
           [ -n "$version" ] || { echo "::error::no project version in CMakeLists.txt"; ok=0; }
           [ "$changelog" = "$version" ] || { echo "::error::CHANGELOG.md top heading '$changelog' is not the project version '$version'"; ok=0; }
-          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+          # The event decides, not the ref: a workflow_dispatch can target a tag too, and it must
+          # stay a rehearsal. Only the push of a version tag enforces the check and releases.
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$GITHUB_REF_TYPE" = "tag" ]; then
             [ "$GITHUB_REF_NAME" = "v$version" ] || { echo "::error::tag $GITHUB_REF_NAME is not v$version"; ok=0; }
             [ "$ok" = 1 ]
           else
-            echo "workflow_dispatch: rehearsal against HEAD, this check only reports; a release needs the tag v$version" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "$GITHUB_EVENT_NAME on $GITHUB_REF_TYPE $GITHUB_REF_NAME: rehearsal, this check only reports; a release needs the push of the tag v$version" | tee -a "$GITHUB_STEP_SUMMARY"
             [ "$ok" = 1 ] || echo "::warning::a tagged release would fail this check"
           fi
 
@@ -142,8 +144,10 @@ jobs:
           sha256sum kickcrafter-fable-* > SHA256SUMS
           { echo '```'; cat SHA256SUMS; echo '```'; } | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: Draft GitHub Release (tag)
-        if: github.ref_type == 'tag'
+      # Only the push of a version tag releases (the push trigger admits tags v* only); a
+      # workflow_dispatch, on a branch or on a tag, never does.
+      - name: Draft GitHub Release (push of a version tag)
+        if: github.event_name == 'push' && github.ref_type == 'tag'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
@@ -161,7 +165,7 @@ jobs:
           fail_on_unmatched_files: true
 
       - name: Rehearsal assets instead of a release (workflow_dispatch)
-        if: github.ref_type != 'tag'
+        if: github.event_name != 'push' || github.ref_type != 'tag'
         uses: actions/upload-artifact@v7
         with:
           name: release-assets-rehearsal

@@ -305,12 +305,15 @@ calls `build.yml` unchanged, signs and notarizes the macOS bundles on a `macos-1
 `tools/macos-sign.sh` (import of the Developer ID certificate into a throwaway keychain,
 `codesign --force --deep --options runtime --timestamp` on the VST3 and the component, one zip,
 `xcrun notarytool submit --wait`, `xcrun stapler staple` on each bundle, the `Signing` line of
-`INSTALL.txt` rewritten, the final zip made after stapling, then `codesign --verify --deep --strict`,
-`spctl --assess --type open --context context:primary-signature` and `stapler validate` printed in
-the job summary), and a last job, the only one with `contents: write`, downloads the three archives,
-writes `SHA256SUMS` and creates a **draft** GitHub Release with `fail_on_unmatched_files`. On
-dispatch that last job uploads the would-be assets as the workflow artifact
-`release-assets-rehearsal` instead of creating a release. Publishing is the owner's click.
+`INSTALL.txt` rewritten, the final zip made after stapling, then the verification printed in the
+job summary: `codesign --verify --deep --strict` on each bundle, and, when signed,
+`codesign --check-notarization -R="notarized"` and `stapler validate`, all three fatal; `spctl` is
+printed as a diagnostic only, because Gatekeeper assesses apps, packages and disk images and a bare
+plug-in bundle is none of these), and a last job, the only one with `contents: write`, downloads
+the three archives, writes `SHA256SUMS` and creates a **draft** GitHub Release with
+`fail_on_unmatched_files`. Only the push of a version tag releases: a `workflow_dispatch`, whether
+on a branch or on a tag, makes that last job upload the would-be assets as the workflow artifact
+`release-assets-rehearsal` instead. Publishing is the owner's click.
 
 The six repository secrets, named as in the owner's other repositories and listed in the header of
 `release.yml`: `MACOS_SIGN_IDENTITY`, `MACOS_CERT_P12_BASE64`, `MACOS_CERT_PASSWORD`,
@@ -327,7 +330,7 @@ The release procedure, in this order:
    (`artifacts/dist/kickcrafter-fable-<version>-evidence.tar.gz`) next to the locally validated
    binary and source archives. Keep them.
 2. Rehearse once: run the `Release` workflow by hand (`workflow_dispatch` on `main`) and read its
-   summary: the version check, `codesign --verify` and `spctl` accepting both bundles, notarization
+   summary: the version check, `codesign --verify` and `--check-notarization` accepting both bundles, notarization
    `Accepted`, `SHA256SUMS` listing the three archives. Download `release-assets-rehearsal` if you
    want to try the archives.
 3. Tag: `git tag v<version> && git push origin v<version>`. The workflow creates the draft release.

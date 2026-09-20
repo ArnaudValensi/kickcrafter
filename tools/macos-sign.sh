@@ -114,8 +114,13 @@ final="$out/$(basename "$archive")"
 rm -f "$final"
 mv "$work/final.zip" "$final"
 
-# 7. Verify what the archive holds and print the verdicts in the job summary. codesign must pass in
-#    every mode; spctl must accept a signed and notarized bundle, and is expected to reject an ad hoc one.
+# 7. Verify what the final archive holds and print the verdicts in the job summary.
+#    Gates (a failure stops the release): codesign --verify --deep --strict in every mode; when
+#    signed, codesign --check-notarization against the requirement "notarized" (Apple's own test
+#    for a notarized code bundle) and stapler validate (the ticket is in the bundle).
+#    Diagnostics (printed, never fatal): spctl. Gatekeeper assesses apps (--type exec),
+#    packages (--type install) and disk images (--type open); a bare plug-in bundle is none of
+#    these, so its spctl verdict is information for the reader, not a verdict on the release.
 ditto -x -k "$final" "$work/verify"
 for name in "KickCrafter Fable.vst3" "KickCrafter Fable.component"; do
     bundle="$work/verify/$(basename "$folder")/$name"
@@ -124,11 +129,11 @@ for name in "KickCrafter Fable.vst3" "KickCrafter Fable.component"; do
     note '```'
     codesign --verify --deep --strict --verbose=2 "$bundle" 2>&1 | tee -a "${summary:-/dev/null}"
     if [ -n "$identity" ]; then
-        spctl --assess --type open --context context:primary-signature --verbose=2 "$bundle" 2>&1 | tee -a "${summary:-/dev/null}"
+        codesign --verify --verbose=4 -R="notarized" --check-notarization "$bundle" 2>&1 | tee -a "${summary:-/dev/null}"
         xcrun stapler validate "$bundle" 2>&1 | tee -a "${summary:-/dev/null}"
-    else
-        spctl --assess --type open --context context:primary-signature --verbose=2 "$bundle" 2>&1 | tee -a "${summary:-/dev/null}" || true
     fi
+    note "spctl (diagnostic only, see above):"
+    spctl --assess --type install --verbose=2 "$bundle" 2>&1 | tee -a "${summary:-/dev/null}" || true
     note '```'
 done
 note ""
