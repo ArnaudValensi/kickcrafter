@@ -20,7 +20,7 @@ directory (JUCE, VST3 SDK, HarfBuzz, SheenBidi, zlib, pnglib, jpglib, FLAC, Ogg 
 | Oboe, AudioUnitSDK, AAX SDK, Box2D, CHOC/QuickJS, GLEW/Mesa (bundled in JUCE) | various | Apache 2.0 / Apache 2.0 / proprietary-or-GPLv3 / zlib / ISC+MIT / BSD+MIT | Not compiled into the Linux VST3 (Android/macOS/AAX/OpenGL/JavaScript/Box2D modules are not used). |
 | IBM Plex Sans (Regular, Medium, SemiBold) and IBM Plex Mono (Medium) | `resources/fonts/`, from the Arch package `ttf-ibm-plex` 6.4.0 | SIL Open Font License 1.1 (`resources/fonts/IBM-Plex-OFL.txt`) | Embedded as binary data; reserved font name "Plex" is unchanged. |
 | System libraries at run time: FreeType, fontconfig, ALSA, X11/Xext/Xrandr/Xinerama/Xcursor, libdl/pthread | Arch Linux packages | FreeType licence / MIT / LGPL-2.1+ / MIT | Dynamically linked or dlopen'ed by JUCE; not redistributed. |
-| DaisySP `SoftLimit` formula (reference only) | `docs/reference/daisysp-dsp.h`, commit `a0494a3a` of electro-smith/DaisySP, itself derived from pichenettes/stmlib | MIT | The rational function `x*(27+x²)/(27+9x²)` is re-implemented in `engine/SoftClip.h`; the header copy is kept for documentation only. |
+| DaisySP `SoftLimit` formula (reference only) | `Utility/dsp.h` at commit `a0494a3a` of [electro-smith/DaisySP](https://github.com/electro-smith/DaisySP), itself derived from pichenettes/stmlib | MIT | The rational function `x*(27+x²)/(27+9x²)` is re-implemented in `engine/SoftClip.h`; no DaisySP code is included. |
 
 The original KickCrafter Daisy firmware and SDL/ImGui desktop application by Arnaud Valensi are the
 behavioural references (private repositories); no code from them is copied verbatim except the

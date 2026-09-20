@@ -19,32 +19,14 @@ never retuned.
 - Eight factory presets, unlimited user presets as plain XML files, A/B comparison, resizable UI.
 - Free software: AGPL-3.0-or-later.
 
-## Getting started
+## Installation
 
-There are no binary releases yet: build the plug-in from source (about five minutes on a modern
-machine; the first configure fetches nothing, JUCE is cloned once by the script below).
+Binary releases are on their way (built and tested by CI). Until then, build the plug-in from
+source: it takes a few minutes, see [docs/development.md](docs/development.md#building-from-source).
 
-Requirements: Linux x86_64, CMake 3.22+, Ninja, GCC 12+ (or a recent Clang), pkg-config, git, and
-the development packages of FreeType, fontconfig, ALSA and X11 (`libx11`, `libxext`, `libxrandr`,
-`libxinerama`, `libxcursor`).
-
-```sh
-git clone https://github.com/ArnaudValensi/kickcrafter.git
-cd kickcrafter
-tools/fetch-juce.sh                                   # JUCE 8.0.9, pinned by commit, into external/JUCE
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build --target KickCrafterFable_VST3
-```
-
-Install by copying the bundle into a folder your host scans, then rescan plug-ins:
-
-```sh
-mkdir -p ~/.vst3
-cp -r "build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3" ~/.vst3/
-```
-
-The plug-in appears as **KickCrafter Fable** (vendor Arnaud Valensi) in the instrument list. Insert
-it on a track and send it MIDI notes.
+Install by copying the `KickCrafter Fable.vst3` bundle into a folder your host scans, for example
+`~/.vst3/`, and rescan plug-ins. The plug-in appears as **KickCrafter Fable** (vendor Arnaud Valensi)
+in the instrument list. Insert it on a track and send it MIDI notes.
 
 ## Playing it
 
@@ -133,8 +115,8 @@ parameter values, such as automation lanes written by an older version, are not 
 
 ## Documentation
 
-- [docs/architecture.md](docs/architecture.md): design, the per-hit snapshot rule, the gain and
-  limiting topology, realtime invariants, state and preset formats, deviations from the hardware.
+- [docs/architecture.md](docs/architecture.md): signal-flow and threading diagrams, the per-hit
+  snapshot rule, the gain and limiting topology, state and preset formats, deviations from the hardware.
 - [docs/development.md](docs/development.md): building, the test suites, the VST3 validator, the
   REAPER host validation harness, the memory-leak gate and packaging.
 - [CHANGELOG.md](CHANGELOG.md).

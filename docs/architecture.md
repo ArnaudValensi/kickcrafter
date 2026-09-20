@@ -26,6 +26,33 @@ tests/        engine_tests (JUCE-free, sanitizer-capable), plugin_tests (real pr
 tools/        build/test chain, VST3 validator wrapper, REAPER host harness, memory gate, packaging
 ```
 
+## Signal flow
+
+```mermaid
+flowchart LR
+    MIDI["MIDI Note On<br/>note · velocity"] --> SNAP
+    PARAMS["Parameters<br/>knobs · automation · presets · A/B"] --> SNAP
+    SNAP{{"Snapshot at Note On<br/>frozen for the whole hit"}} --> PENV
+    SNAP --> AENV
+    subgraph VOICE["Voice (one per hit, pool of 16)"]
+        direction LR
+        PENV["Pitch sweep<br/>Start → End · Sweep · Curve"] --> OSC
+        OSC["Wavetable oscillator<br/>2048-point sine ↔ square · Shape"] --> MUL
+        AENV["Amplitude envelope<br/>Attack · Hold · Fade"] --> MUL
+        MUL(("×")) --> GAIN["Drive × Velocity"]
+    end
+    GAIN --> SUM(("Σ"))
+    SUM --> LIM["Bus soft limiter<br/>SoftLimit clamped at ±1"]
+    LIM --> OUT["Output<br/>L = R"]
+```
+
+A hit is one voice. At Note On the current parameter values, the note and the velocity are frozen
+into the voice's snapshot; from then on the voice reads nothing else. The pitch sweep drives the
+wavetable oscillator from the start to the end frequency along the curve, the amplitude envelope
+shapes the level (attack, hold, fade), the per-hit gain (Drive) and the velocity scale the result,
+the voices are summed and the bus soft limiter bounds the mix. The limiter is the only stage that
+sees more than one voice.
+
 ## The per-hit snapshot rule
 
 Every Note On freezes **all** synthesis parameters into the new voice. `processBlock` reads the
@@ -69,6 +96,26 @@ not a parameter leak.
 - **Output** is dual mono (the firmware wrote the left channel only).
 
 ## Realtime invariants
+
+```mermaid
+flowchart TB
+    HOST["Host<br/>automation · MIDI · state save/restore"]
+    PARAMS[("Parameters<br/>12 atomics")]
+    PB["processBlock (audio thread)<br/>reads the atomics once · parses MIDI at sample offsets<br/>renders the voice pool · no lock, no allocation"]
+    ENGINE["KickEngine<br/>16 voices · declicked stealing · soft limiter"]
+    EDITOR["Editor (message thread, 30 Hz timer)<br/>polls the parameters · draws the next hit"]
+    CTRL["Control transactions (message thread)<br/>presets · A/B · state, under one lock"]
+    HOST -- "automation, MIDI" --> PB
+    HOST -- "parameter values" --> PARAMS
+    HOST -- "get/set state" --> CTRL
+    PARAMS --> PB
+    PB --> ENGINE
+    ENGINE -- "audio" --> HOST
+    EDITOR -- "gestures (begin · value · end)" --> PARAMS
+    PARAMS -. "polled, never pushed" .-> EDITOR
+    CTRL --> PARAMS
+    EDITOR -- "load / save preset, A/B" --> CTRL
+```
 
 `processBlock` reads the parameter atomics, renders the fixed voice pool straight into channel 0 and
 copies it to channel 1, parses MIDI bytes at their sample offsets and publishes a few atomics

@@ -6,8 +6,7 @@ overwritten by a later run.
 
 ## Prerequisites
 
-Linux x86_64, CMake ≥ 3.22, Ninja, GCC 12+ (tested with GCC 16.1), pkg-config, git, FreeType,
-fontconfig, ALSA and X11 development headers. For the GUI tests and the host harness: Python 3 with
+For the build: see "Building from source" below. For the GUI tests and the host harness: Python 3 with
 NumPy and Pillow, Xvfb, Openbox, xdotool, xprop/xwininfo. For the host stages: REAPER (tested with
 7.80). For the bundle check: the Steinberg VST3 SDK `validator` (set `KCF_VALIDATOR` or put it on
 `PATH`).
@@ -18,7 +17,20 @@ JUCE 8.0.9 is pinned by commit and fetched once into `external/JUCE` (not vendor
 tools/fetch-juce.sh
 ```
 
-## Build
+## Building from source
+
+```sh
+git clone https://github.com/ArnaudValensi/kickcrafter.git
+cd kickcrafter
+tools/fetch-juce.sh                                   # once: JUCE 8.0.9, pinned by commit, into external/JUCE
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target KickCrafterFable_VST3
+mkdir -p ~/.vst3 && cp -r "build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3" ~/.vst3/
+```
+
+Requirements: Linux x86_64, CMake 3.22+, Ninja, GCC 12+ (or a recent Clang), pkg-config, git, and
+the development packages of FreeType, fontconfig, ALSA and X11 (`libx11`, `libxext`, `libxrandr`,
+`libxinerama`, `libxcursor`). The full set of targets:
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
