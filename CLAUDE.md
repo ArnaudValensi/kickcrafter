@@ -81,6 +81,10 @@ The reasoning is in `docs/development.md` (Conventions, Memory-leak gate) and `R
   is OOM-killed here) and uses no suppression file.
 - The plug-in keeps the name "KickCrafter Fable" inside hosts until the owner renames it
   (renaming changes the bundle name and breaks existing projects).
+- CI builds, it does not validate. GitHub Actions compiles the plug-in for every platform (Linux,
+  macOS Intel and ARM, Windows) and publishes the archives; `./run check`, `./run validate` and
+  `./run memory` run on a development machine only, where REAPER, the displays and the validator
+  live.
 
 ## Self-validation
 
@@ -123,4 +127,5 @@ who usually writes in French.
 
 - Whether the nine dials should be equalised upwards (they share the former frequency-dial size).
 - Whether the Start Frequency range (20–2000 Hz) should be reduced.
-- When the repository goes public (it changes the CI minutes budget and the release flow).
+- When the repository goes public (it changes the CI minutes budget for the macOS runners and the
+  release flow).
