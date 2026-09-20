@@ -17,7 +17,7 @@ option(KCF_BUILD_PLUGIN "Build the JUCE VST3/Standalone plugin" ON)
 option(KCF_BUILD_TESTS "Build the automated tests" ON)
 option(KCF_SANITIZE "Instrument the engine tests with ASan/UBSan" OFF)
 option(KCF_ENGINE_ONLY "Only build the engine and engine tests (no JUCE)" OFF)
-# Diagnostic memory build (epic/MEMORY.md): AddressSanitizer + LeakSanitizer compiled into the
+# Diagnostic memory build (the memory gate, docs/development.md): AddressSanitizer + LeakSanitizer compiled into the
 # engine, the plugin shared code, the JUCE modules it contains, the VST3 wrapper and every test
 # executable. Frame pointers kept, LTO off (tools/memory-check.sh; never the delivered binary).
 option(KCF_SANITIZE_PLUGIN "Instrument engine + plugin + JUCE + tests with ASan/LSan" OFF)

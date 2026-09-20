@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Memory-leak gate (epic/MEMORY.md). Two passes, every run logged with real exit codes, tool
+# Memory-leak gate (docs/development.md). Two passes, every run logged with real exit codes, tool
 # identity, options, source manifests and the exact binary hashes (artifacts/logs/memory/).
 #
 #   pass A (default)   standalone LeakSanitizer preloaded into the ORDINARY build's test executables

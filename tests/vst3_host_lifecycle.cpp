@@ -1,4 +1,4 @@
-// Minimal real VST3 host for the memory-leak gate (epic/MEMORY.md).
+// Minimal real VST3 host for the memory-leak gate (docs/development.md).
 //
 // Loads the ACTUAL built "KickCrafter Fable.vst3" module with dlopen and drives it exactly
 // the way a host does, through the public VST3 interfaces only (no JUCE, no test hooks):

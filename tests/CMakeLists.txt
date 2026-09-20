@@ -29,7 +29,7 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
     add_dependencies(kcf_plugin_tests KickCrafterFable)
     add_test(NAME plugin_tests COMMAND kcf_plugin_tests)
 
-    # Memory-leak exercise (epic/MEMORY.md): same shared code, many lifecycle cycles, run under
+    # Memory-leak exercise (the memory gate): same shared code, many lifecycle cycles, run under
     # LeakSanitizer by tools/memory-check.sh (standalone LSan preload on the ordinary build, and
     # the compiled-in ASan/LSan diagnostic build when KCF_SANITIZE_PLUGIN=ON).
     add_executable(kcf_leak_tests leak_tests.cpp)

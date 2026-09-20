@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build + test chain (single compiler job). Long: run it inside tmux or another persistent shell.
+# Build + test chain. KCF_JOBS compiler jobs (default 1: the 8 GB machine with a JUCE unity build).
+# Long: run it inside tmux or another persistent shell, or through ./run check.
 #
 # Per-run evidence: configure and build logs are fresh files for THIS run,
 # their exit statuses are carried explicitly, nothing is staged and no build record is written
@@ -8,7 +9,8 @@
 # test executable to the application manifest (production sources), the dependency revision and a
 # preserved copy of the CMake configuration; the tests/tools manifest is recorded for information.
 set -uo pipefail
-export CMAKE_BUILD_PARALLEL_LEVEL=1
+jobs="${KCF_JOBS:-1}"
+export CMAKE_BUILD_PARALLEL_LEVEL="$jobs"
 here="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$here"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -27,7 +29,7 @@ cfg_exit=$?
 echo "configure exit=$cfg_exit ($cfg_log)" >> "$status"
 if [ "$cfg_exit" -ne 0 ]; then echo "chain FAILED (configure) $(date -u +%FT%TZ)" >> "$status"; exit 1; fi
 
-( cd build && ninja -j1 -k 0 kcf_plugin_tests kcf_engine_tests KickCrafterFable_VST3 ) > "$build_log" 2>&1
+( cd build && ninja -j"$jobs" -k 0 kcf_plugin_tests kcf_engine_tests KickCrafterFable_VST3 ) > "$build_log" 2>&1
 build_exit=$?
 echo "build exit=$build_exit ($build_log)" >> "$status"
 # Compatibility copies for readers of the old fixed paths (always fresh for this run).

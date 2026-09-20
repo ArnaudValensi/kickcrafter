@@ -1,4 +1,4 @@
-// Memory-leak exercise for LeakSanitizer (epic/MEMORY.md gate).
+// Memory-leak exercise for LeakSanitizer (the memory gate, docs/development.md).
 //
 // Runs the REAL engine, KickCrafterProcessor and KickCrafterEditor (same shared-code
 // objects the VST3 links) through many create/use/destroy cycles so that any
