@@ -1,0 +1,170 @@
+# Release KickCrafter Fable. On a version tag `v<project version>`: check the tag against
+# CMakeLists.txt and the CHANGELOG, rebuild the three platforms through build.yml (unchanged), sign
+# and notarize the macOS bundles with tools/macos-sign.sh, then create a DRAFT GitHub Release with
+# the three archives and SHA256SUMS. Publishing the draft is the owner's click, after attaching the
+# evidence archive of the locally validated Linux build (docs/development.md, "Continuous
+# integration and releases"). On workflow_dispatch the same flow runs against HEAD, the tag check
+# only reports, and the would-be assets are uploaded as a workflow artifact instead of a release,
+# so the whole thing (signing included) can be rehearsed without a tag.
+#
+# Required repository secrets (Settings > Secrets and variables > Actions), the same six names as
+# the owner's other repositories. Without MACOS_SIGN_IDENTITY the macOS bundles are signed ad hoc
+# and not notarized: the job summary and the archive's INSTALL.txt say so in capitals.
+#   MACOS_SIGN_IDENTITY      e.g. "Developer ID Application: Arnaud Valensi (TEAMID)"
+#   MACOS_CERT_P12_BASE64    base64 of the exported Developer ID certificate + key (.p12)
+#   MACOS_CERT_PASSWORD      password used when exporting that .p12
+#   MACOS_NOTARY_APPLE_ID    Apple ID email used for notarization
+#   MACOS_NOTARY_TEAM_ID     the team id of that Apple ID
+#   MACOS_NOTARY_PASSWORD    an app-specific password for that Apple ID
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Tag and CHANGELOG
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: The tag is v<project version> and the CHANGELOG's top heading is that version
+        id: check
+        shell: bash
+        run: |
+          version="$(sed -n 's/^project(.*VERSION \([0-9][0-9.]*\).*/\1/p' CMakeLists.txt | head -1)"
+          changelog="$(sed -n 's/^## \([0-9][0-9.]*\).*/\1/p' CHANGELOG.md | head -1)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          {
+            echo "project version: $version"
+            echo "CHANGELOG top heading: $changelog"
+            echo "ref: $GITHUB_REF_TYPE $GITHUB_REF_NAME"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          ok=1
+          [ -n "$version" ] || { echo "::error::no project version in CMakeLists.txt"; ok=0; }
+          [ "$changelog" = "$version" ] || { echo "::error::CHANGELOG.md top heading '$changelog' is not the project version '$version'"; ok=0; }
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            [ "$GITHUB_REF_NAME" = "v$version" ] || { echo "::error::tag $GITHUB_REF_NAME is not v$version"; ok=0; }
+            [ "$ok" = 1 ]
+          else
+            echo "workflow_dispatch: rehearsal against HEAD, this check only reports; a release needs the tag v$version" | tee -a "$GITHUB_STEP_SUMMARY"
+            [ "$ok" = 1 ] || echo "::warning::a tagged release would fail this check"
+          fi
+
+  build:
+    name: Build
+    needs: verify
+    uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
+
+  sign-macos:
+    name: Sign and notarize the macOS bundles
+    needs: build
+    runs-on: macos-15
+    steps:
+      - name: Checkout (for tools/macos-sign.sh)
+        uses: actions/checkout@v7
+
+      - name: Download the macOS archive
+        uses: actions/download-artifact@v8
+        with:
+          name: kickcrafter-fable-macos-universal
+          path: dist-macos
+
+      - name: Sign, notarize, staple, verify (or ad hoc when the identity is absent)
+        shell: bash
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          MACOS_NOTARY_APPLE_ID: ${{ secrets.MACOS_NOTARY_APPLE_ID }}
+          MACOS_NOTARY_TEAM_ID: ${{ secrets.MACOS_NOTARY_TEAM_ID }}
+          MACOS_NOTARY_PASSWORD: ${{ secrets.MACOS_NOTARY_PASSWORD }}
+        run: |
+          archive="$(find dist-macos -name 'kickcrafter-fable-*-macos-universal.zip' | head -1)"
+          [ -n "$archive" ] || { echo "::error::no macOS archive in the build artifact"; exit 1; }
+          tools/macos-sign.sh "$archive" signed
+
+      - name: Upload the signed archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: kickcrafter-fable-macos-universal-signed
+          path: signed/
+          retention-days: 14
+          if-no-files-found: error
+
+  release:
+    name: Draft release
+    needs: [verify, build, sign-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # the only job that writes: it creates the draft release
+    steps:
+      - name: Download the Linux archive
+        uses: actions/download-artifact@v8
+        with:
+          name: kickcrafter-fable-linux-x86_64
+          path: assets
+
+      - name: Download the Windows archive
+        uses: actions/download-artifact@v8
+        with:
+          name: kickcrafter-fable-windows-x86_64
+          path: assets
+
+      - name: Download the signed macOS archive
+        uses: actions/download-artifact@v8
+        with:
+          name: kickcrafter-fable-macos-universal-signed
+          path: assets
+
+      - name: SHA256SUMS, one archive per platform
+        shell: bash
+        run: |
+          cd assets
+          for suffix in linux-x86_64.tar.gz macos-universal.zip windows-x86_64.zip; do
+            n="$(ls kickcrafter-fable-*-$suffix 2>/dev/null | wc -l | tr -d ' ')"
+            [ "$n" = 1 ] || { echo "::error::expected one kickcrafter-fable-*-$suffix, found $n"; exit 1; }
+          done
+          sha256sum kickcrafter-fable-* > SHA256SUMS
+          { echo '```'; cat SHA256SUMS; echo '```'; } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Draft GitHub Release (tag)
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: KickCrafter Fable ${{ needs.verify.outputs.version }}
+          draft: true
+          body: |
+            See CHANGELOG.md, section ${{ needs.verify.outputs.version }}. The three archives were built
+            by GitHub Actions; the evidence archive of the maintainer's validated Linux build is
+            attached by hand before publication (docs/development.md).
+          files: |
+            assets/kickcrafter-fable-*-linux-x86_64.tar.gz
+            assets/kickcrafter-fable-*-macos-universal.zip
+            assets/kickcrafter-fable-*-windows-x86_64.zip
+            assets/SHA256SUMS
+          fail_on_unmatched_files: true
+
+      - name: Rehearsal assets instead of a release (workflow_dispatch)
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-assets-rehearsal
+          path: assets/
+          retention-days: 14
+          if-no-files-found: error

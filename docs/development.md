@@ -296,6 +296,47 @@ A superseded run of the same branch is cancelled. The workflow grants itself `co
 the release workflow reuses it unchanged. Minutes: a macOS minute costs ten Linux minutes on a
 private repository, which is why the triggers are filtered.
 
+### Releases
+
+`.github/workflows/release.yml` runs on a tag `v*` and on `workflow_dispatch`. Its first job checks
+that the tag is `v<project version>` (`project()` in `CMakeLists.txt`) and that the top heading of
+`CHANGELOG.md` is that version; on dispatch the check runs against `HEAD` and only reports. It then
+calls `build.yml` unchanged, signs and notarizes the macOS bundles on a `macos-15` runner through
+`tools/macos-sign.sh` (import of the Developer ID certificate into a throwaway keychain,
+`codesign --force --deep --options runtime --timestamp` on the VST3 and the component, one zip,
+`xcrun notarytool submit --wait`, `xcrun stapler staple` on each bundle, the `Signing` line of
+`INSTALL.txt` rewritten, the final zip made after stapling, then `codesign --verify --deep --strict`,
+`spctl --assess --type open --context context:primary-signature` and `stapler validate` printed in
+the job summary), and a last job, the only one with `contents: write`, downloads the three archives,
+writes `SHA256SUMS` and creates a **draft** GitHub Release with `fail_on_unmatched_files`. On
+dispatch that last job uploads the would-be assets as the workflow artifact
+`release-assets-rehearsal` instead of creating a release. Publishing is the owner's click.
+
+The six repository secrets, named as in the owner's other repositories and listed in the header of
+`release.yml`: `MACOS_SIGN_IDENTITY`, `MACOS_CERT_P12_BASE64`, `MACOS_CERT_PASSWORD`,
+`MACOS_NOTARY_APPLE_ID`, `MACOS_NOTARY_TEAM_ID`, `MACOS_NOTARY_PASSWORD`. When
+`MACOS_SIGN_IDENTITY` is absent the script signs ad hoc, skips notarization, and says so in
+capitals in the job summary and in `INSTALL.txt` (the user then has to clear the quarantine
+attribute); a release made that way is a rehearsal, not something to publish. Windows code signing
+is future work.
+
+The release procedure, in this order:
+
+1. On the commit to release: `./run validate`, `./run memory`, `./run memory --diag`, then
+   `./run package`, which writes the Linux evidence archive
+   (`artifacts/dist/kickcrafter-fable-<version>-evidence.tar.gz`) next to the locally validated
+   binary and source archives. Keep them.
+2. Rehearse once: run the `Release` workflow by hand (`workflow_dispatch` on `main`) and read its
+   summary: the version check, `codesign --verify` and `spctl` accepting both bundles, notarization
+   `Accepted`, `SHA256SUMS` listing the three archives. Download `release-assets-rehearsal` if you
+   want to try the archives.
+3. Tag: `git tag v<version> && git push origin v<version>`. The workflow creates the draft release.
+4. Attach the evidence archive of step 1 to the draft by hand, read the draft, publish.
+
+The Linux archive in the release is the CI build, compiled by a different GCC than the machine
+that ran the gates: its module hash differs from the locally validated one, which is accepted and
+stated in the README. The evidence archive names the validated hash.
+
 ## Preset files
 
 A preset is one XML file; the eleven synthesis values are in the units the knobs display,

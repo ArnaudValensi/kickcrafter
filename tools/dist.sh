@@ -64,9 +64,8 @@ install_text() {
         macos-*)
             echo 'Copy "KickCrafter Fable.vst3" into ~/Library/Audio/Plug-Ins/VST3/ and "KickCrafter Fable.component" into'
             echo '~/Library/Audio/Plug-Ins/Components/, then rescan plug-ins (Logic and GarageBand load the AU, most other hosts the VST3).'
-            # tools/macos-sign.sh rewrites this line when it signs and notarizes a release.
-            echo 'Signing: not signed. macOS refuses a downloaded unsigned bundle until its quarantine attribute is removed:'
-            echo '  xattr -dr com.apple.quarantine "<the copied bundle>"' ;;
+            # One line, which tools/macos-sign.sh rewrites when it signs (and notarizes) a release.
+            echo 'Signing: not signed. macOS refuses a downloaded unsigned bundle until its quarantine attribute is removed: xattr -dr com.apple.quarantine "<the copied bundle>"' ;;
         windows-*)
             echo 'Copy "KickCrafter Fable.vst3" into C:\Program Files\Common Files\VST3\ and rescan plug-ins.' ;;
     esac
