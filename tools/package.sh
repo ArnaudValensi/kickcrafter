@@ -66,11 +66,11 @@ echo "build record: $(grep '^build-record' artifacts/logs/build-record.txt)" >> 
 
 # Verify the source archive from its extraction: documented offline JUCE path, no evidence inside.
 verify="$(mktemp -d)"
-tar -C "$verify" -xzf "$out/kickcrafter-fable-$rev-source.tar.gz"
-( cd "$verify/kickcrafter-fable-$rev-source" && tools/fetch-juce.sh && [ ! -d artifacts ] && [ ! -d reviews ] && [ -f external/JUCE/CMakeLists.txt ] \
+tar -C "$verify" -xzf "$out/$base-source.tar.gz"
+( cd "$verify/$base-source" && tools/fetch-juce.sh && [ ! -d artifacts ] && [ ! -d reviews ] && [ -f external/JUCE/CMakeLists.txt ] \
   && [ "$(find engine plugin resources CMakeLists.txt -type f | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1)" = "$manifest" ] ) \
     || { echo "source archive verification failed" >&2; rm -rf "$verify"; exit 1; }
 echo "source archive verified: fetch path accepts the bundled pinned JUCE tree; no artifacts/reviews inside"
 rm -rf "$verify"
-tar -tzf "$out/kickcrafter-fable-$rev-linux-x86_64.tar.gz" | grep -c "licenses/" | sed 's/^/licence files in the binary archive: /'
+tar -tzf "$binarchive" | grep -c "licenses/" | sed 's/^/licence files in the binary archive: /'
 echo "packaged into $out ($rev, JUCE $juce_commit):"; ls -la "$out"; cat "$out/SHA256SUMS"
