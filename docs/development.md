@@ -312,10 +312,10 @@ job summary: `codesign --verify --deep --strict` on each bundle, and, when signe
 `codesign --check-notarization -R="notarized"` and `stapler validate`, all three fatal; `spctl` is
 printed as a diagnostic only, because Gatekeeper assesses apps, packages and disk images and a bare
 plug-in bundle is none of these), and a last job, the only one with `contents: write`, downloads
-the three archives, writes `SHA256SUMS` and creates a **draft** GitHub Release with
-`fail_on_unmatched_files`. Only the push of a version tag releases: a `workflow_dispatch`, whether
-on a branch or on a tag, makes that last job upload the would-be assets as the workflow artifact
-`release-assets-rehearsal` instead. Publishing is the owner's click.
+the three archives, writes `SHA256SUMS` and publishes the GitHub Release with
+`fail_on_unmatched_files` (no draft: the owner decided that the workflow releases). Only the push
+of a version tag releases: a `workflow_dispatch`, whether on a branch or on a tag, makes that last
+job upload the would-be assets as the workflow artifact `release-assets-rehearsal` instead.
 
 The six repository secrets, named as in the owner's other repositories and listed in the header of
 `release.yml`: `MACOS_SIGN_IDENTITY`, `MACOS_CERT_P12_BASE64`, `MACOS_CERT_PASSWORD`,
@@ -335,8 +335,11 @@ The release procedure, in this order:
    summary: the version check, `codesign --verify` and `--check-notarization` accepting both bundles, notarization
    `Accepted`, `SHA256SUMS` listing the three archives. Download `release-assets-rehearsal` if you
    want to try the archives.
-3. Tag: `git tag v<version> && git push origin v<version>`. The workflow creates the draft release.
-4. Attach the evidence archive of step 1 to the draft by hand, read the draft, publish.
+3. Tag: `git tag v<version> && git push origin v<version>`. The workflow publishes the release
+   with the three archives and `SHA256SUMS`.
+4. Add the evidence archive of step 1 to the release (`gh release upload v<version>
+   artifacts/dist/kickcrafter-fable-<version>-evidence.tar.gz`), then download the three
+   archives once and check them (the listing, `INSTALL.txt`, the checksums against `SHA256SUMS`).
 
 The Linux archive in the release is the CI build, compiled by a different GCC than the machine
 that ran the gates: its module hash differs from the locally validated one, which is accepted and

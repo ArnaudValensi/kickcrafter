@@ -1,11 +1,12 @@
 # Release KickCrafter Fable. On a version tag `v<project version>`: check the tag against
 # CMakeLists.txt and the CHANGELOG, rebuild the three platforms through build.yml (unchanged), sign
-# and notarize the macOS bundles with tools/macos-sign.sh, then create a DRAFT GitHub Release with
-# the three archives and SHA256SUMS. Publishing the draft is the owner's click, after attaching the
-# evidence archive of the locally validated Linux build (docs/development.md, "Continuous
-# integration and releases"). On workflow_dispatch the same flow runs against HEAD, the tag check
-# only reports, and the would-be assets are uploaded as a workflow artifact instead of a release,
-# so the whole thing (signing included) can be rehearsed without a tag.
+# and notarize the macOS bundles with tools/macos-sign.sh, then publish the GitHub Release with
+# the three archives and SHA256SUMS (the owner's decision, 2026-09-20: the workflow releases, no
+# draft). The evidence archive of the locally validated Linux build is added to the release by the
+# maintainer afterwards (docs/development.md, "Continuous integration and releases"). On
+# workflow_dispatch the same flow runs against HEAD, the tag check only reports, and the would-be
+# assets are uploaded as a workflow artifact instead of a release, so the whole thing (signing
+# included) can be rehearsed without a tag.
 #
 # Required repository secrets (Settings > Secrets and variables > Actions), the same six names as
 # the owner's other repositories. Without MACOS_SIGN_IDENTITY the macOS bundles are signed ad hoc
@@ -109,11 +110,11 @@ jobs:
           if-no-files-found: error
 
   release:
-    name: Draft release
+    name: Release
     needs: [verify, build, sign-macos]
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # the only job that writes: it creates the draft release
+      contents: write   # the only job that writes: it creates the release
     steps:
       - name: Download the Linux archive
         uses: actions/download-artifact@v8
@@ -146,17 +147,17 @@ jobs:
 
       # Only the push of a version tag releases (the push trigger admits tags v* only); a
       # workflow_dispatch, on a branch or on a tag, never does.
-      - name: Draft GitHub Release (push of a version tag)
+      - name: GitHub Release (push of a version tag)
         if: github.event_name == 'push' && github.ref_type == 'tag'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: KickCrafter Fable ${{ needs.verify.outputs.version }}
-          draft: true
+          draft: false
           body: |
             See CHANGELOG.md, section ${{ needs.verify.outputs.version }}. The three archives were built
             by GitHub Actions; the evidence archive of the maintainer's validated Linux build is
-            attached by hand before publication (docs/development.md).
+            added to this release afterwards (docs/development.md).
           files: |
             assets/kickcrafter-fable-*-linux-x86_64.tar.gz
             assets/kickcrafter-fable-*-macos-universal.zip
