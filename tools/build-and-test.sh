@@ -48,6 +48,7 @@ if [ "$manifest_before" != "$manifest_after" ] || [ "$testmanifest_before" != "$
     echo "chain FAILED (sources changed during the run) $(date -u +%FT%TZ)" >> "$status"; exit 1
 fi
 
+mkdir -p artifacts/reaper
 DISPLAY=:104 ./build/tests/kcf_plugin_tests --layout 100 > artifacts/reaper/layout-100.txt 2>&1 || { echo "chain FAILED (layout dump) $(date -u +%FT%TZ)" >> "$status"; exit 1; }
 rm -rf "artifacts/vst3/KickCrafter Fable.vst3" && cp -r "build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3" artifacts/vst3/ || { echo "chain FAILED (staging) $(date -u +%FT%TZ)" >> "$status"; exit 1; }
 so="artifacts/vst3/KickCrafter Fable.vst3/Contents/x86_64-linux/KickCrafter Fable.so"
