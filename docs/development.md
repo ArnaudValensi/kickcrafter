@@ -275,11 +275,12 @@ freedom; they do exercise every lifecycle the plug-in has.
 
 ## Continuous integration and releases
 
-CI builds, it does not validate. `.github/workflows/build.yml` runs on every push to `main` and
-every pull request that touches what can change a binary or the build (`engine/`, `plugin/`,
-`resources/`, `tests/`, `CMakeLists.txt`, `run`, `tools/`, the workflows themselves), one job per
-platform on `ubuntu-latest`, `macos-15` and `windows-latest`. Each job types exactly what a
-developer would: `./run juce`, `./run build`, `./run test-engine`, `./run dist`, under `bash`
+CI builds, it does not validate, and it runs only for a release: nothing on GitHub Actions is
+triggered by an ordinary push or a pull request (the owner's decision, so that no minutes are
+spent outside a version). `.github/workflows/build.yml` is called by the release workflow, on the
+push of a version tag or on its manual rehearsal, and can also be run by hand
+(`workflow_dispatch`) for a one-off check of a branch. It has one job per platform on
+`ubuntu-latest`, `macos-15` and `windows-latest`. Each job types exactly what a developer would: `./run juce`, `./run build`, `./run test-engine`, `./run dist`, under `bash`
 (Git Bash on Windows, bash 3.2 on macOS; the MSVC developer environment comes from
 `ilammy/msvc-dev-cmd`, the Linux packages from the apt list of "Setting up", macOS needs nothing
 beyond the runner image) with `KCF_JOBS=4`. The macOS job also prints `lipo -archs` for both
@@ -292,9 +293,10 @@ Each job uploads two workflow artifacts kept 14 days: `kickcrafter-fable-<platfo
 is not on a tag), and `kickcrafter-fable-<platform>-logs` holds `artifacts/logs/` (the configure,
 build, engine-test and dist logs with their `.exit` sidecars, the evidence convention of this
 project) and is uploaded even when a step failed, since the console only shows the logs' paths.
-A superseded run of the same branch is cancelled. The workflow grants itself `contents: read` only and is also `workflow_call`-able, so
-the release workflow reuses it unchanged. Minutes: a macOS minute costs ten Linux minutes on a
-private repository, which is why the triggers are filtered.
+A superseded run of the same ref is cancelled. The workflow grants itself `contents: read` only.
+Minutes: a macOS minute costs ten Linux minutes on a private repository, which is why nothing
+runs outside a release. The price is that a change to `main` is not compiled on macOS or Windows
+until the next release or a manual run of `Build`.
 
 ### Releases
 

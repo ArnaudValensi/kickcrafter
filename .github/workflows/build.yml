@@ -3,36 +3,17 @@
 # (`./run check`, `./run validate`, `./run memory`, the REAPER harness) run on the development
 # machine only (docs/development.md, "Continuous integration and releases").
 #
-# Runs on every push to main and every pull request that can change a binary or the build (the
-# path filter below), and on workflow_call so that release.yml reuses these jobs unchanged. Each
-# job goes through `./run` only: juce, build, test-engine, dist (the same commands a developer
-# types), then uploads the archive and the logs (with their .exit sidecars) as a workflow artifact
-# kept 14 days. A superseded run of the same ref is cancelled. Nothing here signs or releases.
+# Nothing runs on GitHub outside a release (the owner's decision, 2026-09-20: no Actions minutes
+# spent on ordinary pushes or pull requests). This workflow is therefore only called by
+# release.yml, on the push of a version tag or on its manual rehearsal, and can be run by hand
+# for a one-off check of a branch. Each job goes through `./run` only: juce, build, test-engine,
+# dist (the same commands a developer types), then uploads the archive and the logs (with their
+# .exit sidecars) as a workflow artifact kept 14 days. Nothing here signs or releases.
 name: Build
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'engine/**'
-      - 'plugin/**'
-      - 'resources/**'
-      - 'tests/**'
-      - 'CMakeLists.txt'
-      - 'run'
-      - 'tools/**'
-      - '.github/workflows/**'
-  pull_request:
-    paths:
-      - 'engine/**'
-      - 'plugin/**'
-      - 'resources/**'
-      - 'tests/**'
-      - 'CMakeLists.txt'
-      - 'run'
-      - 'tools/**'
-      - '.github/workflows/**'
   workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
