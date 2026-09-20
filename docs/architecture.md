@@ -26,32 +26,37 @@ tests/        engine_tests (JUCE-free, sanitizer-capable), plugin_tests (real pr
 tools/        build/test chain, VST3 validator wrapper, REAPER host harness, memory gate, packaging
 ```
 
-## Signal flow
+## Synthesis
 
 ```mermaid
 flowchart LR
-    MIDI["MIDI Note On<br/>note · velocity"] --> SNAP
-    PARAMS["Parameters<br/>knobs · automation · presets · A/B"] --> SNAP
-    SNAP{{"Snapshot at Note On<br/>frozen for the whole hit"}} --> PENV
-    SNAP --> AENV
-    subgraph VOICE["Voice (one per hit, pool of 16)"]
-        direction LR
-        PENV["Pitch sweep<br/>Start → End · Sweep · Curve"] --> OSC
-        OSC["Wavetable oscillator<br/>2048-point sine ↔ square · Shape"] --> MUL
-        AENV["Amplitude envelope<br/>Attack · Hold · Fade"] --> MUL
-        MUL(("×")) --> GAIN["Drive × Velocity"]
-    end
-    GAIN --> SUM(("Σ"))
-    SUM --> LIM["Bus soft limiter<br/>SoftLimit clamped at ±1"]
-    LIM --> OUT["Output<br/>L = R"]
+    classDef audio fill:#fbe9d7,stroke:#b5651d,stroke-width:1.5px
+    classDef mod fill:#e9eef9,stroke:#4a6fa5
+    classDef trig fill:#eeeeee,stroke:#777777
+    OSC["Wavetable oscillator<br/>2048-point sine and square tables"]:::audio --> VCA["Amplifier"]:::audio --> DRIVE["Drive<br/>0–4 ×"]:::audio --> LIM["Soft limiter<br/>x·(27+x²)/(27+9x²), clamped"]:::audio --> OUT(["Output"]):::audio
+    GATE(["Note On"]):::trig -. "trigger" .-> PENV["Pitch envelope<br/>Start → End · Sweep time · Curve"]:::mod
+    GATE -. "trigger" .-> AENV["Amplitude envelope<br/>Attack · Hold · Fade"]:::mod
+    NOTE["MIDI note<br/>Pitch Source = MIDI Note"]:::mod -. "end frequency" .-> PENV
+    PENV -. "frequency" .-> OSC
+    SHAPE["Shape<br/>sine ↔ square morph"]:::mod -. "waveform" .-> OSC
+    AENV -. "level" .-> VCA
+    VEL["MIDI velocity<br/>Velocity switch On"]:::mod -. "level" .-> VCA
 ```
 
-A hit is one voice. At Note On the current parameter values, the note and the velocity are frozen
-into the voice's snapshot; from then on the voice reads nothing else. The pitch sweep drives the
-wavetable oscillator from the start to the end frequency along the curve, the amplitude envelope
-shapes the level (attack, hold, fade), the per-hit gain (Drive) and the velocity scale the result,
-the voices are summed and the bus soft limiter bounds the mix. The limiter is the only stage that
-sees more than one voice.
+The audio path is the classic one-oscillator kick: an oscillator, an amplifier, a gain stage and a
+limiter. Everything that shapes a hit is a modulation source frozen at Note On.
+
+| Module | What it does | Parameters |
+|---|---|---|
+| Wavetable oscillator | Reads a 2048-point table by linear interpolation; the waveform is a morph between the sine table and the naive square table. | Shape |
+| Pitch envelope | Sweeps the oscillator frequency from Start to End over the sweep time along `start + (end - start) · (1 - (1 - t)^curve)`, then holds End. In MIDI Note mode the played note sets End. | Start, End, Sweep, Curve, Pitch Source |
+| Amplitude envelope | Linear attack, hold at full level, linear fade to silence; the hit lasts sweep + hold, the fade is a fraction of it. | Attack, Hold, Fade |
+| Amplifier | Envelope level × MIDI velocity (127 = full) when the Velocity switch is on, envelope level alone when it is off. | Velocity |
+| Drive | Per-hit gain, 0 to 4 ×, applied inside the voice so it can be frozen with the rest. | Drive |
+| Soft limiter | DaisySP's `SoftLimit` on the sum of all voices, clamped to ±1 for |x| ≥ 3. The only stage shared by the voices. | none |
+
+There is no filter, no LFO and no second oscillator: the character comes from the sweep curve, the
+sine-to-square morph and the drive into the limiter.
 
 ## The per-hit snapshot rule
 

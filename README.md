@@ -115,7 +115,7 @@ parameter values, such as automation lanes written by an older version, are not 
 
 ## Documentation
 
-- [docs/architecture.md](docs/architecture.md): signal-flow and threading diagrams, the per-hit
+- [docs/architecture.md](docs/architecture.md): the synthesis block diagram, the per-hit
   snapshot rule, the gain and limiting topology, state and preset formats, deviations from the hardware.
 - [docs/development.md](docs/development.md): building, the test suites, the VST3 validator, the
   REAPER host validation harness, the memory-leak gate and packaging.
