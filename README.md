@@ -30,11 +30,7 @@ it MIDI notes.
 ### Linux (x86_64, VST3)
 
 `kickcrafter-fable-<version>-linux-x86_64.tar.gz`. Copy `KickCrafter Fable.vst3` into a folder your
-host scans, for example `~/.vst3/`. Like the other two, this binary is compiled and unit-tested by
-continuous integration. Linux is also the platform the maintainer validates: before each release, a
-local build of the same sources goes through the Steinberg validator, the plug-in tests, the REAPER
-host harness and the memory gate ([docs/development.md](docs/development.md)). The downloaded
-binary is not that local build (another compiler produced it), only its sources are.
+host scans, for example `~/.vst3/`.
 
 ### macOS (Apple Silicon and Intel, VST3 and Audio Unit)
 
@@ -132,8 +128,6 @@ loaded preset.
 ## Known limitations
 
 - Linux x86_64 VST3, macOS universal VST3 and AU, Windows x64 VST3. No LV2, CLAP, AUv3 or AAX.
-  The downloadable binaries are compiled and unit-tested by continuous integration; only a Linux
-  build of the release sources is validated in a host by the maintainer (see Installation).
 - No pitch bend, MPE, LFOs, multi-point envelopes, sample import, sequencer, kit or WAV export.
 - The square waveform is not band-limited (about 21 dB of aliasing below the harmonics at
   44.1/48 kHz, 25 dB at 96 kHz), by design. Use Shape below 100 % or a higher sample rate for
