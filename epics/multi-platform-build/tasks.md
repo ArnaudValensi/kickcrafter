@@ -34,6 +34,12 @@ green after the commit, the journal entry written.
 
 ## M2: The build workflow on the three platforms
 
+**Done, awaiting the owner's push and CI** (2026-09-20, link 1): `build.yml` with the path filter,
+concurrency, `workflow_call`, one job per platform through `./run juce`, `build`, `test-engine`,
+`dist`, `lipo -archs` on macOS, artifacts kept 14 days; README installation per platform with the
+preset folders; the guide's CI section and the macOS and Windows prerequisites; `.github` in the
+source archive. Owner actions and what CI must show: `journal/2026-09-20.md`.
+
 `.github/workflows/build.yml` per decision 9: push to `main` and pull requests with the path
 filter, concurrency, three jobs, each `./run juce`, `./run build`, `./run test-engine`,
 `./run dist`, artifacts uploaded, `workflow_call` exposed. `tools/fetch-juce.sh` and `run` fixed
