@@ -250,11 +250,18 @@ demand; a project remembers its preset by kind and name and shows "(missing)" wh
 - Presets, A/B and state save/restore are message-thread transactions under one lock, so a saved
   project always holds a coherent combination of current values, other slot and preset identity. No
   host "Program" parameter is published: presets live in the editor and in the saved state.
-- Validate what a change affects, not the folder it lives in:
-  - `engine/`, `plugin/`, `resources/`, `CMakeLists.txt`: the binary changes, so everything (chain,
-    validator, host stages, both memory passes) before packaging or release;
-  - a unit test: that test binary; a REAPER harness script or analyzer: the stage or fixtures it
-    serves; the chain or packaging scripts: the chain and the package fixtures;
-  - documentation, diagrams, helper scripts (displays, generators), `CLAUDE.md`: nothing.
-  A CI run on every commit is the safety net for judgement errors here.
+- Validate what a change affects, not the folder it lives in. What to run before committing:
+
+  | Changed | Run |
+  |---|---|
+  | `engine/`, `plugin/`, `resources/`, `CMakeLists.txt` (the binary changes) | `tools/build-and-test.sh`, `tools/validate-bundle.sh`, `tools/reaper/run_all_stages.sh`, `tools/memory-check.sh` and `tools/memory-check.sh --diag` (after the `build-leak` build); then `tools/package.sh` if a release is due. `engine/` alone: also the ASan build of the engine tests |
+  | `tests/engine_tests.cpp`, `tests/plugin_tests.cpp` | rebuild and run that test binary (`cmake --build build --target kcf_plugin_tests && DISPLAY=:104 ./build/tests/kcf_plugin_tests`) |
+  | `tests/leak_tests.cpp`, `tests/vst3_host_lifecycle.cpp` | `tools/memory-check.sh` (pass A is enough unless the change is about instrumentation) |
+  | `tools/reaper/kcf_*.lua`, `analyze_render.py`, `check_saved_state.py`, `drive_mouse.py`, `find_highlight.py`, `image_check.py`, `run_reaper_validation.sh` | `tools/reaper/run_all_stages.sh` (a single stage, `tools/reaper/run_reaper_validation.sh <stage>`, only when the earlier stages' outputs already exist) and `tools/reaper/harness_negative_controls.sh` |
+  | `tools/build-and-test.sh`, `tools/package*.sh`, `tools/validate-bundle.sh`, `tools/run-logged.sh` | `tools/build-and-test.sh` then `tools/package-negative-controls.sh` and `tools/package-preflight.sh` |
+  | `tools/memory-check.sh` | both memory passes |
+  | `tools/xvfb-display.sh`, `tools/fetch-juce.sh`, `tools/diagrams/` | run the script once and look at what it produced |
+  | `README.md`, `docs/`, `CHANGELOG.md`, `CLAUDE.md`, `THIRD_PARTY_NOTICES.md` | nothing (render a diagram if you changed its generator) |
+
+  When in doubt, run more: a CI run on every commit is the safety net for judgement errors here.
 - Keep failed logs; never treat a trailing `echo` as a test status.
