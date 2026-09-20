@@ -4,13 +4,15 @@ cmake_minimum_required(VERSION 3.22)
 
 # macOS: one universal binary (Apple Silicon and Intel) that runs from macOS 11, the first release
 # with Apple Silicon. Both variables must be set before project() and only when the caller set
-# nothing (cache, -D or environment). APPLE does not exist yet at this point; CMAKE_HOST_APPLE
-# does, and the macOS build is native (no cross-compilation), so the host is the target.
+# nothing: the cache or -D, or the environment variables CMake itself reads for them
+# (CMAKE_OSX_ARCHITECTURES and MACOSX_DEPLOYMENT_TARGET), which project() then honours. APPLE does
+# not exist yet at this point; CMAKE_HOST_APPLE does, and the macOS build is native (no
+# cross-compilation), so the host is the target.
 if(CMAKE_HOST_APPLE)
     if(NOT DEFINED CMAKE_OSX_ARCHITECTURES AND NOT DEFINED ENV{CMAKE_OSX_ARCHITECTURES})
         set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "macOS architectures (universal by default)")
     endif()
-    if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET AND NOT DEFINED ENV{CMAKE_OSX_DEPLOYMENT_TARGET})
+    if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET AND NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
         set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS version")
     endif()
 endif()

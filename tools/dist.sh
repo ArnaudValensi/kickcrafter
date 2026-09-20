@@ -74,17 +74,18 @@ install_text() {
 }
 
 stage() {   # stage <dir> [<from>]: the bundle(s) built under <from>, the documents, the licences, INSTALL.txt
-    local dir="$1" from="${2:-build/KickCrafterFable_artefacts/Release}" found=0 b
+    local dir="$1" from="${2:-build/KickCrafterFable_artefacts/Release}" b
     [ -d "$from" ] || die "nothing built under $from"
     mkdir -p "$dir/licenses"
+    # The bundles sit under a format folder in build/ and directly under artifacts/vst3 (package.sh).
     for b in "$from/VST3/KickCrafter Fable.vst3" "$from/KickCrafter Fable.vst3" \
              "$from/AU/KickCrafter Fable.component" "$from/KickCrafter Fable.component"; do
         [ -d "$b" ] || continue
         cp -R "$b" "$dir/"
-        found=$((found + 1))
         echo "staged: $b"
     done
-    [ "$found" -gt 0 ] || die "no KickCrafter Fable.vst3 under $from"
+    # Every platform ships the VST3; macOS ships the AU component as well. A partial build refuses.
+    [ -d "$dir/KickCrafter Fable.vst3" ] || die "no KickCrafter Fable.vst3 under $from"
     case "$platform" in macos-*) [ -d "$dir/KickCrafter Fable.component" ] || die "no KickCrafter Fable.component under $from" ;; esac
     cp README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md "$dir/"
     copy_licences "$dir/licenses"

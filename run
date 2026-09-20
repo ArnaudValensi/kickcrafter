@@ -128,10 +128,12 @@ cmd_memory() {   # memory [--diag] [--cycles N]: builds the binaries the pass ne
 }
 
 # --- packaging ------------------------------------------------------------------
-cmd_dist()             { tools/dist.sh "$@"; }   # the per-platform archive of what build/ holds (CI's last step)
+# Every packaging command is logged like the tests: the log names the commit and the manifest, the
+# .exit sidecar the real exit code, so a run is evidence (docs/development.md) and not a claim.
+cmd_dist()             { logged dist tools/dist.sh "$@"; }   # the per-platform archive of what build/ holds (CI's last step)
 cmd_package_controls() { logged package-negative-controls tools/package-negative-controls.sh; }
-cmd_preflight()        { tools/package-preflight.sh; }
-cmd_package()          { tools/package.sh; }
+cmd_preflight()        { logged preflight tools/package-preflight.sh; }
+cmd_package()          { logged package tools/package.sh; }
 
 # --- gates ----------------------------------------------------------------------
 check_steps() {

@@ -5,6 +5,9 @@ add_executable(kcf_engine_tests engine_tests.cpp)
 target_link_libraries(kcf_engine_tests PRIVATE kcf_engine)
 if(MSVC)
     target_compile_options(kcf_engine_tests PRIVATE /W4)
+    # engine_tests.cpp uses M_PI; Microsoft's <cmath> defines it only with this opt-in, which must
+    # precede the first include, hence a command-line definition rather than one in the source.
+    target_compile_definitions(kcf_engine_tests PRIVATE _USE_MATH_DEFINES)
 else()
     target_compile_options(kcf_engine_tests PRIVATE -Wall -Wextra)
 endif()
