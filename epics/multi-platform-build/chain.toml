@@ -1,0 +1,8 @@
+# Parameters read by the chain-next and chain-review scripts for this epic. The chain runs as
+# Claude claude-fable-5-1 implementer links at effort high with one persistent Codex gpt-6-astra
+# reviewer at high. window_prefix names both the reviewer window and the link windows (mpb-1,
+# mpb-2, ...). cap is the maximum number of links: one per milestone, a link that has room carries
+# on to the next milestone instead of handing off.
+
+window_prefix = "mpb"
+cap = 3
