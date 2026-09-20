@@ -1,9 +1,16 @@
 # KickCrafter
 
-A kick-drum synthesizer plug-in. One kick per instance, played with MIDI, every hit frozen the
-moment it starts.
+A kick-drum synthesizer made to be played live: turn any knob, anywhere, and it is still a kick.
 
 ![KickCrafter editor](docs/screenshots/editor.png)
+
+KickCrafter was built for playing, not for programming. The first reason it exists is real-time
+control: every knob and every graph handle is meant to be moved while the track runs, on stage or
+in a jam, and the sound follows without glitches or surprises. The second is that it never leaves
+kick territory. Most synthesizers have parameter zones that produce nothing, or noise; a 808 or a
+909 always makes a sound wherever the knobs sit. KickCrafter is designed the same way: the ranges
+of the controls are bounded so that any combination is still a playable kick, from a deep sub
+thump to a hard gabber slam.
 
 KickCrafter is a VST3 instrument for Linux, macOS and Windows, and an Audio Unit on macOS. The
 sound is a wavetable oscillator morphing between sine
