@@ -65,7 +65,8 @@ code-signed.
   so the kick can be played melodically.
 - **Velocity.** Off (default): every note plays at full level, as the original. On: the MIDI
   velocity scales the level linearly, a velocity-96 note plays at 96/127 of the level. The top
-  bar shows the last note received and its velocity (`A1 vel 100`).
+  bar shows the last note received when it shapes the sound: its name in MIDI Note mode, its
+  velocity when Velocity is On (`A1 vel 100`).
 - **Audition** fires an A1 hit at full velocity through the same path as a MIDI note.
 - **Knobs.** Drag, mouse wheel, Shift for fine control, double-click to reset, click the value to
   type it (`440`, `440 Hz`, or a note name such as `A1` or `C#2` for the frequency knobs).

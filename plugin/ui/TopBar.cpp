@@ -418,8 +418,18 @@ void TopBar::paint (juce::Graphics& g)
     g.setColour (Palette::textDim);
     g.setFont (font (11.5f, Weight::mono));
     juce::String text = juce::String (voices) + "/" + juce::String (Limits::maxVoices) + " voices";
-    if (lastNote >= 0)   // last note received and its MIDI velocity (1-127)
-        text = params::noteNameForMidi (lastNote) + " vel " + juce::String (lastVelocity) + "   " + text;
+    if (lastNote >= 0)
+    {
+        // The last note received, but only what shapes the sound (1.5.2): its name when the
+        // played note sets the pitch (MIDI Note mode), its velocity when the velocity sets the
+        // level (Velocity On). In the default Fixed / Off configuration the LED and the voice
+        // count say all there is to say. The editor repaints the bar whenever a parameter changes.
+        const auto p = processor.getCurrentParams();
+        juce::String last;
+        if (p.pitchSource == PitchSource::midiNote) last = params::noteNameForMidi (lastNote);
+        if (p.velocitySensitive) last += (last.isEmpty() ? "vel " : " vel ") + juce::String (lastVelocity);
+        if (last.isNotEmpty()) text = last + "   " + text;
+    }
     g.drawText (text, feedback.withTrimmedRight (24), juce::Justification::centredRight);
 }
 

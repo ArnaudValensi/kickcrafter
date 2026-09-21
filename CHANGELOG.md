@@ -3,6 +3,12 @@
 All notable changes to KickCrafter. Versions follow the `project()` version in `CMakeLists.txt`.
 State documents carry a schema number; every schema since 1 is still read.
 
+## 1.5.2 — 2026-09-21
+
+- The top bar shows the last note received only when it shapes the sound: its name in MIDI Note
+  mode, its velocity when Velocity is On. With Fixed and Off (the defaults) only the LED and the
+  voice count remain.
+
 ## 1.5.1 — 2026-09-21
 
 - Graphs: after dragging a handle that changes the hit length (the hit end, the sweep knee), the
