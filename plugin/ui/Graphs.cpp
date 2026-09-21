@@ -174,6 +174,10 @@ void GraphPanel::mouseUp (const juce::MouseEvent&)
     endGestures();
     dragging = -1;
     frozenAxis = 0.0;
+    // The preview rebuilt during the drag laid the handles out on the frozen axis; the plot now
+    // uses the rescaled one, so lay them out again or they sit off the curve until the next
+    // parameter change (1.5.1 fix).
+    layoutHandles();
     repaint();
 }
 

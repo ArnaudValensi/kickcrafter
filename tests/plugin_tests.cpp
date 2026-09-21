@@ -1190,6 +1190,23 @@ TEST_CASE ("editor graphs (v1.1): knee only edits the sweep, curve handle spans 
     host.setDisplay (params::hold, 132.0f);
     kc->pollNow(); pump();
 
+    // 3b. Release after the axis grew (1.5.1 fix): the preview rebuilt during the drag laid the
+    //     handles out on the frozen axis; on release they are laid out again on the rescaled one,
+    //     so the end handle sits at the hit end without waiting for the next parameter change.
+    {
+        const auto handle = amp.getHandles()[2];
+        const auto target = handle.position.translated (ampPlot.getWidth() * 0.3f, 0.0f);
+        amp.mouseDown (makeEvent (amp, handle.position, true));
+        amp.mouseDrag (makeEvent (amp, target, true));
+        kc->pollNow(); pump();                                   // the preview (and its axis) rebuilds mid-drag
+        amp.mouseUp (makeEvent (amp, target, false));
+        CHECK (host.getDisplay (params::hold) > 132.0f);
+        const double total = (double) (host.getDisplay (params::sweep) + host.getDisplay (params::hold)) / 1000.0;
+        CHECK_NEAR (amp.getHandles()[2].position.x, amp.xForSeconds (total), 0.5f);
+        host.setDisplay (params::hold, 132.0f);
+        kc->pollNow(); pump();
+    }
+
     // 4. Preset popup: picking the item that is already selected reloads the preset.
     host.processor->loadFactoryPreset (2);
     host.setDisplay (params::drive, 3.3f);                       // "edited"

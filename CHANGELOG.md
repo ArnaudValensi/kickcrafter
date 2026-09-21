@@ -3,6 +3,12 @@
 All notable changes to KickCrafter. Versions follow the `project()` version in `CMakeLists.txt`.
 State documents carry a schema number; every schema since 1 is still read.
 
+## 1.5.1 — 2026-09-21
+
+- Graphs: after dragging a handle that changes the hit length (the hit end, the sweep knee), the
+  handles were left where the frozen axis had put them while the plot had already rescaled, so
+  they sat off the curve until the next parameter change. They are laid out again on release.
+
 ## 1.5.0 — 2026-09-21
 
 - The plug-in is named **KickCrafter** everywhere; it was "KickCrafter Fable" inside hosts. The
