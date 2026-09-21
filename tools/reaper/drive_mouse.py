@@ -47,7 +47,7 @@ def locate():
         raise DriverError("xwininfo failed: " + tree.stderr.strip())
     lines = tree.stdout.splitlines()
     for i, line in enumerate(lines):
-        if "KickCrafter Fable" in line and "Track" in line:
+        if "KickCrafter" in line and "Track" in line:
             m = re.search(r"(\d+)x(\d+)\+(-?\d+)\+(-?\d+)\s+\+(-?\d+)\+(-?\d+)\s*$", line)
             if not m:
                 continue
@@ -65,9 +65,9 @@ def locate():
 def raise_editor():
     """ReaScript invocations raise REAPER's main window above the floating FX window;
     bring the plug-in window back on top before every real mouse action."""
-    ids = sh("search", "--name", "KickCrafter Fable").split()
+    ids = sh("search", "--name", "KickCrafter").split()
     if not ids:
-        raise DriverError("no KickCrafter Fable window to raise")
+        raise DriverError("no KickCrafter window to raise")
     for wid in ids:
         sh("windowraise", wid)
     time.sleep(0.3)

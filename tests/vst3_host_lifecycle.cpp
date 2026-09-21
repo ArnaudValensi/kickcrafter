@@ -1,6 +1,6 @@
 // Minimal real VST3 host for the memory-leak gate (docs/development.md).
 //
-// Loads the ACTUAL built "KickCrafter Fable.vst3" module with dlopen and drives it exactly
+// Loads the ACTUAL built "KickCrafter.vst3" module with dlopen and drives it exactly
 // the way a host does, through the public VST3 interfaces only (no JUCE, no test hooks):
 //   ModuleEntry -> GetPluginFactory -> IPluginFactory3::setHostContext (with a Linux IRunLoop)
 //   -> IComponent + IEditController (connected) -> buses, setupProcessing, setActive,
@@ -175,7 +175,7 @@ struct HostApplication final : HostObject<Vst::IHostApplication>
     explicit HostApplication (RunLoop& r) : runLoop (r) {}
     tresult PLUGIN_API getName (Vst::String128 name) override
     {
-        const char16_t* n = u"KickCrafter Fable leak host";
+        const char16_t* n = u"KickCrafter leak host";
         size_t i = 0; for (; n[i] != 0 && i < 127; ++i) name[i] = (Vst::TChar) n[i]; name[i] = 0; return kResultTrue;
     }
     tresult PLUGIN_API createInstance (TUID, TUID, void** obj) override { *obj = nullptr; return kNotImplemented; }
@@ -436,7 +436,7 @@ struct ViewSession
         const Window root = DefaultRootWindow (display);
         const Window window = XCreateSimpleWindow (display, root, 40, 40, (unsigned) std::max (1, size.getWidth()), (unsigned) std::max (1, size.getHeight()), 0, 0, 0x202020);
         XSelectInput (display, window, StructureNotifyMask | ExposureMask);
-        XStoreName (display, window, "KickCrafter Fable leak host");
+        XStoreName (display, window, "KickCrafter leak host");
         XMapWindow (display, window); XSync (display, False);
         frame.display = display; frame.window = window;
         require (view->attached ((void*) window, kPlatformTypeX11EmbedWindowID) == kResultOk, "attached");

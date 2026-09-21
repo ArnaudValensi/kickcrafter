@@ -40,7 +40,7 @@ KickCrafterProcessor::ControlSnapshot KickCrafterProcessor::captureControlSnapsh
 
 KickCrafterProcessor::KickCrafterProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "KickCrafterFableParams", params::createLayout())
+      apvts (*this, nullptr, "KickCrafterParams", params::createLayout())
 {
     refs.attach (apvts);
     (void) presets::count();                 // initialise the preset catalogue before any audio
@@ -178,7 +178,7 @@ void KickCrafterProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 int KickCrafterProcessor::getNumPrograms() { return 1; }
 int KickCrafterProcessor::getCurrentProgram() { return 0; }
 void KickCrafterProcessor::setCurrentProgram (int) {}
-const juce::String KickCrafterProcessor::getProgramName (int) { return "KickCrafter Fable"; }
+const juce::String KickCrafterProcessor::getProgramName (int) { return "KickCrafter"; }
 
 void KickCrafterProcessor::setLoadedPreset (const presets::Preset& preset)
 {
@@ -369,7 +369,7 @@ void KickCrafterProcessor::setStateInformation (const void* data, int sizeInByte
     const Transaction transaction (*this);
 
     std::unique_ptr<juce::XmlElement> xml (getXmlFromBinary (data, sizeInBytes));
-    if (xml == nullptr || ! xml->hasTagName (stateRootTag))
+    if (xml == nullptr || ! (xml->hasTagName (stateRootTag) || xml->hasTagName (legacyStateRootTag)))
         return;                                   // malformed or foreign state: ignore safely
 
     const juce::ValueTree root = juce::ValueTree::fromXml (*xml);

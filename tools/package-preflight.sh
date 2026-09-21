@@ -16,7 +16,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$here"
 pinned_juce="f72bad64d29715216226685810c5196bd0d79d77"
 record="${KCF_RECORD:-artifacts/logs/build-record.txt}"
-staged="${KCF_STAGED_SO:-artifacts/vst3/KickCrafter Fable.vst3/Contents/x86_64-linux/KickCrafter Fable.so}"
+staged="${KCF_STAGED_SO:-artifacts/vst3/KickCrafter.vst3/Contents/x86_64-linux/KickCrafter.so}"
 testlog="${KCF_TESTLOG:-$(ls -t artifacts/logs/runs/*-plugin-tests.log 2>/dev/null | head -1)}"
 validatorlog="${KCF_VALIDATORLOG:-$(ls -t artifacts/logs/runs/*-validator.log 2>/dev/null | head -1)}"
 die() { echo "PREFLIGHT FAIL: $*" >&2; exit 1; }

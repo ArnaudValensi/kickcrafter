@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KickCrafter Fable — REAPER host validation driver (isolated config, Xvfb :102 + Openbox).
+# KickCrafter — REAPER host validation driver (isolated config, Xvfb :102 + Openbox).
 #
 # Every stage exits nonzero on ANY failed required command, wait, driver or analyzer
 #: FAIL takes precedence over DONE, stages require their own
@@ -49,7 +49,7 @@ shot_checked() {   # shot_checked <png> [region]
     "$here/tools/reaper/image_check.py" uniform "$1" || fail "capture $1 is uniform/black (nothing visible on the display)"
 }
 status_line() {   # status_line <stage> <code>
-    echo "$(date -u +%FT%TZ) stage=$1 exit=$2 bundle=$(sha256sum "$vstpath/KickCrafter Fable.vst3/Contents/x86_64-linux/KickCrafter Fable.so" 2>/dev/null | cut -c1-16)" >> "$results/stage-status.txt"
+    echo "$(date -u +%FT%TZ) stage=$1 exit=$2 bundle=$(sha256sum "$vstpath/KickCrafter.vst3/Contents/x86_64-linux/KickCrafter.so" 2>/dev/null | cut -c1-16)" >> "$results/stage-status.txt"
 }
 
 prepare_config() {
@@ -174,7 +174,7 @@ restore_iconified() {
 # Raise + position the editor; fails (return 1) when the plug-in window is absent or not viewable.
 raise_editor() {   # raise_editor <x> <y>
     local ed
-    ed=$($xdotool_bin search --name "KickCrafter Fable" 2>/dev/null | head -1)
+    ed=$($xdotool_bin search --name "KickCrafter" 2>/dev/null | head -1)
     [ -n "$ed" ] || { fail "plug-in editor window not found"; return 1; }
     restore_iconified
     $xdotool_bin windowactivate --sync "$ed" 2>/dev/null
@@ -306,7 +306,7 @@ layout_point() {   # layout_point <layout-file> <control> -> "x,y" (integers)
 # focus it (the preset popup then never opened: 21:09 attempt of v1.2).
 focus_editor() {
     local ed
-    ed=$($xdotool_bin search --name "KickCrafter Fable" 2>/dev/null | head -1)
+    ed=$($xdotool_bin search --name "KickCrafter" 2>/dev/null | head -1)
     [ -n "$ed" ] || { fail "plug-in editor window not found"; return 1; }
     $xdotool_bin windowactivate --sync "$ed" 2>/dev/null; sleep 0.4
 }
@@ -621,7 +621,7 @@ EOF
     [ -n "$main" ] || { fail "REAPER main window not found"; return 1; }
     $xdotool_bin windowactivate --sync "$main" 2>/dev/null; sleep 0.5
     local visible="" w
-    for w in $($xdotool_bin search --name "KickCrafter Fable" 2>/dev/null || true); do
+    for w in $($xdotool_bin search --name "KickCrafter" 2>/dev/null || true); do
         xwininfo -id "$w" 2>/dev/null | grep -q "IsViewable" && visible="$visible $w"
     done
     [ -z "$visible" ] || { fail "editor window still visible for the automation capture ($visible)"; return 1; }

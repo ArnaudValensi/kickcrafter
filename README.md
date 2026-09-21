@@ -31,18 +31,18 @@ Download the archive for your platform from the
 few minutes: [docs/development.md](docs/development.md#building-from-source)), extract it, copy the
 bundle where your host looks for plug-ins, and rescan plug-ins. Every archive holds an
 `INSTALL.txt` with the same instructions, the licences and the changelog. The plug-in appears as
-**KickCrafter Fable** (vendor Arnaud Valensi) in the instrument list; insert it on a track and send
+**KickCrafter** (vendor Arnaud Valensi) in the instrument list; insert it on a track and send
 it MIDI notes.
 
 ### Linux (x86_64, VST3)
 
-`kickcrafter-fable-<version>-linux-x86_64.tar.gz`. Copy `KickCrafter Fable.vst3` into a folder your
+`kickcrafter-<version>-linux-x86_64.tar.gz`. Copy `KickCrafter.vst3` into a folder your
 host scans, for example `~/.vst3/`.
 
 ### macOS (Apple Silicon and Intel, VST3 and Audio Unit)
 
-`kickcrafter-fable-<version>-macos-universal.zip`, macOS 11 or later. Copy `KickCrafter Fable.vst3`
-into `~/Library/Audio/Plug-Ins/VST3/` and `KickCrafter Fable.component` into
+`kickcrafter-<version>-macos-universal.zip`, macOS 11 or later. Copy `KickCrafter.vst3`
+into `~/Library/Audio/Plug-Ins/VST3/` and `KickCrafter.component` into
 `~/Library/Audio/Plug-Ins/Components/` (Logic and GarageBand load the Audio Unit, most other hosts
 the VST3). Releases are signed with a Developer ID and notarized; `INSTALL.txt` says so, or says
 what to do when a build is not. This build is compiled and unit-tested by the project's continuous
@@ -50,7 +50,7 @@ integration; it has not yet been validated in a host by the maintainer.
 
 ### Windows (x64, VST3)
 
-`kickcrafter-fable-<version>-windows-x86_64.zip`. Copy `KickCrafter Fable.vst3` into
+`kickcrafter-<version>-windows-x86_64.zip`. Copy `KickCrafter.vst3` into
 `C:\Program Files\Common Files\VST3\`. This build is compiled and unit-tested by the project's
 continuous integration; it has not yet been validated in a host by the maintainer, and it is not
 code-signed.
@@ -127,8 +127,8 @@ band-limited, on purpose.
 The preset list has a *Factory* section (eight presets shipped in the plug-in) and a *User* section
 (your own). The `...` button saves, renames, deletes, opens the user presets folder and rescans it.
 User presets are plain XML files, one per preset, easy to back up or share, in
-`~/.config/KickCrafterFable/Presets/` on Linux, `~/Library/Application Support/KickCrafterFable/Presets/`
-on macOS and `%APPDATA%\KickCrafterFable\Presets\` on Windows (the `KCF_PRESET_DIR` environment
+`~/.config/KickCrafter/Presets/` on Linux, `~/Library/Application Support/KickCrafter/Presets/`
+on macOS and `%APPDATA%\KickCrafter\Presets\` on Windows (the `KCF_PRESET_DIR` environment
 variable overrides the folder); "• edited" after a name means the current values differ from the
 loaded preset.
 

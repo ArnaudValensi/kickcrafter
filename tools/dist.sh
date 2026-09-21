@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Pack what build/ holds into the per-platform archive under artifacts/dist/ (no publication):
-#   kickcrafter-fable-<version>-linux-x86_64.tar.gz    KickCrafter Fable.vst3/
-#   kickcrafter-fable-<version>-macos-universal.zip    KickCrafter Fable.vst3/ and KickCrafter Fable.component/
-#   kickcrafter-fable-<version>-windows-x86_64.zip     KickCrafter Fable.vst3/
+#   kickcrafter-<version>-linux-x86_64.tar.gz    KickCrafter.vst3/
+#   kickcrafter-<version>-macos-universal.zip    KickCrafter.vst3/ and KickCrafter.component/
+#   kickcrafter-<version>-windows-x86_64.zip     KickCrafter.vst3/
 # Every archive also holds README.md, CHANGELOG.md, LICENSE, THIRD_PARTY_NOTICES.md, INSTALL.txt
 # (the platform's install path) and licenses/ (the full licence text of every shipped third-party
 # component; the list lives here and nowhere else). The version is project(... VERSION ...) of
@@ -10,10 +10,10 @@
 # produce the same file name.
 #
 # usage: tools/dist.sh                        stage build/ and archive it into artifacts/dist/ (./run dist, CI)
-#        tools/dist.sh name                   print the archive base name (kickcrafter-fable-<version>-<platform>)
+#        tools/dist.sh name                   print the archive base name (kickcrafter-<version>-<platform>)
 #        tools/dist.sh version                print <version> (with the CI sha suffix when it applies)
 #        tools/dist.sh stage <dir> [<from>]   fill <dir> with the bundles found under <from> and the documents
-#                                             (<from> defaults to build/KickCrafterFable_artefacts/Release)
+#                                             (<from> defaults to build/KickCrafter_artefacts/Release)
 #        tools/dist.sh archive <dir> <out>    archive a staged <dir> into <out>/<basename of dir>.<tar.gz|zip>
 # tools/package.sh uses stage and archive so it can add BUILD-RECORD.txt and its validation lines.
 #
@@ -38,7 +38,7 @@ rev="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 if [ "${GITHUB_ACTIONS:-}" = "true" ] && [ "${GITHUB_REF_TYPE:-}" != "tag" ]; then
     version="$version-$rev"
 fi
-name="kickcrafter-fable-$version-$platform"
+name="kickcrafter-$version-$platform"
 
 # The licence texts of every shipped third-party component (THIRD_PARTY_NOTICES.md names them).
 copy_licences() {   # copy_licences <licenses dir>
@@ -57,35 +57,35 @@ copy_licences() {   # copy_licences <licenses dir>
 }
 
 install_text() {
-    echo "KickCrafter Fable $version, $platform_label. Built from commit $rev."
+    echo "KickCrafter $version, $platform_label. Built from commit $rev."
     case "$platform" in
         linux-*)
-            echo 'Copy "KickCrafter Fable.vst3" into a VST3 folder your host scans (for example ~/.vst3/) and rescan plug-ins.' ;;
+            echo 'Copy "KickCrafter.vst3" into a VST3 folder your host scans (for example ~/.vst3/) and rescan plug-ins.' ;;
         macos-*)
-            echo 'Copy "KickCrafter Fable.vst3" into ~/Library/Audio/Plug-Ins/VST3/ and "KickCrafter Fable.component" into'
+            echo 'Copy "KickCrafter.vst3" into ~/Library/Audio/Plug-Ins/VST3/ and "KickCrafter.component" into'
             echo '~/Library/Audio/Plug-Ins/Components/, then rescan plug-ins (Logic and GarageBand load the AU, most other hosts the VST3).'
             # One line, which tools/macos-sign.sh rewrites when it signs (and notarizes) a release.
             echo 'Signing: not signed. macOS refuses a downloaded unsigned bundle until its quarantine attribute is removed: xattr -dr com.apple.quarantine "<the copied bundle>"' ;;
         windows-*)
-            echo 'Copy "KickCrafter Fable.vst3" into C:\Program Files\Common Files\VST3\ and rescan plug-ins.' ;;
+            echo 'Copy "KickCrafter.vst3" into C:\Program Files\Common Files\VST3\ and rescan plug-ins.' ;;
     esac
     echo "Licence: AGPL-3.0-or-later (LICENSE). Third-party components: THIRD_PARTY_NOTICES.md and licenses/."
 }
 
 stage() {   # stage <dir> [<from>]: the bundle(s) built under <from>, the documents, the licences, INSTALL.txt
-    local dir="$1" from="${2:-build/KickCrafterFable_artefacts/Release}" b
+    local dir="$1" from="${2:-build/KickCrafter_artefacts/Release}" b
     [ -d "$from" ] || die "nothing built under $from"
     mkdir -p "$dir/licenses"
     # The bundles sit under a format folder in build/ and directly under artifacts/vst3 (package.sh).
-    for b in "$from/VST3/KickCrafter Fable.vst3" "$from/KickCrafter Fable.vst3" \
-             "$from/AU/KickCrafter Fable.component" "$from/KickCrafter Fable.component"; do
+    for b in "$from/VST3/KickCrafter.vst3" "$from/KickCrafter.vst3" \
+             "$from/AU/KickCrafter.component" "$from/KickCrafter.component"; do
         [ -d "$b" ] || continue
         cp -R "$b" "$dir/"
         echo "staged: $b"
     done
     # Every platform ships the VST3; macOS ships the AU component as well. A partial build refuses.
-    [ -d "$dir/KickCrafter Fable.vst3" ] || die "no KickCrafter Fable.vst3 under $from"
-    case "$platform" in macos-*) [ -d "$dir/KickCrafter Fable.component" ] || die "no KickCrafter Fable.component under $from" ;; esac
+    [ -d "$dir/KickCrafter.vst3" ] || die "no KickCrafter.vst3 under $from"
+    case "$platform" in macos-*) [ -d "$dir/KickCrafter.component" ] || die "no KickCrafter.component under $from" ;; esac
     cp README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md "$dir/"
     copy_licences "$dir/licenses"
     install_text > "$dir/INSTALL.txt"
@@ -130,7 +130,7 @@ case "${1:-}" in
         sha256 "$file" ;;
     name)    echo "$name" ;;
     version) echo "$version" ;;
-    stage)   [ $# -ge 2 ] || die "usage: dist.sh stage <dir> [<from>]"; stage "$2" "${3:-build/KickCrafterFable_artefacts/Release}" ;;
+    stage)   [ $# -ge 2 ] || die "usage: dist.sh stage <dir> [<from>]"; stage "$2" "${3:-build/KickCrafter_artefacts/Release}" ;;
     archive) [ $# -eq 3 ] || die "usage: dist.sh archive <staged dir> <out dir>"; archive "$2" "$3" ;;
     *) die "unknown command: $1 (see the header of tools/dist.sh)" ;;
 esac

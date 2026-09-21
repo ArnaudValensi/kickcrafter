@@ -7,8 +7,8 @@ here="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$here"
 validator="${KCF_VALIDATOR:-$(command -v validator || true)}"   # Steinberg VST3 SDK validator (build it from the SDK, or set KCF_VALIDATOR)
 [ -n "$validator" ] && [ -x "$validator" ] || { echo "VST3 validator not found: set KCF_VALIDATOR to the Steinberg SDK validator executable" >&2; exit 2; }
-bundle="${1:-artifacts/vst3/KickCrafter Fable.vst3}"
-so="$bundle/Contents/x86_64-linux/KickCrafter Fable.so"
+bundle="${1:-artifacts/vst3/KickCrafter.vst3}"
+so="$bundle/Contents/x86_64-linux/KickCrafter.so"
 [ -f "$so" ] || { echo "bundle module missing: $so" >&2; exit 2; }
 stamp="$(date -u +%Y%m%dT%H%M%S.%NZ)-$$"
 log="artifacts/logs/runs/$stamp-validator.log"

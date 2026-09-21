@@ -2,7 +2,7 @@
 # Sign, notarize and staple the macOS bundles of a dist archive, verify them, and archive them again
 # (decision 10 of epics/multi-platform-build, reproducing the owner's reference workflows).
 #
-# usage: tools/macos-sign.sh <kickcrafter-fable-<version>-macos-universal.zip> [<out dir>]
+# usage: tools/macos-sign.sh <kickcrafter-<version>-macos-universal.zip> [<out dir>]
 #        writes <out dir>/<same file name> (default: next to the input, replacing it)
 #
 # Environment (the six repository secrets of release.yml; nothing is ever printed, there is no set -x):
@@ -43,8 +43,8 @@ trap cleanup EXIT
 ditto -x -k "$archive" "$work/unpacked"
 folder="$(find "$work/unpacked" -mindepth 1 -maxdepth 1 -type d | head -1)"
 [ -n "$folder" ] || die "the archive holds no folder"
-vst3="$folder/KickCrafter Fable.vst3"
-component="$folder/KickCrafter Fable.component"
+vst3="$folder/KickCrafter.vst3"
+component="$folder/KickCrafter.component"
 [ -d "$vst3" ] || die "missing $vst3"
 [ -d "$component" ] || die "missing $component"
 [ -f "$folder/INSTALL.txt" ] || die "missing INSTALL.txt"
@@ -122,7 +122,7 @@ mv "$work/final.zip" "$final"
 #    packages (--type install) and disk images (--type open); a bare plug-in bundle is none of
 #    these, so its spctl verdict is information for the reader, not a verdict on the release.
 ditto -x -k "$final" "$work/verify"
-for name in "KickCrafter Fable.vst3" "KickCrafter Fable.component"; do
+for name in "KickCrafter.vst3" "KickCrafter.component"; do
     bundle="$work/verify/$(basename "$folder")/$name"
     note ""
     note "### $name"

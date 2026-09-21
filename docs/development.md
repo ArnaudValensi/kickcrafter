@@ -114,14 +114,14 @@ git clone https://github.com/ArnaudValensi/kickcrafter.git
 cd kickcrafter
 tools/fetch-juce.sh                                   # once: JUCE 8.0.9, pinned by commit, into external/JUCE
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build --target KickCrafterFable_VST3
-mkdir -p ~/.vst3 && cp -r "build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3" ~/.vst3/
+cmake --build build --target KickCrafter_VST3
+mkdir -p ~/.vst3 && cp -r "build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3" ~/.vst3/
 ```
 
 Requirements: section 1 of "Setting up" above. On macOS: the Xcode Command Line Tools
 (`xcode-select --install`), CMake and Ninja (`brew install cmake ninja`); the build is universal
 (`arm64;x86_64`, macOS 11 or later) by default, `-DCMAKE_OSX_ARCHITECTURES=arm64` makes it native
-only, and the AU component lands next to the VST3 under `build/KickCrafterFable_artefacts/Release/AU/`.
+only, and the AU component lands next to the VST3 under `build/KickCrafter_artefacts/Release/AU/`.
 On Windows: Visual Studio 2022 Build Tools with the "Desktop development with C++" workload, CMake,
 Ninja and Git for Windows; run `./run` from Git Bash inside a "x64 Native Tools" developer prompt
 (or after `vcvars64.bat`), so that `cl.exe` is on `PATH` for Ninja. The default targets of `./run
@@ -132,11 +132,11 @@ Linux:
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build --target KickCrafterFable_VST3 KickCrafterFable_Standalone \
+cmake --build build --target KickCrafter_VST3 KickCrafter_Standalone \
                               kcf_engine_tests kcf_plugin_tests kcf_leak_tests kcf_vst3_host
 ```
 
-Outputs: `build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3`, the Standalone
+Outputs: `build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3`, the Standalone
 application next to it, and the test executables under `build/tests/`. The delivered build uses
 LTO; assertions stay enabled in Release (the test harness relies on them).
 
@@ -191,12 +191,12 @@ manifest is recorded for information only). `tools/package-preflight.sh` refuses
 production sources no longer match the record, when the newest test or validator logs do not name the
 recorded binaries, or when the archived paths are not committed; `tools/package-negative-controls.sh`
 proves those refusals with fixtures in a scratch repository. `tools/package.sh` then builds three archives under
-`artifacts/dist/`, named `kickcrafter-fable-<version>-...` after the `project()` version (binary with
+`artifacts/dist/`, named `kickcrafter-<version>-...` after the `project()` version (binary with
 all licence texts and `BUILD-RECORD.txt`, source with the pinned JUCE tree, evidence) plus
 `SHA256SUMS`.
 
 `tools/dist.sh` (`./run dist`) is the platform-neutral part of that: it packs what `build/` holds
-into `artifacts/dist/kickcrafter-fable-<version>-<platform>.tar.gz` on Linux (`.zip` on macOS,
+into `artifacts/dist/kickcrafter-<version>-<platform>.tar.gz` on Linux (`.zip` on macOS,
 with the AU component, and on Windows) with `README.md`, `CHANGELOG.md`, `LICENSE`,
 `THIRD_PARTY_NOTICES.md`, an `INSTALL.txt` naming the platform's install path, and `licenses/`
 (the licence list lives there only; `package.sh` calls it). It is CI's last step on every
@@ -258,7 +258,7 @@ Things learned the hard way, kept here so nobody rediscovers them:
 ```sh
 tools/memory-check.sh                     # pass A: LeakSanitizer preloaded into the ordinary binaries   (./run memory)
 cmake -S . -B build-leak -G Ninja -DCMAKE_BUILD_TYPE=Release -DKCF_SANITIZE_PLUGIN=ON
-ninja -C build-leak KickCrafterFable_VST3 kcf_plugin_tests kcf_leak_tests kcf_vst3_host
+ninja -C build-leak KickCrafter_VST3 kcf_plugin_tests kcf_leak_tests kcf_vst3_host
 tools/memory-check.sh --diag              # pass B: diagnostic build                                    (./run memory --diag builds build-leak first)
 ```
 
@@ -288,9 +288,9 @@ bundles, which must read `x86_64 arm64`. The engine tests are the only tests CI 
 JUCE-free, six seconds, and the only proof that the three binaries make the same sound; the plug-in
 tests, the validator, the REAPER harness and the memory gate need this development machine.
 
-Each job uploads two workflow artifacts kept 14 days: `kickcrafter-fable-<platform>` holds
+Each job uploads two workflow artifacts kept 14 days: `kickcrafter-<platform>` holds
 `artifacts/dist/` (the archive `dist.sh` made, with `-<short sha>` after the version when the run
-is not on a tag), and `kickcrafter-fable-<platform>-logs` holds `artifacts/logs/` (the configure,
+is not on a tag), and `kickcrafter-<platform>-logs` holds `artifacts/logs/` (the configure,
 build, engine-test and dist logs with their `.exit` sidecars, the evidence convention of this
 project) and is uploaded even when a step failed, since the console only shows the logs' paths.
 A superseded run of the same ref is cancelled. The workflow grants itself `contents: read` only.
@@ -359,7 +359,8 @@ Rescan reports why):
 
 The factory bank is the set of files under `resources/presets/`, compiled into the binary (the
 numeric prefix fixes the order): edit or add files there and rebuild to change it. The user library
-is `~/.config/KickCrafterFable/Presets/`, or the folder named by `KCF_PRESET_DIR`, scanned on
+is `~/.config/KickCrafter/Presets/` (a `~/.config/KickCrafterFable/Presets/` left by 1.0 to 1.4 is moved
+there the first time the editor opens), or the folder named by `KCF_PRESET_DIR`, scanned on
 demand; a project remembers its preset by kind and name and shows "(missing)" when the file is gone.
 
 ## Conventions

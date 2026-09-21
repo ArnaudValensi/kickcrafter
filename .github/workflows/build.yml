@@ -1,4 +1,4 @@
-# Build KickCrafter Fable on the three platforms and run the JUCE-free engine tests on each: the
+# Build KickCrafter on the three platforms and run the JUCE-free engine tests on each: the
 # only proof that every binary makes the same sound. CI builds, it does not validate: the gates
 # (`./run check`, `./run validate`, `./run memory`, the REAPER harness) run on the development
 # machine only (docs/development.md, "Continuous integration and releases").
@@ -74,10 +74,10 @@ jobs:
       - name: Architectures of the macOS bundles
         if: runner.os == 'macOS'
         run: |
-          for bundle in "build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3" \
-                        "build/KickCrafterFable_artefacts/Release/AU/KickCrafter Fable.component"; do
+          for bundle in "build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3" \
+                        "build/KickCrafter_artefacts/Release/AU/KickCrafter.component"; do
             printf '%s: ' "$bundle"
-            lipo -archs "$bundle/Contents/MacOS/KickCrafter Fable"
+            lipo -archs "$bundle/Contents/MacOS/KickCrafter"
           done
 
       - name: Archive
@@ -86,7 +86,7 @@ jobs:
       - name: Upload the archive
         uses: actions/upload-artifact@v7
         with:
-          name: kickcrafter-fable-${{ matrix.platform }}
+          name: kickcrafter-${{ matrix.platform }}
           path: artifacts/dist/
           retention-days: 14
           if-no-files-found: error
@@ -98,7 +98,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: kickcrafter-fable-${{ matrix.platform }}-logs
+          name: kickcrafter-${{ matrix.platform }}-logs
           path: artifacts/logs/
           retention-days: 14
           if-no-files-found: warn

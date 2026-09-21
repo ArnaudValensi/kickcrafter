@@ -7,7 +7,7 @@
 
 usage: find_highlight.py <png> <x0> <y0> <x1> <y1> [r,g,b] [tolerance]
 Searches the given screen region for pixels of the menu highlight colour (default: the
-KickCrafter Fable theme's selected-row colour 113,66,36) and prints the centre of their
+KickCrafter theme's selected-row colour 113,66,36) and prints the centre of their
 bounding box. Exits 1 when no plausible highlighted row exists (fewer than 400 pixels or a
 bounding box that is not row-shaped)."""
 import sys

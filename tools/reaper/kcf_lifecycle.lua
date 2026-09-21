@@ -1,4 +1,4 @@
--- KickCrafter Fable: REAPER check 7 helper, run with automation.rpp open.
+-- KickCrafter: REAPER check 7 helper, run with automation.rpp open.
 --  a) same project, same rate: render with the editor CLOSED and with the editor OPEN
 --     (editor-closed.wav / editor-open.wav, compared sample-exact by analyze_render.py --lifecycle)
 --  b) close/reopen the editor, change the project/render sample rate to 96 kHz and 44.1 kHz,

@@ -29,7 +29,7 @@ cfg_exit=$?
 echo "configure exit=$cfg_exit ($cfg_log)" >> "$status"
 if [ "$cfg_exit" -ne 0 ]; then echo "chain FAILED (configure) $(date -u +%FT%TZ)" >> "$status"; exit 1; fi
 
-( cd build && ninja -j"$jobs" -k 0 kcf_plugin_tests kcf_engine_tests KickCrafterFable_VST3 ) > "$build_log" 2>&1
+( cd build && ninja -j"$jobs" -k 0 kcf_plugin_tests kcf_engine_tests KickCrafter_VST3 ) > "$build_log" 2>&1
 build_exit=$?
 echo "build exit=$build_exit ($build_log)" >> "$status"
 # Compatibility copies for readers of the old fixed paths (always fresh for this run).
@@ -52,8 +52,8 @@ fi
 
 mkdir -p artifacts/reaper
 DISPLAY=:104 ./build/tests/kcf_plugin_tests --layout 100 > artifacts/reaper/layout-100.txt 2>&1 || { echo "chain FAILED (layout dump) $(date -u +%FT%TZ)" >> "$status"; exit 1; }
-mkdir -p artifacts/vst3 && rm -rf "artifacts/vst3/KickCrafter Fable.vst3" && cp -r "build/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3" artifacts/vst3/ || { echo "chain FAILED (staging) $(date -u +%FT%TZ)" >> "$status"; exit 1; }
-so="artifacts/vst3/KickCrafter Fable.vst3/Contents/x86_64-linux/KickCrafter Fable.so"
+mkdir -p artifacts/vst3 && rm -rf "artifacts/vst3/KickCrafter.vst3" && cp -r "build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3" artifacts/vst3/ || { echo "chain FAILED (staging) $(date -u +%FT%TZ)" >> "$status"; exit 1; }
+so="artifacts/vst3/KickCrafter.vst3/Contents/x86_64-linux/KickCrafter.so"
 sha256sum "$so" >> "$status"
 cp build/CMakeCache.txt "artifacts/logs/runs/$stamp-CMakeCache.txt"
 {

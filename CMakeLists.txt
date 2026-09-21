@@ -1,4 +1,4 @@
-# KickCrafter Fable - reproducible CMake build.
+# KickCrafter - reproducible CMake build.
 # SPDX-License-Identifier: AGPL-3.0-or-later
 cmake_minimum_required(VERSION 3.22)
 
@@ -17,7 +17,7 @@ if(CMAKE_HOST_APPLE)
     endif()
 endif()
 
-project(KickCrafterFable VERSION 1.5.0 LANGUAGES C CXX)
+project(KickCrafter VERSION 1.5.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -112,7 +112,7 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
     set(JUCE_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     add_subdirectory(${KCF_JUCE_DIR} ${CMAKE_BINARY_DIR}/juce EXCLUDE_FROM_ALL)
 
-    juce_add_binary_data(KickCrafterFableAssets
+    juce_add_binary_data(KickCrafterAssets
         HEADER_NAME KcfAssets.h
         NAMESPACE KcfAssets
         SOURCES
@@ -129,11 +129,11 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
             resources/presets/07-long-boom.xml
             resources/presets/08-gabber.xml)
 
-    juce_add_plugin(KickCrafterFable
-        PRODUCT_NAME "KickCrafter Fable"
+    juce_add_plugin(KickCrafter
+        PRODUCT_NAME "KickCrafter"
         COMPANY_NAME "Arnaud Valensi"
         COMPANY_COPYRIGHT "Copyright (c) 2026 Arnaud Valensi. AGPL-3.0-or-later."
-        BUNDLE_ID "com.arnaudvalensi.kickcrafter-fable"
+        BUNDLE_ID "com.arnaudvalensi.kickcrafter"
         PLUGIN_MANUFACTURER_CODE Arnv
         PLUGIN_CODE Kcfb
         FORMATS VST3 AU Standalone   # AU only exists on macOS: JUCE drops it elsewhere
@@ -147,7 +147,7 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
         VST3_AUTO_MANIFEST FALSE
         DESCRIPTION "One-kick wavetable synthesiser with frozen per-note snapshots")
 
-    target_sources(KickCrafterFable PRIVATE
+    target_sources(KickCrafter PRIVATE
         plugin/Parameters.cpp
         plugin/Parameters.h
         plugin/Presets.cpp
@@ -166,9 +166,9 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
         plugin/ui/TopBar.cpp
         plugin/ui/TopBar.h)
 
-    target_include_directories(KickCrafterFable PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(KickCrafter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-    target_compile_definitions(KickCrafterFable PUBLIC
+    target_compile_definitions(KickCrafter PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
@@ -184,10 +184,10 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
         JUCE_STRICT_REFCOUNTEDPOINTER=1
         KCF_VERSION_STRING="${PROJECT_VERSION}")
 
-    target_link_libraries(KickCrafterFable
+    target_link_libraries(KickCrafter
         PRIVATE
             kcf_engine
-            KickCrafterFableAssets
+            KickCrafterAssets
             juce::juce_audio_utils
             juce::juce_audio_processors
             juce::juce_gui_basics
@@ -197,11 +197,11 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
             $<$<NOT:$<BOOL:${KCF_SANITIZE_PLUGIN}>>:juce::juce_recommended_lto_flags>
             juce::juce_recommended_warning_flags)
     if(KCF_SANITIZE_PLUGIN)
-        target_link_libraries(KickCrafterFable PUBLIC kcf_memory_instrumentation)
+        target_link_libraries(KickCrafter PUBLIC kcf_memory_instrumentation)
     endif()
 
     # Keep the engine visible to the test executables that link the shared code.
-    target_link_libraries(KickCrafterFable PUBLIC kcf_engine)
+    target_link_libraries(KickCrafter PUBLIC kcf_engine)
 endif()
 
 # ----------------------------------------------------------------- tests ----

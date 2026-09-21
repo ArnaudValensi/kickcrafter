@@ -1,4 +1,4 @@
-// KickCrafter Fable - hardware independent kick synthesis engine.
+// KickCrafter - hardware independent kick synthesis engine.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
 // This header has no JUCE or host dependencies. It describes the musical

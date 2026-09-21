@@ -1,9 +1,9 @@
--- KickCrafter Fable: REAPER host checks 1-4 (isolated config, dummy audio).
--- Environment: KCF_TEST_DIR (results directory), KCF_FX (defaults to "VST3i: KickCrafter Fable").
+-- KickCrafter: REAPER host checks 1-4 (isolated config, dummy audio).
+-- Environment: KCF_TEST_DIR (results directory), KCF_FX (defaults to "VST3i: KickCrafter").
 -- Writes reaper-setup-results.txt, saves control.rpp / automation.rpp, renders both,
 -- reopens automation.rpp and verifies state + envelope points, then opens the editor.
 local directory = assert(os.getenv("KCF_TEST_DIR"), "KCF_TEST_DIR is required")
-local requested = os.getenv("KCF_FX") or "VST3i: KickCrafter Fable"
+local requested = os.getenv("KCF_FX") or "VST3i: KickCrafter"
 local output = assert(io.open(directory .. "/reaper-setup-results.txt", "w"))
 local function log(message) output:write(message .. "\n"); output:flush() end
 local function check(ok, message) if not ok then error(message) end end

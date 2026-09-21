@@ -1,4 +1,4 @@
-# Release KickCrafter Fable. On a version tag `v<project version>`: check the tag against
+# Release KickCrafter. On a version tag `v<project version>`: check the tag against
 # CMakeLists.txt and the CHANGELOG, rebuild the three platforms through build.yml (unchanged), sign
 # and notarize the macOS bundles with tools/macos-sign.sh, then publish the GitHub Release with
 # the three archives and SHA256SUMS (the owner's decision, 2026-09-20: the workflow releases, no
@@ -82,7 +82,7 @@ jobs:
       - name: Download the macOS archive
         uses: actions/download-artifact@v8
         with:
-          name: kickcrafter-fable-macos-universal
+          name: kickcrafter-macos-universal
           path: dist-macos
 
       - name: Sign, notarize, staple, verify (or ad hoc when the identity is absent)
@@ -95,14 +95,14 @@ jobs:
           MACOS_NOTARY_TEAM_ID: ${{ secrets.MACOS_NOTARY_TEAM_ID }}
           MACOS_NOTARY_PASSWORD: ${{ secrets.MACOS_NOTARY_PASSWORD }}
         run: |
-          archive="$(find dist-macos -name 'kickcrafter-fable-*-macos-universal.zip' | head -1)"
+          archive="$(find dist-macos -name 'kickcrafter-*-macos-universal.zip' | head -1)"
           [ -n "$archive" ] || { echo "::error::no macOS archive in the build artifact"; exit 1; }
           tools/macos-sign.sh "$archive" signed
 
       - name: Upload the signed archive
         uses: actions/upload-artifact@v7
         with:
-          name: kickcrafter-fable-macos-universal-signed
+          name: kickcrafter-macos-universal-signed
           path: signed/
           retention-days: 14
           if-no-files-found: error
@@ -117,19 +117,19 @@ jobs:
       - name: Download the Linux archive
         uses: actions/download-artifact@v8
         with:
-          name: kickcrafter-fable-linux-x86_64
+          name: kickcrafter-linux-x86_64
           path: assets
 
       - name: Download the Windows archive
         uses: actions/download-artifact@v8
         with:
-          name: kickcrafter-fable-windows-x86_64
+          name: kickcrafter-windows-x86_64
           path: assets
 
       - name: Download the signed macOS archive
         uses: actions/download-artifact@v8
         with:
-          name: kickcrafter-fable-macos-universal-signed
+          name: kickcrafter-macos-universal-signed
           path: assets
 
       - name: SHA256SUMS, one archive per platform
@@ -137,10 +137,10 @@ jobs:
         run: |
           cd assets
           for suffix in linux-x86_64.tar.gz macos-universal.zip windows-x86_64.zip; do
-            n="$(ls kickcrafter-fable-*-$suffix 2>/dev/null | wc -l | tr -d ' ')"
-            [ "$n" = 1 ] || { echo "::error::expected one kickcrafter-fable-*-$suffix, found $n"; exit 1; }
+            n="$(ls kickcrafter-*-$suffix 2>/dev/null | wc -l | tr -d ' ')"
+            [ "$n" = 1 ] || { echo "::error::expected one kickcrafter-*-$suffix, found $n"; exit 1; }
           done
-          sha256sum kickcrafter-fable-* > SHA256SUMS
+          sha256sum kickcrafter-* > SHA256SUMS
           { echo '```'; cat SHA256SUMS; echo '```'; } | tee -a "$GITHUB_STEP_SUMMARY"
 
       # Only the push of a version tag releases (the push trigger admits tags v* only); a
@@ -150,16 +150,16 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
-          name: KickCrafter Fable ${{ needs.verify.outputs.version }}
+          name: KickCrafter ${{ needs.verify.outputs.version }}
           draft: false
           body: |
             See CHANGELOG.md, section ${{ needs.verify.outputs.version }}, and INSTALL.txt inside each
             archive. Linux x86_64 VST3, macOS universal VST3 and AU (signed and notarized), Windows
             x64 VST3.
           files: |
-            assets/kickcrafter-fable-*-linux-x86_64.tar.gz
-            assets/kickcrafter-fable-*-macos-universal.zip
-            assets/kickcrafter-fable-*-windows-x86_64.zip
+            assets/kickcrafter-*-linux-x86_64.tar.gz
+            assets/kickcrafter-*-macos-universal.zip
+            assets/kickcrafter-*-windows-x86_64.zip
             assets/SHA256SUMS
           fail_on_unmatched_files: true
 

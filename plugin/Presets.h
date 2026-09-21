@@ -1,5 +1,5 @@
 // Presets: the factory bank embedded from resources/presets/*.xml and the user
-// library on disk (~/.config/KickCrafterFable/Presets, or $KCF_PRESET_DIR). One
+// library on disk (~/.config/KickCrafter/Presets, or $KCF_PRESET_DIR). One
 // text format for both. Loading a preset only changes the parameter model, so it
 // affects subsequent hits only (per-note snapshot rule). Everything here runs on
 // the message thread (or test threads); nothing is called from the audio thread.
@@ -46,7 +46,10 @@ juce::String fileNameFor (const juce::String& name);   // "<sanitised>.xml"
 class Library
 {
 public:
-    static juce::File defaultDirectory();             // $KCF_PRESET_DIR or ~/.config/KickCrafterFable/Presets
+    static juce::File defaultDirectory();             // $KCF_PRESET_DIR or ~/.config/KickCrafter/Presets
+    // <base>/KickCrafter/Presets; a library left by 1.0 to 1.4 under <base>/KickCrafterFable/Presets
+    // is moved there once (and stays in use if the move fails). Exposed for the tests.
+    static juce::File resolveDefaultDirectory (const juce::File& base);
     explicit Library (const juce::File& directory = defaultDirectory());
 
     const juce::File& directory() const noexcept { return dir; }

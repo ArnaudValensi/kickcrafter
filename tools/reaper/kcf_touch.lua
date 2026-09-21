@@ -1,4 +1,4 @@
--- KickCrafter Fable: REAPER check 5 (Touch mode). Run in the instance that has
+-- KickCrafter: REAPER check 5 (Touch mode). Run in the instance that has
 -- automation.rpp open. Loops playback for KCF_OBSERVE seconds (default 40) while
 -- an external driver moves a native knob (Start Frequency) and a graph handle
 -- (Sweep Time). Records both envelopes and requires several distinct values

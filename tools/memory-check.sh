@@ -33,14 +33,14 @@ outdir="artifacts/logs/memory/$stamp-pass$mode"
 mkdir -p "$outdir"
 validator="${KCF_VALIDATOR:-$(command -v validator || true)}"   # Steinberg VST3 SDK validator (build it from the SDK, or set KCF_VALIDATOR)
 [ -n "$validator" ] && [ -x "$validator" ] || { echo "VST3 validator not found: set KCF_VALIDATOR to the Steinberg SDK validator executable" >&2; exit 2; }
-staged_so="artifacts/vst3/KickCrafter Fable.vst3/Contents/x86_64-linux/KickCrafter Fable.so"
+staged_so="artifacts/vst3/KickCrafter.vst3/Contents/x86_64-linux/KickCrafter.so"
 if [ "$mode" = "A" ]; then
     bdir="build"; module="$staged_so"; module_kind="delivered (staged) module, uninstrumented"
     lsan_so="$(gcc -print-file-name=liblsan.so)"
     [ -f "$lsan_so" ] || { echo "liblsan.so not found"; exit 2; }
     preload="LD_PRELOAD=$lsan_so"
 else
-    bdir="build-leak"; module="$bdir/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3/Contents/x86_64-linux/KickCrafter Fable.so"
+    bdir="build-leak"; module="$bdir/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3/Contents/x86_64-linux/KickCrafter.so"
     module_kind="diagnostic ASan/LSan build (build-leak): own sources instrumented, JUCE -O1 -g1 uninstrumented, sanitizer runtime linked"
     preload=""
 fi
@@ -100,12 +100,12 @@ run vst3-host-negative    leak  "$bdir/tests/kcf_vst3_host --cycles 1 --intentio
 if [ "$mode" = "A" ]; then
     # Steinberg validator (uninstrumented host binary) with the standalone leak checker preloaded:
     # host-owned allocations are attributed by module in the report (see the analysis step).
-    run validator-preload clean "'$validator' 'artifacts/vst3/KickCrafter Fable.vst3'"
+    run validator-preload clean "'$validator' 'artifacts/vst3/KickCrafter.vst3'"
 else
     # The diagnostic module links libasan; an uninstrumented host can load it only with the ASan
     # runtime preloaded (ASan must be the first library in the process).
     asan_so="$(gcc -print-file-name=libasan.so)"
-    run validator-diag    clean "LD_PRELOAD=$asan_so '$validator' '$bdir/KickCrafterFable_artefacts/Release/VST3/KickCrafter Fable.vst3'"
+    run validator-diag    clean "LD_PRELOAD=$asan_so '$validator' '$bdir/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3'"
 fi
 # Attribution helper: which modules appear in reported leak stacks (if any).
 for f in "$outdir"/*.log; do

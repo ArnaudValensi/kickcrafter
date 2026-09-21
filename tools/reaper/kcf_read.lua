@@ -1,4 +1,4 @@
--- KickCrafter Fable: REAPER check 6 (Read mode). A constant Start Frequency
+-- KickCrafter: REAPER check 6 (Read mode). A constant Start Frequency
 -- envelope stays authoritative while an external driver drags the native knob
 -- during playback. Saves read-mode.rpp so the opaque plug-in state can be
 -- inspected independently (tools/reaper/check_saved_state.py).

@@ -1,4 +1,4 @@
--- KickCrafter Fable: CC120 (All Sound Off) / CC123 (All Notes Off) in a REAPER MIDI item.
+-- KickCrafter: CC120 (All Sound Off) / CC123 (All Notes Off) in a REAPER MIDI item.
 -- Builds variants of one project on the running instance's track 1 and renders each:
 --   panic-control.wav    long note (A1, 0.1 s, Hold 1000 ms) only
 --   panic-cc120.wav      + CC120 at 0.6 s

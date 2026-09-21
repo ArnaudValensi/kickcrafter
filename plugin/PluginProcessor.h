@@ -1,4 +1,4 @@
-// KickCrafter Fable - plugin/parameter/state integration around the engine.
+// KickCrafter - plugin/parameter/state integration around the engine.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 #pragma once
 
@@ -111,7 +111,8 @@ public:
 
     static constexpr int stateVersion = 4;    // 2 (v1.1): pitchSource order Fixed, MIDI Note; 3 (v1.2): preset kind + name;
                                               // 4 (v1.3): velocity is on/off (older documents: 0-100 % amount, > 0 -> on)
-    static constexpr const char* stateRootTag = "KickCrafterFable";
+    static constexpr const char* stateRootTag = "KickCrafter";
+    static constexpr const char* legacyStateRootTag = "KickCrafterFable";   // written by 1.0 to 1.4, still read
 
 private:
     std::array<float, kcf::params::synthesisIds.size()> captureSynthesisValues() const;

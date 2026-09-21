@@ -100,7 +100,7 @@ void exerciseControls (KickCrafterProcessor& p, int seed)
     juce::MemoryBlock state;
     p.getStateInformation (state);
     p.setStateInformation (state.getData(), (int) state.getSize());
-    const char* junk = "<KickCrafterFable version=\"1\"><param id=\"startFreq\" value=\"nonsense\"/>";
+    const char* junk = "<KickCrafter version=\"1\"><param id=\"startFreq\" value=\"nonsense\"/>";
     p.setStateInformation (junk, (int) std::strlen (junk));           // rejected without leaking
     p.setStateInformation (state.getData(), (int) state.getSize());
     p.setUIScalePercent (80 + (seed % 5) * 20);

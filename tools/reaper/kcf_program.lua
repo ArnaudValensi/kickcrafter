@@ -1,4 +1,4 @@
--- KickCrafter Fable: host Program exposure check. Host programs are deliberately not published
+-- KickCrafter: host Program exposure check. Host programs are deliberately not published
 -- (see PluginProcessor.cpp): the enumeration must not contain a "Program" parameter, and the
 -- factory presets are reachable through the editor (covered by the menus stage) and the state.
 local directory = assert(os.getenv("KCF_TEST_DIR"), "KCF_TEST_DIR is required")

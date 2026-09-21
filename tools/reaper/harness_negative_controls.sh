@@ -41,7 +41,7 @@ xwininfo: Window id: 0x1 (the root window) (has no name)
   Root window id: 0x1 (the root window) (has no name)
   Parent window id: 0x0 (none)
      2 children:
-     0x20db47 "VST3i: KickCrafter Fable (Arnaud Valensi) - Track 1": ("REAPER" "REAPER")  1000x668+300+60  +300+60
+     0x20db47 "VST3i: KickCrafter (Arnaud Valensi) - Track 1": ("REAPER" "REAPER")  1000x668+300+60  +300+60
         1 child:
         0x20db46 (has no name): ()  1000x640+0+28  +300+88
 T

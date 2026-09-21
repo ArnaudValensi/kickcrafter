@@ -5,7 +5,7 @@
 #   2. source archive: production sources + docs from HEAD (no artifacts/) and the exact
 #      pinned JUCE tree (no .git, no build caches), with a source manifest hash
 #   3. evidence archive: logs, REAPER projects/renders/results, screenshots
-# plus SHA256SUMS, all named kickcrafter-fable-<version>-... after the project version. Refuses to
+# plus SHA256SUMS, all named kickcrafter-<version>-... after the project version. Refuses to
 # package when the production sources are not committed or when the staged binary does not
 # correspond to the last recorded test run of these sources. Linux only (the validation gates).
 set -euo pipefail
@@ -13,9 +13,9 @@ here="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$here"
 rev="$(git rev-parse --short HEAD)"
 version="$(tools/dist.sh version)"
-base="kickcrafter-fable-$version"
+base="kickcrafter-$version"
 out="artifacts/dist"
-bundle="artifacts/vst3/KickCrafter Fable.vst3"
+bundle="artifacts/vst3/KickCrafter.vst3"
 [ -d "$bundle" ] || { echo "staged bundle missing: $bundle" >&2; exit 1; }
 juce_commit="$(git -C external/JUCE rev-parse HEAD)"
 [ "$juce_commit" = "f72bad64d29715216226685810c5196bd0d79d77" ] || { echo "unexpected JUCE commit $juce_commit" >&2; exit 1; }
@@ -24,7 +24,7 @@ juce_commit="$(git -C external/JUCE rev-parse HEAD)"
 # staged binary and to a successful test run, clean validator run. Details: tools/package-preflight.sh.
 tools/package-preflight.sh || exit 1
 manifest="$(find engine plugin resources CMakeLists.txt -type f | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1)"
-staged_sha="$(sha256sum "$bundle/Contents/x86_64-linux/KickCrafter Fable.so" | cut -d' ' -f1)"
+staged_sha="$(sha256sum "$bundle/Contents/x86_64-linux/KickCrafter.so" | cut -d' ' -f1)"
 
 rm -rf "$out"; mkdir -p "$out"
 stage="$(mktemp -d)"
@@ -60,7 +60,7 @@ for f in artifacts/reaper/*.txt artifacts/reaper/*.rpp artifacts/reaper/*.wav ar
 tar -C "$stage" -czf "$out/$base-evidence.tar.gz" "$(basename "$ev")"
 
 ( cd "$out" && sha256sum ./*.tar.gz > SHA256SUMS )
-echo "validated binary: $staged_sha  KickCrafter Fable.vst3/Contents/x86_64-linux/KickCrafter Fable.so" >> "$out/SHA256SUMS"
+echo "validated binary: $staged_sha  KickCrafter.vst3/Contents/x86_64-linux/KickCrafter.so" >> "$out/SHA256SUMS"
 echo "production source manifest: $manifest (git $rev)" >> "$out/SHA256SUMS"
 echo "build record: $(grep '^build-record' artifacts/logs/build-record.txt)" >> "$out/SHA256SUMS"
 

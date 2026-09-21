@@ -6,7 +6,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 runner="$here/tools/reaper/run_reaper_validation.sh"
 log="$here/artifacts/reaper/all-stages.log"
 mkdir -p "$here/artifacts/reaper"
-echo "all-stages start $(date -u +%FT%TZ) bundle $(sha256sum "$here/artifacts/vst3/KickCrafter Fable.vst3/Contents/x86_64-linux/KickCrafter Fable.so" | cut -c1-16)" > "$log"
+echo "all-stages start $(date -u +%FT%TZ) bundle $(sha256sum "$here/artifacts/vst3/KickCrafter.vst3/Contents/x86_64-linux/KickCrafter.so" | cut -c1-16)" > "$log"
 [ "${1:-setup}" = "setup" ] && "$runner" stop >> "$log" 2>&1
 from="${1:-setup}"; started=0
 for stage in setup analyze editor menus touch read lifecycle panic program resize captures; do

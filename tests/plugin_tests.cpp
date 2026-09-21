@@ -211,7 +211,7 @@ TEST_CASE ("published parameters: IDs, names, defaults, ranges, units and choice
     CHECK (std::isnan (params::parseNumberText ("ten", std::numeric_limits<float>::quiet_NaN())));
     CHECK_NEAR (host.param ("sweep").convertFrom0to1 (host.param ("sweep").getValueForText ("12.5 ms")), 12.5, 1e-4);
     CHECK (host.processor->getNumPrograms() == 1);            // no host Program parameter (deliberate)
-    CHECK (host.processor->getProgramName (0) == "KickCrafter Fable");
+    CHECK (host.processor->getProgramName (0) == "KickCrafter");
     CHECK (host.processor->acceptsMidi());
     CHECK (! host.processor->producesMidi());
     CHECK (host.processor->getTailLengthSeconds() >= 1.25);
@@ -526,7 +526,7 @@ TEST_CASE ("state save/restore covers every parameter, A/B slot, preset and UI s
     CHECK (block.getSize() > 0);
     const auto xml = juce::AudioProcessor::getXmlFromBinary (block.getData(), (int) block.getSize());
     REQUIRE (xml != nullptr);
-    CHECK (xml->hasTagName ("KickCrafterFable"));
+    CHECK (xml->hasTagName ("KickCrafter"));
     CHECK (xml->getIntAttribute ("version") == 4);
 
     Host b;
@@ -567,7 +567,7 @@ TEST_CASE ("malformed, empty, foreign and out-of-range state never crash and nev
     // Well-formed root with NaN, Inf, out-of-range and junk attributes, from a
     // "newer" schema version: known fields are read best-effort, junk is ignored.
     host.setDisplay (params::drive, 2.0f);
-    juce::XmlElement bad ("KickCrafterFable");
+    juce::XmlElement bad ("KickCrafter");
     bad.setAttribute ("version", 999);
     auto* p = bad.createNewChildElement ("Params");
     p->setAttribute ("startFreq", "nan");
@@ -599,7 +599,7 @@ TEST_CASE ("malformed, empty, foreign and out-of-range state never crash and nev
     // Missing / invalid version: the whole document is rejected.
     for (const char* version : { "", "abc", "0", "-1", "1.5" })
     {
-        juce::XmlElement doc ("KickCrafterFable");
+        juce::XmlElement doc ("KickCrafter");
         if (juce::String (version).isNotEmpty()) doc.setAttribute ("version", version);
         doc.createNewChildElement ("Params")->setAttribute ("startFreq", 777.0);
         juce::MemoryBlock b;
@@ -622,7 +622,7 @@ TEST_CASE ("malformed, empty, foreign and out-of-range state never crash and nev
     host.setDisplay (params::drive, 2.0f);
     host.setDisplay (params::sweep, 30.0f);
     {
-        juce::XmlElement doc ("KickCrafterFable");
+        juce::XmlElement doc ("KickCrafter");
         doc.setAttribute ("version", 1);
         auto* pp = doc.createNewChildElement ("Params");
         pp->setAttribute ("drive", "--1");
@@ -652,7 +652,7 @@ TEST_CASE ("malformed, empty, foreign and out-of-range state never crash and nev
         CHECK_NEAR (after[slotIndex (params::sweep)], 25.0f, 1e-4);
     }
     // Numeric overflow text and legitimate clamping.
-    juce::XmlElement big ("KickCrafterFable");
+    juce::XmlElement big ("KickCrafter");
     big.setAttribute ("version", 1);
     auto* bp = big.createNewChildElement ("Params");
     bp->setAttribute ("startFreq", "1e400");
@@ -1052,7 +1052,7 @@ TEST_CASE ("v1.0 state (schema 1) migrates the pitch-source index; schema 2 is s
     for (int oldValue : { 0, 1 })
     {
         Host host;
-        juce::XmlElement doc ("KickCrafterFable");
+        juce::XmlElement doc ("KickCrafter");
         doc.setAttribute ("version", 1);
         auto* pp = doc.createNewChildElement ("Params");
         pp->setAttribute ("pitchSource", oldValue);
@@ -1073,7 +1073,7 @@ TEST_CASE ("v1.0 state (schema 1) migrates the pitch-source index; schema 2 is s
     }
     // Schema 2 documents are not migrated.
     Host host;
-    juce::XmlElement doc ("KickCrafterFable");
+    juce::XmlElement doc ("KickCrafter");
     doc.setAttribute ("version", 2);
     doc.createNewChildElement ("Params")->setAttribute ("pitchSource", 1);
     juce::MemoryBlock block;
@@ -1087,7 +1087,7 @@ TEST_CASE ("v1.0 state (schema 1) migrates the pitch-source index; schema 2 is s
                             Legacy { 4, 1.0, true }, Legacy { 4, 0.0, false }, Legacy { 4, 0.6, true } })
     {
         Host h;
-        juce::XmlElement d ("KickCrafterFable");
+        juce::XmlElement d ("KickCrafter");
         d.setAttribute ("version", l.version);
         d.createNewChildElement ("Params")->setAttribute ("velocity", l.stored);
         auto* abNode = d.createNewChildElement ("AB");
@@ -1099,6 +1099,19 @@ TEST_CASE ("v1.0 state (schema 1) migrates the pitch-source index; schema 2 is s
         CHECK_MSG (h.getDisplay (params::velocity) == (l.on ? 1.0f : 0.0f), "velocity schema " + std::to_string (l.version) + " value " + std::to_string (l.stored));
         CHECK (h.processor->getCurrentParams().velocitySensitive == l.on);
         CHECK (h.processor->getOtherSlotValues()[params::synthesisIds.size() - 2] == (l.on ? 1.0f : 0.0f));   // velocity precedes pitchSource
+    }
+    {   // 1.0 to 1.4 wrote the root tag "KickCrafterFable": such a document still loads (1.5 renamed the plug-in)
+        Host h;
+        juce::XmlElement d ("KickCrafterFable");
+        d.setAttribute ("version", 4);
+        d.createNewChildElement ("Params")->setAttribute ("velocity", 1.0);
+        juce::MemoryBlock mb;
+        juce::AudioProcessor::copyXmlToBinary (d, mb);
+        h.processor->setStateInformation (mb.getData(), (int) mb.getSize());
+        CHECK (h.getDisplay (params::velocity) == 1.0f);
+        juce::MemoryBlock back;
+        h.processor->getStateInformation (back);
+        CHECK (juce::AudioProcessor::getXmlFromBinary (back.getData(), (int) back.getSize())->hasTagName ("KickCrafter"));   // written with the new tag
     }
 }
 
@@ -1364,6 +1377,32 @@ TEST_CASE ("user preset library: save, scan, load, rename, delete, collisions, j
     CHECK (dir.findChildFiles (juce::File::findFiles, false, "*.xml").size() == 4);   // Zed, Beta, junk, dup
 }
 
+TEST_CASE ("user preset folder: KickCrafter/Presets, a pre-1.5 KickCrafterFable/Presets library is moved there once")
+{
+    const auto base = juce::File::getSpecialLocation (juce::File::tempDirectory)
+                          .getChildFile ("kcf-preset-dir-" + juce::String (juce::Random::getSystemRandom().nextInt64()));
+    REQUIRE (base.createDirectory());
+    const auto current = base.getChildFile ("KickCrafter").getChildFile ("Presets");
+    const auto legacy = base.getChildFile ("KickCrafterFable").getChildFile ("Presets");
+    // nothing on disk: the new path, not created
+    CHECK (presets::Library::resolveDefaultDirectory (base) == current);
+    CHECK (! current.exists());
+    // a legacy library only: moved once, files included
+    REQUIRE (legacy.createDirectory());
+    REQUIRE (legacy.getChildFile ("Mine.xml").replaceWithText (presets::toXml ("Mine", KickParams {})));
+    CHECK (presets::Library::resolveDefaultDirectory (base) == current);
+    CHECK (current.getChildFile ("Mine.xml").existsAsFile() && ! legacy.exists());
+    presets::Library moved (presets::Library::resolveDefaultDirectory (base));
+    moved.rescan();
+    CHECK (moved.find ("Mine") != nullptr);
+    // both present (the user recreated the old one): the new path wins, nothing is touched
+    REQUIRE (legacy.createDirectory());
+    REQUIRE (legacy.getChildFile ("Old.xml").replaceWithText (presets::toXml ("Old", KickParams {})));
+    CHECK (presets::Library::resolveDefaultDirectory (base) == current);
+    CHECK (legacy.getChildFile ("Old.xml").existsAsFile() && ! current.getChildFile ("Old.xml").exists());
+    base.deleteRecursively();
+}
+
 TEST_CASE ("loaded preset identity: factory/user loads, adopt after save, edited marker, state schema 3 and migration")
 {
     Host host;
@@ -1424,7 +1463,7 @@ TEST_CASE ("loaded preset identity: factory/user loads, adopt after save, edited
     for (int version : { 2, 3 })
     {
         Host old;
-        juce::XmlElement doc ("KickCrafterFable");
+        juce::XmlElement doc ("KickCrafter");
         doc.setAttribute ("version", version);
         auto* p = doc.createNewChildElement ("Preset");
         p->setAttribute ("index", 5);
@@ -1438,7 +1477,7 @@ TEST_CASE ("loaded preset identity: factory/user loads, adopt after save, edited
     // user kind with an invalid name is ignored (falls back to factory 0)
     {
         Host bad;
-        juce::XmlElement doc ("KickCrafterFable");
+        juce::XmlElement doc ("KickCrafter");
         doc.setAttribute ("version", 3);
         auto* p = doc.createNewChildElement ("Preset");
         p->setAttribute ("index", -1); p->setAttribute ("kind", "user"); p->setAttribute ("name", "");

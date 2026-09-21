@@ -371,7 +371,7 @@ void TopBar::reportError (const juce::String& what)
 void TopBar::resized()
 {
     auto r = getLocalBounds().reduced (16, 12);
-    r.removeFromLeft (150);                                    // wordmark (v1.5: no "FABLE" after it)
+    r.removeFromLeft (150);                                    // wordmark
     scaleButton.setBounds (r.removeFromRight (64));
     r.removeFromRight (12);
     audition.setBounds (r.removeFromRight (92));

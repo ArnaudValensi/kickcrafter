@@ -32,14 +32,14 @@ export KCF_DISPLAY="${KCF_DISPLAY:-:102}"  # the REAPER harness display
 # leak tests and the VST3 host need X11 and exist on Linux only; the AU exists on macOS only.
 # CI (Linux, macOS, Windows) reaches only juce, build, test-engine and dist, so everything on
 # those paths stays bash 3.2 (macOS) and Git Bash (Windows) compatible.
-ALL_TARGETS="KickCrafterFable_VST3 KickCrafterFable_Standalone kcf_engine_tests"
+ALL_TARGETS="KickCrafter_VST3 KickCrafter_Standalone kcf_engine_tests"
 EXE=""                                     # executable suffix of the test binaries
 case "$(uname -s)" in
     Linux)        ALL_TARGETS="$ALL_TARGETS kcf_plugin_tests kcf_leak_tests kcf_vst3_host" ;;
-    Darwin)       ALL_TARGETS="$ALL_TARGETS KickCrafterFable_AU" ;;
+    Darwin)       ALL_TARGETS="$ALL_TARGETS KickCrafter_AU" ;;
     MINGW*|MSYS*) EXE=".exe" ;;
 esac
-LEAK_TARGETS="KickCrafterFable_VST3 kcf_plugin_tests kcf_leak_tests kcf_vst3_host"
+LEAK_TARGETS="KickCrafter_VST3 kcf_plugin_tests kcf_leak_tests kcf_vst3_host"
 
 # --- helpers ------------------------------------------------------------------
 logged() { tools/run-logged.sh "$@"; }     # output to artifacts/logs/runs/<stamp>-<name>.log, real exit code

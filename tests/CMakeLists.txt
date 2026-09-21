@@ -25,38 +25,38 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY AND CMAKE_SYSTEM_NAME STREQUAL "Linu
     # X11 through dlopen at runtime).
     add_executable(kcf_plugin_tests plugin_tests.cpp)
     target_include_directories(kcf_plugin_tests PRIVATE
-        $<TARGET_PROPERTY:KickCrafterFable,INCLUDE_DIRECTORIES>)
+        $<TARGET_PROPERTY:KickCrafter,INCLUDE_DIRECTORIES>)
     target_compile_definitions(kcf_plugin_tests PRIVATE
-        $<TARGET_PROPERTY:KickCrafterFable,COMPILE_DEFINITIONS>
+        $<TARGET_PROPERTY:KickCrafter,COMPILE_DEFINITIONS>
         JUCE_STANDALONE_APPLICATION=1)
     target_compile_options(kcf_plugin_tests PRIVATE -Wall -Wextra -Wno-unused-parameter)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(KCF_TEST_DEPS REQUIRED IMPORTED_TARGET freetype2 fontconfig alsa)
     target_link_libraries(kcf_plugin_tests PRIVATE
-        $<TARGET_FILE:KickCrafterFable>
-        KickCrafterFableAssets
+        $<TARGET_FILE:KickCrafter>
+        KickCrafterAssets
         kcf_engine
         PkgConfig::KCF_TEST_DEPS
         ${CMAKE_DL_LIBS} pthread rt)
-    add_dependencies(kcf_plugin_tests KickCrafterFable)
+    add_dependencies(kcf_plugin_tests KickCrafter)
     add_test(NAME plugin_tests COMMAND kcf_plugin_tests)
 
     # Memory-leak exercise (the memory gate): same shared code, many lifecycle cycles, run under
     # LeakSanitizer by tools/memory-check.sh (standalone LSan preload on the ordinary build, and
     # the compiled-in ASan/LSan diagnostic build when KCF_SANITIZE_PLUGIN=ON).
     add_executable(kcf_leak_tests leak_tests.cpp)
-    target_include_directories(kcf_leak_tests PRIVATE $<TARGET_PROPERTY:KickCrafterFable,INCLUDE_DIRECTORIES>)
+    target_include_directories(kcf_leak_tests PRIVATE $<TARGET_PROPERTY:KickCrafter,INCLUDE_DIRECTORIES>)
     target_compile_definitions(kcf_leak_tests PRIVATE
-        $<TARGET_PROPERTY:KickCrafterFable,COMPILE_DEFINITIONS>
+        $<TARGET_PROPERTY:KickCrafter,COMPILE_DEFINITIONS>
         JUCE_STANDALONE_APPLICATION=1)
     target_compile_options(kcf_leak_tests PRIVATE -Wall -Wextra -Wno-unused-parameter)
     target_link_libraries(kcf_leak_tests PRIVATE
-        $<TARGET_FILE:KickCrafterFable>
-        KickCrafterFableAssets
+        $<TARGET_FILE:KickCrafter>
+        KickCrafterAssets
         kcf_engine
         PkgConfig::KCF_TEST_DEPS
         ${CMAKE_DL_LIBS} pthread rt)
-    add_dependencies(kcf_leak_tests KickCrafterFable)
+    add_dependencies(kcf_leak_tests KickCrafter)
 
     # Minimal real VST3 host (no JUCE): dlopen the built module, run its factory/component/
     # controller/processor/view lifecycle with a Linux IRunLoop and an X11 parent window.

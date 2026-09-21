@@ -7,9 +7,8 @@ points to when the work needs them; nothing below duplicates what those document
 
 A kick-drum instrument plug-in (JUCE 8, C++20, CMake, AGPL-3.0-or-later): Linux x86_64 VST3,
 macOS universal VST3 and AU, Windows x64 VST3; one kick per instance, every Note On freezes all
-parameters into its voice. The plug-in is named
-"KickCrafter Fable" inside hosts (bundle, plug-in code); the project and repository are
-"KickCrafter".
+parameters into its voice. The plug-in, the bundle, the project and the repository are all named
+"KickCrafter" (the plug-in was "KickCrafter Fable" inside hosts until 1.5.0).
 
 Layout: `engine/` (JUCE-free synthesis), `plugin/` and `plugin/ui/` (JUCE integration, editor),
 `resources/` (fonts, factory presets), `tests/`, `tools/` (the scripts `./run` calls), `docs/`,
@@ -85,8 +84,11 @@ The reasoning is in `docs/development.md` (Conventions, Memory-leak gate) and `R
   a JUCE unity build and LTO. CI raises it.
 - The memory gate's pass B leaves JUCE translation units uninstrumented (an instrumented unity build
   is OOM-killed here) and uses no suppression file.
-- The plug-in keeps the name "KickCrafter Fable" inside hosts until the owner renames it
-  (renaming changes the bundle name and breaks existing projects).
+- The plug-in is named "KickCrafter" everywhere since 1.5.0 (the owner renamed it from
+  "KickCrafter Fable"; the bundle name changed with it). The VST3 class identity (manufacturer
+  and plug-in codes) did not change, saved state with the old root tag still loads, and a preset
+  library under the old folder is moved to the new one once. The word "Fable" stays only in
+  history (changelog, epic journals) and in the model identifier of the chain skill.
 - CI builds, it does not validate, and it runs only for a release. GitHub Actions compiles the
   plug-in for every platform (Linux, macOS Intel and ARM, Windows), runs the JUCE-free engine
   tests on each (six seconds, the only proof that every binary makes the same sound) and

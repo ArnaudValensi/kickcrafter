@@ -21,7 +21,7 @@ mkdir -p "$scratch/artifacts/logs/runs" "$scratch/artifacts/vst3" "$scratch/exte
 cp "$record" "$scratch/artifacts/logs/build-record.txt"
 cp "$testlog" "$testlog.exit" "$vlog" "$vlog.exit" "$scratch/artifacts/logs/runs/"
 cp "$(grep '^cmake-cache-copy:' "$record" | cut -d' ' -f2)" "$scratch/artifacts/logs/runs/"
-cp -r "artifacts/vst3/KickCrafter Fable.vst3" "$scratch/artifacts/vst3/"
+cp -r "artifacts/vst3/KickCrafter.vst3" "$scratch/artifacts/vst3/"
 ln -s "$here/external/JUCE" "$scratch/external/JUCE"
 ( cd "$scratch" && git init -q && git add -A . >/dev/null 2>&1 && git -c user.name=t -c user.email=t@t commit -q -m fixture ) || { echo "scratch repo failed"; exit 1; }
 pf() { ( cd "$scratch" && env "$@" tools/package-preflight.sh ); }

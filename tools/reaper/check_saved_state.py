@@ -5,7 +5,7 @@
 # ///
 """Inspect the opaque plug-in state saved by REAPER inside an .rpp file.
 
-Decodes the base64 VST chunk, finds the KickCrafterFable XML and prints the
+Decodes the base64 VST chunk, finds the KickCrafter XML and prints the
 requested parameter (or root attribute). With an expected value the exit code is
 0 only when the saved value matches within the tolerance (relative to max(1, |expected|)).
 
@@ -27,17 +27,17 @@ def find_state_xml(project_text):
             decoded = b"".join(base64.b64decode(block) for block in re.findall(r"[^=]+={0,2}", encoded))
         except Exception:
             continue
-        start = decoded.find(b"<KickCrafterFable")
+        start = decoded.find(b"<KickCrafter")
         if start < 0:
             continue
-        end = decoded.find(b"</KickCrafterFable>", start)
+        end = decoded.find(b"</KickCrafter>", start)
         if end < 0:
             end = decoded.find(b"/>", start)
             if end < 0:
                 continue
             end += 2
         else:
-            end += len(b"</KickCrafterFable>")
+            end += len(b"</KickCrafter>")
         return decoded[start:end].decode("utf-8", errors="ignore")
     return None
 
@@ -50,7 +50,7 @@ def main(argv):
     text = Path(path).read_text()
     xml_text = find_state_xml(text)
     if xml_text is None:
-        print("FAIL: no KickCrafterFable state found in", path)
+        print("FAIL: no KickCrafter state found in", path)
         return 1
     root = ET.fromstring(xml_text)
     if argv[1] == "--attr":
