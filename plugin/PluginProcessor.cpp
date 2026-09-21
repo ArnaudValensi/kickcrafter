@@ -369,7 +369,7 @@ void KickCrafterProcessor::setStateInformation (const void* data, int sizeInByte
     const Transaction transaction (*this);
 
     std::unique_ptr<juce::XmlElement> xml (getXmlFromBinary (data, sizeInBytes));
-    if (xml == nullptr || ! (xml->hasTagName (stateRootTag) || xml->hasTagName (legacyStateRootTag)))
+    if (xml == nullptr || ! xml->hasTagName (stateRootTag))
         return;                                   // malformed or foreign state: ignore safely
 
     const juce::ValueTree root = juce::ValueTree::fromXml (*xml);

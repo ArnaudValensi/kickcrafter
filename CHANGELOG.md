@@ -7,11 +7,10 @@ State documents carry a schema number; every schema since 1 is still read.
 
 - The plug-in is named **KickCrafter** everywhere; it was "KickCrafter Fable" inside hosts. The
   bundle is now `KickCrafter.vst3` (`KickCrafter.component` on macOS) and the archives are named
-  `kickcrafter-<version>-...`. The plug-in codes are unchanged, so hosts that match by identity
-  keep their projects; a host that matches by file name needs the plug-in reinserted. Saved state
-  written under the old root tag still loads. The user preset folder is `KickCrafter/Presets`
-  under the platform's application data folder; a library found under the old
-  `KickCrafterFable/Presets` is moved there once.
+  `kickcrafter-<version>-...`. The plug-in codes are unchanged. Nothing is carried over from the
+  old name: the state root tag and the user preset folder (`KickCrafter/Presets` under the
+  platform's application data folder) are new, so projects and user presets saved by earlier
+  versions are not read.
 - Velocity Sensitivity is Off by default (every note at full level, as the original); the
   factory presets follow. Projects saved by earlier versions keep their stored value. No state or
   preset schema change.

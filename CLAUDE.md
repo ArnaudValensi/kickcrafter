@@ -85,10 +85,10 @@ The reasoning is in `docs/development.md` (Conventions, Memory-leak gate) and `R
 - The memory gate's pass B leaves JUCE translation units uninstrumented (an instrumented unity build
   is OOM-killed here) and uses no suppression file.
 - The plug-in is named "KickCrafter" everywhere since 1.5.0 (the owner renamed it from
-  "KickCrafter Fable"; the bundle name changed with it). The VST3 class identity (manufacturer
-  and plug-in codes) did not change, saved state with the old root tag still loads, and a preset
-  library under the old folder is moved to the new one once. The word "Fable" stays only in
-  history (changelog, epic journals) and in the model identifier of the chain skill.
+  "KickCrafter Fable"; the bundle name, the state root tag and the user preset folder changed
+  with it, and nothing saved under the old name is migrated: the owner decided against any
+  compatibility code). The plug-in codes did not change. The word "Fable" stays only in history
+  (changelog, epic journals) and in the model identifier of the chain skill.
 - CI builds, it does not validate, and it runs only for a release. GitHub Actions compiles the
   plug-in for every platform (Linux, macOS Intel and ARM, Windows), runs the JUCE-free engine
   tests on each (six seconds, the only proof that every binary makes the same sound) and

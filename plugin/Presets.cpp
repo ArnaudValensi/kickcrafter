@@ -153,17 +153,7 @@ juce::File Library::defaultDirectory()
    #if JUCE_MAC
     base = base.getChildFile ("Application Support");
    #endif
-    return resolveDefaultDirectory (base);
-}
-
-juce::File Library::resolveDefaultDirectory (const juce::File& base)
-{
-    const auto current = base.getChildFile ("KickCrafter").getChildFile ("Presets");
-    const auto legacy = base.getChildFile ("KickCrafterFable").getChildFile ("Presets");   // the folder before 1.5.0
-    if (! current.exists() && legacy.isDirectory())
-        if (! (current.getParentDirectory().createDirectory() && legacy.moveFileTo (current)))
-            return legacy;                                    // the move failed: the old library stays in use
-    return current;
+    return base.getChildFile ("KickCrafter").getChildFile ("Presets");
 }
 
 Library::Library (const juce::File& directory) : dir (directory)

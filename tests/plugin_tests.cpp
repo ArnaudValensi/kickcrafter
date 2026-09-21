@@ -1100,19 +1100,6 @@ TEST_CASE ("v1.0 state (schema 1) migrates the pitch-source index; schema 2 is s
         CHECK (h.processor->getCurrentParams().velocitySensitive == l.on);
         CHECK (h.processor->getOtherSlotValues()[params::synthesisIds.size() - 2] == (l.on ? 1.0f : 0.0f));   // velocity precedes pitchSource
     }
-    {   // 1.0 to 1.4 wrote the root tag "KickCrafterFable": such a document still loads (1.5 renamed the plug-in)
-        Host h;
-        juce::XmlElement d ("KickCrafterFable");
-        d.setAttribute ("version", 4);
-        d.createNewChildElement ("Params")->setAttribute ("velocity", 1.0);
-        juce::MemoryBlock mb;
-        juce::AudioProcessor::copyXmlToBinary (d, mb);
-        h.processor->setStateInformation (mb.getData(), (int) mb.getSize());
-        CHECK (h.getDisplay (params::velocity) == 1.0f);
-        juce::MemoryBlock back;
-        h.processor->getStateInformation (back);
-        CHECK (juce::AudioProcessor::getXmlFromBinary (back.getData(), (int) back.getSize())->hasTagName ("KickCrafter"));   // written with the new tag
-    }
 }
 
 TEST_CASE ("editor graphs (v1.1): knee only edits the sweep, curve handle spans 1..30, time handles can pass the visible axis, preset re-pick reloads")
@@ -1375,32 +1362,6 @@ TEST_CASE ("user preset library: save, scan, load, rename, delete, collisions, j
     // invalid names never touch the disk
     CHECK (! lib.save ("", a, error) && ! lib.save ("a/b", a, error));
     CHECK (dir.findChildFiles (juce::File::findFiles, false, "*.xml").size() == 4);   // Zed, Beta, junk, dup
-}
-
-TEST_CASE ("user preset folder: KickCrafter/Presets, a pre-1.5 KickCrafterFable/Presets library is moved there once")
-{
-    const auto base = juce::File::getSpecialLocation (juce::File::tempDirectory)
-                          .getChildFile ("kcf-preset-dir-" + juce::String (juce::Random::getSystemRandom().nextInt64()));
-    REQUIRE (base.createDirectory());
-    const auto current = base.getChildFile ("KickCrafter").getChildFile ("Presets");
-    const auto legacy = base.getChildFile ("KickCrafterFable").getChildFile ("Presets");
-    // nothing on disk: the new path, not created
-    CHECK (presets::Library::resolveDefaultDirectory (base) == current);
-    CHECK (! current.exists());
-    // a legacy library only: moved once, files included
-    REQUIRE (legacy.createDirectory());
-    REQUIRE (legacy.getChildFile ("Mine.xml").replaceWithText (presets::toXml ("Mine", KickParams {})));
-    CHECK (presets::Library::resolveDefaultDirectory (base) == current);
-    CHECK (current.getChildFile ("Mine.xml").existsAsFile() && ! legacy.exists());
-    presets::Library moved (presets::Library::resolveDefaultDirectory (base));
-    moved.rescan();
-    CHECK (moved.find ("Mine") != nullptr);
-    // both present (the user recreated the old one): the new path wins, nothing is touched
-    REQUIRE (legacy.createDirectory());
-    REQUIRE (legacy.getChildFile ("Old.xml").replaceWithText (presets::toXml ("Old", KickParams {})));
-    CHECK (presets::Library::resolveDefaultDirectory (base) == current);
-    CHECK (legacy.getChildFile ("Old.xml").existsAsFile() && ! current.getChildFile ("Old.xml").exists());
-    base.deleteRecursively();
 }
 
 TEST_CASE ("loaded preset identity: factory/user loads, adopt after save, edited marker, state schema 3 and migration")

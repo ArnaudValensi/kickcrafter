@@ -47,9 +47,6 @@ class Library
 {
 public:
     static juce::File defaultDirectory();             // $KCF_PRESET_DIR or ~/.config/KickCrafter/Presets
-    // <base>/KickCrafter/Presets; a library left by 1.0 to 1.4 under <base>/KickCrafterFable/Presets
-    // is moved there once (and stays in use if the move fails). Exposed for the tests.
-    static juce::File resolveDefaultDirectory (const juce::File& base);
     explicit Library (const juce::File& directory = defaultDirectory());
 
     const juce::File& directory() const noexcept { return dir; }

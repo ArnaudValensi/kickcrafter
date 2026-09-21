@@ -359,8 +359,7 @@ Rescan reports why):
 
 The factory bank is the set of files under `resources/presets/`, compiled into the binary (the
 numeric prefix fixes the order): edit or add files there and rebuild to change it. The user library
-is `~/.config/KickCrafter/Presets/` (a `~/.config/KickCrafterFable/Presets/` left by 1.0 to 1.4 is moved
-there the first time the editor opens), or the folder named by `KCF_PRESET_DIR`, scanned on
+is `~/.config/KickCrafter/Presets/`, or the folder named by `KCF_PRESET_DIR`, scanned on
 demand; a project remembers its preset by kind and name and shows "(missing)" when the file is gone.
 
 ## Conventions
