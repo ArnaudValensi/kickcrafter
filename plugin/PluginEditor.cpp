@@ -135,6 +135,15 @@ KickCrafterEditor::KickCrafterEditor (KickCrafterProcessor& p)
     footer.setJustificationType (juce::Justification::centredLeft);
     content.addAndMakeVisible (footer);
 
+    // The version, from project() in CMakeLists.txt through JUCE: which binary is loaded, at a glance.
+    versionLabel.setText (JucePlugin_VersionString, juce::dontSendNotification);
+    versionLabel.setFont (font (11.5f, Weight::mono));
+    versionLabel.setColour (juce::Label::textColourId, Palette::textDim);
+    versionLabel.setJustificationType (juce::Justification::centredRight);
+    versionLabel.setTooltip ("KickCrafter version");
+    versionLabel.setComponentID ("versionLabel");
+    content.addAndMakeVisible (versionLabel);
+
     topBar.onScaleSelected = [this] (int percent) { applyScalePercent (percent); };
 
     preview.sampleRate = processor.getCurrentSampleRate();
@@ -197,7 +206,9 @@ void KickCrafterEditor::resized()
     auto r = juce::Rectangle<int> (0, 0, logicalWidth, logicalHeight);
     topBar.setBounds (r.removeFromTop (topBarHeight));
     r.reduce (margin, margin);
-    footer.setBounds (r.removeFromBottom (16));
+    auto footerArea = r.removeFromBottom (16);
+    versionLabel.setBounds (footerArea.removeFromRight (72));
+    footer.setBounds (footerArea);
     r.removeFromBottom (6);
 
     auto left = r.removeFromLeft (600);

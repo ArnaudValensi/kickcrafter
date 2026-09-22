@@ -56,6 +56,7 @@ private:
     kcf::ui::WaveformPreview waveformPreview;
     std::vector<std::unique_ptr<kcf::ui::Knob>> knobs;
     juce::Label pitchSourceLabel, channelLabel, velocityLabel, footer;
+    juce::Label versionLabel;              // project version, right end of the footer (1.5.3)
     juce::TextButton pitchMidi { "MIDI Note" }, pitchFixed { "Fixed" };
     juce::TextButton velocityButton { "On" };                 // v1.3: velocity sensitivity on/off (was a knob)
     juce::ComboBox channelBox;

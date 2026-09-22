@@ -1923,6 +1923,19 @@ TEST_CASE ("editor: default and restored sizes, first-open handle geometry, host
     graph.mouseUp (makeEvent (graph, graph.getHandles()[0].position.translated (0.0f, -6.0f), false));
     CHECK (spy.begins.size() == 1 && spy.ends.size() == 1);   // the spy is live
 
+    // 6a'. Version label (1.5.3): the project version, right end of the footer, inside the editor.
+    {
+        juce::Label* version = nullptr;
+        for (auto* child : kc->getChildren())
+            for (auto* grandChild : child->getChildren())
+                if (grandChild->getComponentID() == "versionLabel") version = dynamic_cast<juce::Label*> (grandChild);
+        REQUIRE (version != nullptr);
+        CHECK (version->getText() == JucePlugin_VersionString);
+        CHECK (version->getText().matchesWildcard ("?*.?*.?*", true));
+        const auto* parent = version->getParentComponent();
+        CHECK (version->getRight() <= parent->getWidth() && version->getBottom() <= parent->getHeight());   // inside the content
+    }
+
     // 6b'. Velocity switch (v1.3): one button, click toggles the parameter as a complete gesture,
     // host changes refresh its state and text without gestures; every knob dial has one size.
     {

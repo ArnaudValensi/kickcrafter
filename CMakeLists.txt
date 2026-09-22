@@ -17,7 +17,7 @@ if(CMAKE_HOST_APPLE)
     endif()
 endif()
 
-project(KickCrafter VERSION 1.5.2 LANGUAGES C CXX)
+project(KickCrafter VERSION 1.5.3 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -3,6 +3,11 @@
 All notable changes to KickCrafter. Versions follow the `project()` version in `CMakeLists.txt`.
 State documents carry a schema number; every schema since 1 is still read.
 
+## 1.5.3 — 2026-09-22
+
+- The version is shown at the right end of the footer (from the project version, the same one
+  the release workflow checks), so the loaded binary can be told at a glance.
+
 ## 1.5.2 — 2026-09-21
 
 - The top bar shows the last note received only when it shapes the sound: its name in MIDI Note
