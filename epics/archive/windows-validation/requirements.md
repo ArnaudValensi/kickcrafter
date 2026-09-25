@@ -1,6 +1,6 @@
 # Host-independent validation in CI, and Windows symbols
 
-Status: in progress (2026-09-25). Decisions taken with the owner on 2026-09-25 after a tester
+Status: done (2026-09-25, runs 36176223559 and 36177513623). Decisions taken with the owner on 2026-09-25 after a tester
 reported a crash of the Windows VST3 in a host; the alternatives that lost are recorded under each
 decision.
 

@@ -23,6 +23,12 @@ four new commands run locally with their logs read.
 
 ## M2: The rehearsal and the documents
 
+**Done** (2026-09-25): run 36176223559 (Windows link failed on the shared .pdb name, Linux and
+macOS green), fix `73ab0b5`, run 36177513623 green on the three platforms: validator 47/47
+everywhere, pluginval SUCCESS everywhere, `AU VALIDATION SUCCEEDED` on macOS, the two `.pdb`
+published for Windows. Finding: the CI checks do not reproduce the tester's crash. Documents
+committed with M1. Details: `journal/2026-09-25.md`.
+
 Push `main`, run the Build workflow by hand, read the three jobs (the validator and pluginval logs
 in the uploaded artifacts, the symbols artifact present for Windows). Record the outcome in the
 journal: green, or the Windows failure as the first finding about the tester's crash. Documents
