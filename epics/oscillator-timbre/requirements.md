@@ -2,9 +2,9 @@
 
 Status: planned (2026-09-25), to be implemented later. Decisions taken with the owner over three
 conversations (2026-09-24 and 2026-09-25); the alternatives that lost are recorded under each
-decision, not re-litigated. Three points the owner has agreed to in discussion but not seen
-written are marked **(confirm)**: band-limited tables, the top-bar move of the input settings, and
-the knob names. Confirm them with the owner before the first commit, do not stall on them.
+decision, not re-litigated. The owner read this file and confirmed it on 2026-09-25, including
+the three points that had only been agreed in passing: the band-limited tables, the move of the
+input settings to the top bar, and the names Waveform, Tilt and Tone.
 
 Give the single oscillator more timbres while keeping the instrument what it is: one kick per
 instance, every Note On freezes everything, one knob keeps one meaning, and the default sound is
@@ -41,7 +41,7 @@ Out of scope, decided, recorded at the end: a distortion stage, a high-pass filt
 
 ## Settled decisions
 
-1. **Band-limited tables, per harmonic count, sample-rate independent (confirm).** Each
+1. **Band-limited tables, per harmonic count, sample-rate independent.** Each
    non-sine waveform exists as a set of 2048-point tables with 1024, 512, 256, ..., 2, 1
    harmonics (eleven levels), generated once in the `Wavetables` constructor by additive synthesis
    (each level is the previous one plus the next band of harmonics, so the whole set costs about
@@ -147,7 +147,7 @@ Out of scope, decided, recorded at the end: a distortion stage, a high-pass filt
    (12 cells): the nine knobs in today's order, then Tilt, then Tone, then the Velocity switch in
    the twelfth cell (styled as today, aligned on the same row). The two input settings that
    remain, Pitch source (Fixed / MIDI Note) and MIDI channel, move to the top bar, right of the
-   preset controls and left of the LED, with their labels above them as today **(confirm)**. The
+   preset controls and left of the LED, with their labels above them as today. The
    editor stays 1000 × 640 logical pixels; no control gets narrower than it is today; the top bar
    may grow to two rows if one row cannot hold them without shrinking the preset box below 200 px.
    The selector of decision 2 lives in the Shape knob's cell: the caption line under the dial (the

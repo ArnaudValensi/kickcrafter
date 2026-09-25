@@ -2,8 +2,7 @@
 
 Four milestones. Each ends with the validation `requirements.md` names for it (decision 10), a
 journal entry in this epic's `journal/` (dated from `date +%F`) and a commit. Mark a milestone
-**Done** here, with a short record of what is in place, in the commit that closes it. Before M1,
-confirm with the owner the three points marked **(confirm)** in `requirements.md`.
+**Done** here, with a short record of what is in place, in the commit that closes it.
 
 ## M0: The reference
 
