@@ -210,9 +210,16 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
     # Keep the engine visible to the test executables that link the shared code.
     target_link_libraries(KickCrafter PUBLIC kcf_engine)
     if(MSVC)
+        # One .pdb per format target, named after the target: the VST3 module and the Standalone
+        # executable are both called KickCrafter, and two links writing one KickCrafter.pdb in the
+        # same folder fail (LNK1201, seen in CI). The name is what the binary records, so a dump
+        # resolves against the file of that name. The folder is created here: the linker does not.
+        file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/symbols")
         foreach(kcf_format_target KickCrafter_VST3 KickCrafter_Standalone)
             if(TARGET ${kcf_format_target})
-                set_target_properties(${kcf_format_target} PROPERTIES PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/symbols")
+                set_target_properties(${kcf_format_target} PROPERTIES
+                    PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/symbols"
+                    PDB_NAME "${kcf_format_target}")
             endif()
         endforeach()
     endif()
