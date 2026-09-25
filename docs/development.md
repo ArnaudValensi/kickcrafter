@@ -79,6 +79,24 @@ cmake --build vst3sdk/build --target validator
 export KCF_VALIDATOR="$(find "$PWD/vst3sdk/build/bin" -name validator -type f | head -1)"   # the SDK nests it under bin/<Config>/
 ```
 
+Or let the repository do it: `./run fetch-validator` clones the SDK at the pinned tag
+(`v3.8.1_build_84`, in `tools/fetch-validators.sh`) into `external/vst3sdk/`, builds the
+`validator` target and copies the executable to `external/validator/`, which `./run validator`
+finds when `KCF_VALIDATOR` is unset and no `validator` is on `PATH`. CI does exactly this, with
+`external/validator/` cached by OS and tag.
+
+### 4b. pluginval (editor, parameters, state, threads)
+
+Tracktion's pluginval exercises what the Steinberg validator does not: it opens the editor,
+sweeps the parameters, changes block sizes and sample rates, saves and restores state, and calls
+from several threads. `./run fetch-pluginval` downloads the pinned release (`v1.0.4`) into
+`external/pluginval/`; `./run pluginval [level] [bundle]` runs it on the staged bundle (or the one
+given) at strictness 1 to 10, default 5 (above 5 the timing-sensitive checks fail on a loaded
+machine), logs it like the validator under `artifacts/logs/runs/` and leaves pluginval's own
+report under `artifacts/logs/pluginval/`. It opens a window: on a headless machine, `DISPLAY` from
+`.env` or `xvfb-run -a ./run pluginval`. `KCF_PLUGINVAL` names another executable. It is not part
+of `./run check` or `./run validate`; CI runs it on the three platforms.
+
 ### 5. REAPER (host harness)
 
 Download the Linux x86_64 build from [reaper.fm](https://www.reaper.fm/download.php) (tested with
@@ -90,7 +108,8 @@ executable (default `/usr/sbin/reaper`). The harness runs REAPER with its own co
 
 | Variable | Read by | Meaning (default) |
 |---|---|---|
-| `KCF_VALIDATOR` | `validate-bundle.sh`, `memory-check.sh` | Steinberg validator executable (`validator` on `PATH`) |
+| `KCF_VALIDATOR` | `validate-bundle.sh`, `memory-check.sh` | Steinberg validator executable (`validator` on `PATH`, then `external/validator/`) |
+| `KCF_PLUGINVAL` | `pluginval.sh` | pluginval executable (`pluginval` on `PATH`, then `external/pluginval/`) |
 | `KCF_REAPER` | REAPER harness | REAPER executable (`/usr/sbin/reaper`) |
 | `KCF_DISPLAY` | REAPER harness, `memory-check.sh --display` | X display of the harness (`:102`); the tests use `DISPLAY` (`:104`) |
 | `KCF_XDOTOOL` | REAPER harness | xdotool executable (`xdotool`) |
@@ -275,18 +294,33 @@ freedom; they do exercise every lifecycle the plug-in has.
 
 ## Continuous integration and releases
 
-CI builds, it does not validate, and it runs only for a release: nothing on GitHub Actions is
-triggered by an ordinary push or a pull request (the owner's decision, so that no minutes are
-spent outside a version). `.github/workflows/build.yml` is called by the release workflow, on the
+CI builds and runs the checks that need no host and no display harness; it runs only for a
+release: nothing on GitHub Actions is triggered by an ordinary push or a pull request (the
+owner's decision, so that no minutes are spent outside a version). `.github/workflows/build.yml` is called by the release workflow, on the
 push of a version tag or on its manual rehearsal, and can also be run by hand
 (`workflow_dispatch`) for a one-off check of a branch. It has one job per platform on
 `ubuntu-latest`, `macos-15` and `windows-latest`. Each job types exactly what a developer would: `./run juce`, `./run build`, `./run test-engine`, `./run dist`, under `bash`
 (Git Bash on Windows, bash 3.2 on macOS; the MSVC developer environment comes from
 `ilammy/msvc-dev-cmd`, the Linux packages from the apt list of "Setting up", macOS needs nothing
 beyond the runner image) with `KCF_JOBS=4`. The macOS job also prints `lipo -archs` for both
-bundles, which must read `x86_64 arm64`. The engine tests are the only tests CI runs: they are
-JUCE-free, six seconds, and the only proof that the three binaries make the same sound; the plug-in
-tests, the validator, the REAPER harness and the memory gate need this development machine.
+bundles, which must read `x86_64 arm64`. The engine tests are JUCE-free, six seconds, and the
+only proof that the three binaries make the same sound. After them, each job runs the
+host-independent checks (`epics/windows-validation`, 2026-09-25, after a tester's Windows crash
+that nothing had caught): the Steinberg validator on the bundle (`./run fetch-validator`, built
+from the pinned SDK and cached under `external/validator/` by OS and tag, then `./run validator
+<bundle>`), pluginval at strictness 5 (`./run fetch-pluginval`, `./run pluginval 5 <bundle>`,
+under `xvfb-run` on Linux), and on macOS `auval -v aumu Kcfb Arnv` on the component, which the
+job copies into the runner's `~/Library/Audio/Plug-Ins/Components/` first (the one place a script
+installs the plug-in anywhere: a throwaway machine). Each check is its own step, so the job
+summary names the one that failed, and a failing check fails the job and therefore the release.
+The plug-in tests, the REAPER harness and the memory gate still need this development machine.
+
+The Windows build compiles Release with `/Zi` and links with `/DEBUG /OPT:REF /OPT:ICF`; the
+`.pdb` files go to `build/symbols/` (never inside the bundle, so `dist.sh` never ships them) and
+the job uploads them as `kickcrafter-windows-x86_64-symbols`, kept 90 days. A crash dump (`.dmp`)
+from a tester opens in WinDbg with the `.pdb` of the same version: ask for the host and its
+version, the moment of the crash (scan, insert, editor, first note, project load) and a dump
+(Windows writes none by default: the `LocalDumps` registry key for the host's executable).
 
 Each job uploads two workflow artifacts kept 14 days: `kickcrafter-<platform>` holds
 `artifacts/dist/` (the archive `dist.sh` made, with `-<short sha>` after the version when the run
@@ -388,6 +422,7 @@ demand; a project remembers its preset by kind and name and shows "(missing)" wh
   | `tests/leak_tests.cpp`, `tests/vst3_host_lifecycle.cpp` | `./run build kcf_leak_tests kcf_vst3_host && ./run memory` (pass A is enough unless the change is about instrumentation) |
   | `tools/reaper/kcf_*.lua`, `analyze_render.py`, `check_saved_state.py`, `drive_mouse.py`, `find_highlight.py`, `image_check.py`, `run_reaper_validation.sh` | `./run reaper` (a single stage, `./run reaper-stage <stage>`, only when the earlier stages' outputs already exist) and `./run reaper-controls` |
   | `tools/build-and-test.sh`, `tools/package*.sh`, `tools/validate-bundle.sh`, `tools/run-logged.sh`, `run` | `./run check` then `./run package-controls` and `./run preflight` |
+  | `tools/fetch-validators.sh`, `tools/pluginval.sh`, `.github/workflows/` | run the command once locally (`./run fetch-validator`, `./run fetch-pluginval`, `./run pluginval`) and read its log; a manual run of the Build workflow for the workflow itself (it spends Actions minutes: the owner's call) |
   | `tools/dist.sh` | `./run dist` and read the listing it prints; `./run package` if the staging it does for `package.sh` changed |
   | `tools/memory-check.sh` | `./run memory` and `./run memory --diag` |
   | `tools/xvfb-display.sh`, `tools/fetch-juce.sh`, `tools/diagrams/` | run the script once and look at what it produced (`./run displays`, `./run juce`, `./run diagram`) |

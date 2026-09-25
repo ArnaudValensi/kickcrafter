@@ -27,6 +27,8 @@ scripts it calls are described in `docs/development.md`).
 - **The leak gate**: `./run memory` (pass A) and `./run memory --diag` (pass B, rebuilds JUCE
   instrumented). On demand, on a development machine only, never in CI; both before a release.
 - **Pieces**: `./run build [targets]`, `./run test`, `./run test-plugin "<case substring>"`,
+  `./run validator [bundle]`, `./run pluginval [level] [bundle]` (after `./run fetch-validator`
+  and `./run fetch-pluginval` when the tools are not installed),
   `./run reaper [from-stage]`, `./run memory [--diag]`, `./run dist` (the per-platform archive of
   what `build/` holds, CI's last step), `./run package` (the Linux delivery: refuses without a
   green, committed, recorded build).
@@ -59,7 +61,8 @@ scripts it calls are described in `docs/development.md`).
 - The synthesis diagram is generated: edit the generator, render, look at the result, commit script
   and SVG together. No hand-drawn or Mermaid diagrams.
 - Every Python script is a uv script, run directly (`docs/development.md`, section 2).
-- Never edit `external/JUCE`; never install the plug-in into system folders from scripts; stop the
+- Never edit `external/JUCE`; never install the plug-in into system folders from scripts (the
+  one exception is the `auval` step of the CI workflow, on a throwaway runner); stop the
   harness's REAPER with `./run reaper-stop`, never with `pkill` on a name pattern.
 
 ## Already decided, do not re-litigate
@@ -89,13 +92,15 @@ The reasoning is in `docs/development.md` (Conventions, Memory-leak gate) and `R
   with it, and nothing saved under the old name is migrated: the owner decided against any
   compatibility code). The plug-in codes did not change. The word "Fable" stays only in history
   (changelog, epic journals) and in the model identifier of the chain skill.
-- CI builds, it does not validate, and it runs only for a release. GitHub Actions compiles the
-  plug-in for every platform (Linux, macOS Intel and ARM, Windows), runs the JUCE-free engine
-  tests on each (six seconds, the only proof that every binary makes the same sound) and
+- CI builds and runs the checks that need no host and no display harness, and it runs only
+  for a release. GitHub Actions compiles the plug-in for every platform (Linux, macOS Intel and
+  ARM, Windows), runs the JUCE-free engine tests on each (six seconds, the only proof that every
+  binary makes the same sound), then the Steinberg validator, pluginval and, on macOS, `auval`
+  (since 2026-09-25, after a Windows crash reported by a tester that nothing had caught), and
   publishes the archives, on the push of a version tag or a manual run, never on an ordinary
-  push or pull request (no Actions minutes outside a version); `./run check`, `./run validate`
-  and `./run memory` run on a development machine only, where REAPER, the displays and the
-  validator live.
+  push or pull request (no Actions minutes outside a version). The Windows job publishes the
+  `.pdb` symbols as an artifact. `./run check`, `./run validate` and `./run memory` (the plug-in
+  tests, the REAPER harness, the sanitizers) run on a development machine only.
 
 ## Self-validation
 

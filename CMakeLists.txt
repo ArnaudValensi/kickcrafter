@@ -47,6 +47,13 @@ endif()
 # MSVC has its own. The tests' options live in tests/CMakeLists.txt with the same rule.
 if(MSVC)
     set(KCF_WARNING_OPTIONS /W4)
+    # Symbols for the Release build: a crash dump from a Windows tester is read with the .pdb
+    # (epics/windows-validation). /Zi and /DEBUG cost nothing in the binary; /OPT:REF /OPT:ICF
+    # keep the linker's dead-code and identical-code folding that /DEBUG would otherwise turn off.
+    # The .pdb files are directed to build/symbols/ (PDB_OUTPUT_DIRECTORY, below the targets) so
+    # tools/dist.sh, which copies the bundle whole, never ships them; CI uploads that folder.
+    add_compile_options($<$<CONFIG:Release>:/Zi>)
+    add_link_options($<$<CONFIG:Release>:/DEBUG> $<$<CONFIG:Release>:/OPT:REF> $<$<CONFIG:Release>:/OPT:ICF>)
 else()
     set(KCF_WARNING_OPTIONS -Wall -Wextra -Wpedantic -Wshadow -Wconversion)
 endif()
@@ -202,6 +209,13 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
 
     # Keep the engine visible to the test executables that link the shared code.
     target_link_libraries(KickCrafter PUBLIC kcf_engine)
+    if(MSVC)
+        foreach(kcf_format_target KickCrafter_VST3 KickCrafter_Standalone)
+            if(TARGET ${kcf_format_target})
+                set_target_properties(${kcf_format_target} PROPERTIES PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/symbols")
+            endif()
+        endforeach()
+    endif()
 endif()
 
 # ----------------------------------------------------------------- tests ----

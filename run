@@ -113,7 +113,12 @@ cmd_asan() {   # engine-only ASan/UBSan build and its tests (no JUCE)
         && logged engine-tests-asan ./build-asan/tests/kcf_engine_tests
 }
 cmd_build_chain() { tools/build-and-test.sh; }
-cmd_validator()   { tools/validate-bundle.sh "$@"; }
+cmd_validator()   { tools/validate-bundle.sh "$@"; }           # validator [bundle]
+cmd_pluginval()   {   # pluginval [level] [bundle]
+    case "${1:-}" in ''|*[!0-9]*) tools/pluginval.sh "$@" ;; *) local level="$1"; shift; tools/pluginval.sh --level "$level" "$@" ;; esac
+}
+cmd_fetch_validator() { tools/fetch-validators.sh validator; }
+cmd_fetch_pluginval() { tools/fetch-validators.sh pluginval; }
 
 # --- host and memory ------------------------------------------------------------
 cmd_reaper()          { tools/reaper/run_all_stages.sh "$@"; }   # reaper [from-stage]
@@ -183,7 +188,10 @@ cmd_help() {
     row "test-engine / test-plugin [filter]" "one test binary; a substring selects a single case"
     row asan        "engine-only ASan/UBSan build in build-asan/ and its tests"
     row build-chain "tools/build-and-test.sh: configure, build, plugin tests, layout dump, staging, build record"
-    row validator   "Steinberg validator on the staged bundle (KCF_VALIDATOR)"
+    row "validator [bundle]" "Steinberg validator on the staged bundle, or on the one given (KCF_VALIDATOR, or external/validator/)"
+    row "pluginval [level] [bundle]" "Tracktion pluginval on the staged bundle, strictness 1-10 (default 5; KCF_PLUGINVAL, or external/pluginval/)"
+    row fetch-validator "build the Steinberg validator from the pinned VST3 SDK into external/validator/ (CI does this, cached)"
+    row fetch-pluginval "download the pinned pluginval release into external/pluginval/"
     sec "Host and memory"
     row "reaper [from-stage]" "every REAPER host stage in order (or from one stage on), stop at the first failure"
     row "reaper-stage <stage>" "a single stage (earlier stages' outputs must exist); reaper-stop stops REAPER"
@@ -205,7 +213,9 @@ cmd_help() {
 cmd="${1:-help}"; shift || true
 case "$cmd" in
     help|-h|--help) cmd_help ;;
-    check|validate|setup|juce|displays|build|test|asan|validator|reaper|memory|dist|preflight|package|diagram|clean) "cmd_$cmd" "$@" ;;
+    check|validate|setup|juce|displays|build|test|asan|validator|pluginval|reaper|memory|dist|preflight|package|diagram|clean) "cmd_$cmd" "$@" ;;
+    fetch-validator)  cmd_fetch_validator ;;
+    fetch-pluginval)  cmd_fetch_pluginval ;;
     test-engine)      cmd_test_engine "$@" ;;
     test-plugin)      cmd_test_plugin "$@" ;;
     build-chain)      cmd_build_chain "$@" ;;

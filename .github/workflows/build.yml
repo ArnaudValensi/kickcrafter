@@ -1,7 +1,10 @@
-# Build KickCrafter on the three platforms and run the JUCE-free engine tests on each: the
-# only proof that every binary makes the same sound. CI builds, it does not validate: the gates
-# (`./run check`, `./run validate`, `./run memory`, the REAPER harness) run on the development
-# machine only (docs/development.md, "Continuous integration and releases").
+# Build KickCrafter on the three platforms, run the JUCE-free engine tests on each (the only
+# proof that every binary makes the same sound), then the checks that need no host and no display
+# harness: the Steinberg VST3 validator (built from the pinned SDK, cached), pluginval, and auval
+# for the Audio Unit on macOS. The gates that need REAPER, the displays or the sanitizers
+# (`./run check`, `./run validate`, `./run memory`) run on the development machine only
+# (docs/development.md, "Continuous integration and releases"). The Windows job also publishes
+# the symbols (.pdb) so a crash dump from a tester can be read with a real stack.
 #
 # Nothing runs on GitHub outside a release (the owner's decision, 2026-09-20: no Actions minutes
 # spent on ordinary pushes or pull requests). This workflow is therefore only called by
@@ -52,7 +55,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build pkg-config git \
             libfreetype-dev libfontconfig-dev libasound2-dev \
-            libx11-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev
+            libx11-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev \
+            xvfb unzip   # pluginval opens the editor: a display; the pluginval release is a zip
 
       # macOS: Xcode's Apple Clang, CMake and Ninja are on the runner image; nothing to install.
 
@@ -70,6 +74,41 @@ jobs:
 
       - name: Engine tests
         run: ./run test-engine
+
+      # Host-independent checks (epics/windows-validation). Each is its own step so the job
+      # summary names the one that failed; every log lands under artifacts/logs/ and is uploaded
+      # below even on failure. A failing check fails the job, hence the release.
+      - name: Steinberg validator, cached build from the pinned SDK
+        uses: actions/cache@v4
+        with:
+          path: external/validator
+          key: ${{ runner.os }}-vst3-validator-v3.8.1_build_84
+
+      - name: Steinberg validator (build if not cached)
+        run: ./run fetch-validator
+
+      - name: Steinberg validator on the bundle
+        run: |
+          bundle="build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3"
+          if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a ./run validator "$bundle"; else ./run validator "$bundle"; fi
+
+      - name: pluginval (pinned release)
+        run: ./run fetch-pluginval
+
+      - name: pluginval on the bundle, strictness 5
+        run: |
+          bundle="build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3"
+          if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a ./run pluginval 5 "$bundle"; else ./run pluginval 5 "$bundle"; fi
+
+      # auval needs the component registered: the runner's own plug-in folder, on a throwaway
+      # machine. The only place a script installs the plug-in anywhere (CLAUDE.md).
+      - name: auval on the Audio Unit
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "build/KickCrafter_artefacts/Release/AU/KickCrafter.component" ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          tools/run-logged.sh auval auval -v aumu Kcfb Arnv
 
       - name: Architectures of the macOS bundles
         if: runner.os == 'macOS'
@@ -89,6 +128,15 @@ jobs:
           name: kickcrafter-${{ matrix.platform }}
           path: artifacts/dist/
           retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload the Windows symbols
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v7
+        with:
+          name: kickcrafter-${{ matrix.platform }}-symbols
+          path: build/symbols/
+          retention-days: 90
           if-no-files-found: error
 
       # The logs (with their .exit sidecars) are kept even when a step failed: a failed run's

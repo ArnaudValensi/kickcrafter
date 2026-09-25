@@ -3,6 +3,10 @@ build*/
 artifacts/
 # pinned JUCE checkout, fetched by tools/fetch-juce.sh
 external/JUCE/
+# validators fetched by tools/fetch-validators.sh (the VST3 SDK and its built validator, pluginval)
+external/vst3sdk/
+external/validator/
+external/pluginval/
 # scratch
 __pycache__/
 *.o
