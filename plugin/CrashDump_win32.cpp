@@ -7,6 +7,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <dbghelp.h>
+#include <shlobj.h>       // SHGetKnownFolderPath: the Desktop
+#include <objbase.h>      // CoTaskMemFree
 #include <cstdio>
 #include <cwchar>
 
@@ -46,17 +48,24 @@ namespace
 
     LONG WINAPI writeCrashDump (EXCEPTION_POINTERS* info) noexcept
     {
-        // The folder: KCF_CRASH_DUMP_DIR when set (the CI self-test names one it can read back
-        // from Git Bash), else %TEMP% as Windows resolves it for the host process.
+        // The folder: KCF_CRASH_DUMP_DIR when set (an escape hatch), else the user's Desktop
+        // (where a tester finds the file without being told a path), else %TEMP%.
         wchar_t temp[MAX_PATH] = {};
         DWORD length = GetEnvironmentVariableW (L"KCF_CRASH_DUMP_DIR", temp, MAX_PATH);
-        if (length > 0 && length < MAX_PATH - 1)
+        if (length == 0 || length >= MAX_PATH - 1)
         {
-            if (temp[length - 1] != L'\\' && temp[length - 1] != L'/') { temp[length] = L'\\'; temp[length + 1] = 0; }
+            length = 0;
+            PWSTR desktop = nullptr;
+            if (SUCCEEDED (SHGetKnownFolderPath (FOLDERID_Desktop, KF_FLAG_DEFAULT, nullptr, &desktop)) && desktop != nullptr)
+            {
+                if (wcslen (desktop) < MAX_PATH - 2) { wcscpy_s (temp, MAX_PATH, desktop); length = (DWORD) wcslen (temp); }
+                CoTaskMemFree (desktop);
+            }
+            if (length == 0) length = GetTempPathW (MAX_PATH, temp);
         }
-        else
+        if (length > 0 && length < MAX_PATH - 1 && temp[length - 1] != L'\\' && temp[length - 1] != L'/')
         {
-            length = GetTempPathW (MAX_PATH, temp);
+            temp[length] = L'\\'; temp[length + 1] = 0;
         }
         if (length > 0)
         {
@@ -77,7 +86,7 @@ namespace
                 {
                     wchar_t text[2 * MAX_PATH + 160];
                     _snwprintf_s (text, sizeof (text) / sizeof (text[0]), _TRUNCATE,
-                                  L"KickCrafter (diagnostic build) wrote a crash dump:\n\n%ls\n\nPlease send that file and the .txt next to it.", dumpPath);
+                                  L"KickCrafter (diagnostic build) wrote a crash dump on your Desktop:\n\n%ls\n\nPlease send that file and the .txt next to it.", dumpPath);
                     MessageBoxW (nullptr, text, L"KickCrafter crash dump", MB_OK | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
                 }
             }

@@ -221,7 +221,7 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
         endif()
         target_sources(KickCrafter PRIVATE plugin/CrashDump_win32.cpp)
         target_compile_definitions(KickCrafter PUBLIC KCF_CRASH_DUMP=1)
-        target_link_libraries(KickCrafter PUBLIC dbghelp)
+        target_link_libraries(KickCrafter PUBLIC dbghelp shell32 ole32)   # MiniDumpWriteDump, SHGetKnownFolderPath, CoTaskMemFree
     endif()
     if(MSVC)
         # One .pdb per format target, named after the target: the VST3 module and the Standalone

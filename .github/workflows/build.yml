@@ -106,17 +106,20 @@ jobs:
 
       # The mechanism proven on the runner: with KCF_CRASH_TEST set, the diagnostic module raises
       # an access violation at its first instantiation, so the validator process must die and a
-      # dump must appear in the folder KCF_CRASH_DUMP_DIR names (a folder this shell can read;
-      # a tester gets %TEMP%). The validator's own log keeps its real exit code as evidence.
+      # dump must appear on the runner account's Desktop, where a tester finds it too. The
+      # validator's own log keeps its real exit code as evidence.
       - name: Crash dump self-test (diagnostic build)
         if: runner.os == 'Windows' && inputs.crash_dump == true
         run: |
           bundle="build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3"
-          dir="$RUNNER_TEMP/kcf-crashdump"; mkdir -p "$dir"
-          if KCF_CRASH_TEST=1 KCF_CRASH_DUMP_DIR="$(cygpath -w "$dir")" ./run validator "$bundle"; then echo "::error::the validator survived the deliberate crash"; exit 1; fi
-          ls -la "$dir"
-          cat "$dir"/KickCrafter-crash-*.txt
-          test -s "$dir"/KickCrafter-crash-*.dmp
+          desktop="$(cygpath -u "$(powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')")")"
+          echo "desktop: $desktop"; mkdir -p "$desktop"
+          rm -f "$desktop"/KickCrafter-crash-*.dmp "$desktop"/KickCrafter-crash-*.txt
+          if KCF_CRASH_TEST=1 ./run validator "$bundle"; then echo "::error::the validator survived the deliberate crash"; exit 1; fi
+          ls -la "$desktop"/KickCrafter-crash-*
+          cat "$desktop"/KickCrafter-crash-*.txt
+          test -s "$desktop"/KickCrafter-crash-*.dmp
+          rm -f "$desktop"/KickCrafter-crash-*.dmp "$desktop"/KickCrafter-crash-*.txt
 
       - name: pluginval (pinned release)
         run: ./run fetch-pluginval
