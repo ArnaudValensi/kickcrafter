@@ -117,14 +117,16 @@ Windows writes no dump by default and a tester rarely edits the registry, the pl
 itself in a **diagnostic build**: CMake option `KCF_CRASH_DUMP=ON` (Windows only; `./run build`
 passes it through `KCF_CMAKE_OPTIONS`), which compiles `plugin/CrashDump_win32.cpp`: at the first
 instantiation the module installs an unhandled-exception filter; when the host crashes it writes
-`%TEMP%\KickCrafter-crash-<date>-<time>.dmp` and a `.txt` next to it (version, module base,
-exception code and address), shows a message box with the path, then lets the crash continue.
+`KickCrafter-crash-<date>-<time>.dmp` and a `.txt` next to it (version, module base, exception
+code and address) on the user's Desktop (`%TEMP%` if the Desktop cannot be resolved), shows a
+message box naming the file, then lets the crash continue.
 Never in a release: `release.yml` cannot set it, and the archive of such a build is named
 `kickcrafter-<version>-<sha>-crashdump-windows-x86_64.zip` (`KCF_DIST_SUFFIX`). To make one: run
 the Build workflow by hand with the `crash_dump` input on; the Windows job also self-tests the
 mechanism (`KCF_CRASH_TEST=1` makes the module raise an access violation at its first
 instantiation, the validator must die and the dump must appear) and uploads the archive and the
-symbols. Give the tester the archive; when it crashes, the message box names the dump; open the
+symbols. Give the tester the archive; when it crashes, the message box names the dump on the
+Desktop; open the
 `.dmp` in WinDbg with the `.pdb` from the same run's `kickcrafter-windows-x86_64-symbols` artifact
 (`.sympath+ <folder with the .pdb>`, `!analyze -v`).
 
@@ -145,7 +147,7 @@ executable (default `/usr/sbin/reaper`). The harness runs REAPER with its own co
 | `KCF_CMAKE_OPTIONS` | `run build` | extra CMake options for `build/` (empty; CI sets `-DKCF_CRASH_DUMP=ON` for the diagnostic build) |
 | `KCF_DIST_SUFFIX` | `dist.sh` | inserted after the version in the archive name (empty; `-crashdump` for the diagnostic build) |
 | `KCF_CRASH_TEST` | the diagnostic module | set: the module raises an access violation at its first instantiation (the self-test of the crash dump) |
-| `KCF_CRASH_DUMP_DIR` | the diagnostic module | folder for the dump instead of `%TEMP%` (the CI self-test; a tester leaves it unset) |
+| `KCF_CRASH_DUMP_DIR` | the diagnostic module | folder for the dump instead of the Desktop (an escape hatch; a tester leaves it unset) |
 | `KCF_REAPER` | REAPER harness | REAPER executable (`/usr/sbin/reaper`) |
 | `KCF_DISPLAY` | REAPER harness, `memory-check.sh --display` | X display of the harness (`:102`); the tests use `DISPLAY` (`:104`) |
 | `KCF_XDOTOOL` | REAPER harness | xdotool executable (`xdotool`) |
