@@ -22,6 +22,11 @@ macOS and Windows with the editorhost logs read (or the failure read: the findin
 
 ## T3: The diagnostic build
 
+**Done** (2026-09-26): `KCF_CRASH_DUMP`, `plugin/CrashDump_win32.cpp`, the `crash_dump` input of
+the Build workflow, `KCF_CMAKE_OPTIONS`, `KCF_DIST_SUFFIX`, the self-test step; run 36235673464
+green with the deliberate crash caught: a 975 KB dump and its note on the runner. Details:
+`journal/2026-09-26.md`. What remains is the tester's dump.
+
 The `KCF_CRASH_DUMP` option and the minidump writer (Windows only), documented for the tester in
 one paragraph the owner can paste; built by a manual workflow run with the option on (a
 `workflow_dispatch` input), the archive and its `.pdb` handed to the tester. Acceptance: a
