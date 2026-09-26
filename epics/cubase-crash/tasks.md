@@ -10,6 +10,10 @@ wrapper on Linux.
 
 ## T2: editorhost on the CI runners
 
+**Done** (2026-09-26): run 36233946827 green on the three platforms; editorhost alive after 20 s
+with the editor open on macOS and on Windows (exit 0 both). Finding: not reproduced with
+Steinberg's own editor host at 100 % screen scale. Details: `journal/2026-09-26.md`.
+
 `tools/fetch-validators.sh editorhost`, `tools/editorhost.sh`, `./run fetch-editorhost`,
 `./run editorhost`, the two workflow steps on macOS and Windows with the cache, the documents.
 Acceptance: the probe's alive and dead paths self-tested locally with fake hosts, `./run check`,
