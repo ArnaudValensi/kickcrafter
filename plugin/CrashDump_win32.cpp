@@ -46,8 +46,19 @@ namespace
 
     LONG WINAPI writeCrashDump (EXCEPTION_POINTERS* info) noexcept
     {
+        // The folder: KCF_CRASH_DUMP_DIR when set (the CI self-test names one it can read back
+        // from Git Bash), else %TEMP% as Windows resolves it for the host process.
         wchar_t temp[MAX_PATH] = {};
-        if (GetTempPathW (MAX_PATH, temp) > 0)
+        DWORD length = GetEnvironmentVariableW (L"KCF_CRASH_DUMP_DIR", temp, MAX_PATH);
+        if (length > 0 && length < MAX_PATH - 1)
+        {
+            if (temp[length - 1] != L'\\' && temp[length - 1] != L'/') { temp[length] = L'\\'; temp[length + 1] = 0; }
+        }
+        else
+        {
+            length = GetTempPathW (MAX_PATH, temp);
+        }
+        if (length > 0)
         {
             SYSTEMTIME t; GetLocalTime (&t);
             _snwprintf_s (dumpPath, MAX_PATH, _TRUNCATE, L"%lsKickCrafter-crash-%04u%02u%02u-%02u%02u%02u.dmp",

@@ -87,20 +87,6 @@ jobs:
       - name: Engine tests
         run: ./run test-engine
 
-      # The mechanism proven on the runner: with KCF_CRASH_TEST set, the diagnostic module raises
-      # an access violation at its first instantiation; the validator process must die and a dump
-      # must appear in %TEMP%. The dump is removed so the ordinary checks below start clean.
-      - name: Crash dump self-test (diagnostic build)
-        if: runner.os == 'Windows' && inputs.crash_dump == true
-        run: |
-          bundle="build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3"
-          temp="$(cygpath -u "${TEMP:-${TMP:?}}")"
-          rm -f "$temp"/KickCrafter-crash-*.dmp "$temp"/KickCrafter-crash-*.txt
-          if KCF_CRASH_TEST=1 ./run validator "$bundle"; then echo "::error::the validator survived the deliberate crash"; exit 1; fi
-          ls -la "$temp"/KickCrafter-crash-*.dmp "$temp"/KickCrafter-crash-*.txt
-          cat "$temp"/KickCrafter-crash-*.txt
-          rm -f "$temp"/KickCrafter-crash-*.dmp "$temp"/KickCrafter-crash-*.txt
-
       # Host-independent checks (epics/windows-validation). Each is its own step so the job
       # summary names the one that failed; every log lands under artifacts/logs/ and is uploaded
       # below even on failure. A failing check fails the job, hence the release.
@@ -117,6 +103,20 @@ jobs:
         run: |
           bundle="build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3"
           if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a ./run validator "$bundle"; else ./run validator "$bundle"; fi
+
+      # The mechanism proven on the runner: with KCF_CRASH_TEST set, the diagnostic module raises
+      # an access violation at its first instantiation, so the validator process must die and a
+      # dump must appear in the folder KCF_CRASH_DUMP_DIR names (a folder this shell can read;
+      # a tester gets %TEMP%). The validator's own log keeps its real exit code as evidence.
+      - name: Crash dump self-test (diagnostic build)
+        if: runner.os == 'Windows' && inputs.crash_dump == true
+        run: |
+          bundle="build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3"
+          dir="$RUNNER_TEMP/kcf-crashdump"; mkdir -p "$dir"
+          if KCF_CRASH_TEST=1 KCF_CRASH_DUMP_DIR="$(cygpath -w "$dir")" ./run validator "$bundle"; then echo "::error::the validator survived the deliberate crash"; exit 1; fi
+          ls -la "$dir"
+          cat "$dir"/KickCrafter-crash-*.txt
+          test -s "$dir"/KickCrafter-crash-*.dmp
 
       - name: pluginval (pinned release)
         run: ./run fetch-pluginval

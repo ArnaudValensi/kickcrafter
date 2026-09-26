@@ -145,6 +145,7 @@ executable (default `/usr/sbin/reaper`). The harness runs REAPER with its own co
 | `KCF_CMAKE_OPTIONS` | `run build` | extra CMake options for `build/` (empty; CI sets `-DKCF_CRASH_DUMP=ON` for the diagnostic build) |
 | `KCF_DIST_SUFFIX` | `dist.sh` | inserted after the version in the archive name (empty; `-crashdump` for the diagnostic build) |
 | `KCF_CRASH_TEST` | the diagnostic module | set: the module raises an access violation at its first instantiation (the self-test of the crash dump) |
+| `KCF_CRASH_DUMP_DIR` | the diagnostic module | folder for the dump instead of `%TEMP%` (the CI self-test; a tester leaves it unset) |
 | `KCF_REAPER` | REAPER harness | REAPER executable (`/usr/sbin/reaper`) |
 | `KCF_DISPLAY` | REAPER harness, `memory-check.sh --display` | X display of the harness (`:102`); the tests use `DISPLAY` (`:104`) |
 | `KCF_XDOTOOL` | REAPER harness | xdotool executable (`xdotool`) |
