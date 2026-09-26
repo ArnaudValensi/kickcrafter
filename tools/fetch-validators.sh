@@ -6,6 +6,10 @@
 #                                          pinned tag into external/validator/validator[.exe]
 #   tools/fetch-validators.sh pluginval    Tracktion pluginval, the pinned release's binary for
 #                                          this platform, into external/pluginval/
+#   tools/fetch-validators.sh editorhost   Steinberg's editorhost sample (the SDK's own editor
+#                                          host, the closest thing to Cubase's window code), built
+#                                          from the same SDK checkout into external/editorhost/;
+#                                          macOS and Windows only (on Linux it needs gtkmm)
 # Each prints the executable's path on stdout (everything else goes to stderr) and exits non-zero
 # when it could not produce it. docs/development.md, "Setting up", sections 4 and 5.
 set -uo pipefail
@@ -49,6 +53,39 @@ fetch_validator() {
     echo "$out"
 }
 
+fetch_editorhost() {
+    local out
+    case "$os" in
+        Windows) out="external/editorhost/editorhost.exe" ;;
+        macOS)   out="external/editorhost/editorhost.app/Contents/MacOS/editorhost" ;;
+        Linux)   say "editorhost is not built on Linux (its window needs gtkmm-3.0); macOS and Windows only"; return 2 ;;
+    esac
+    if [ -x "$out" ]; then echo "$out"; return 0; fi
+    local sdk="external/vst3sdk"
+    if [ ! -d "$sdk/.git" ]; then
+        say "cloning $VST3SDK_REPO at $VST3SDK_TAG (shallow, with submodules)"
+        git clone --quiet --depth 1 --branch "$VST3SDK_TAG" --recurse-submodules --shallow-submodules "$VST3SDK_REPO" "$sdk" >&2 || return 1
+    fi
+    # Its own build tree: the hosting examples are on here and off for the validator.
+    say "building the editorhost target (Ninja, Release)"
+    cmake -S "$sdk" -B "$sdk/build-editorhost" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+        -DSMTG_ENABLE_VSTGUI_SUPPORT=OFF -DSMTG_ENABLE_VST3_PLUGIN_EXAMPLES=OFF \
+        -DSMTG_ENABLE_VST3_HOSTING_EXAMPLES=ON >&2 || return 1
+    cmake --build "$sdk/build-editorhost" --target editorhost >&2 || return 1
+    mkdir -p external/editorhost || return 1
+    if [ "$os" = macOS ]; then
+        local app; app="$(find "$sdk/build-editorhost/bin" -type d -name editorhost.app 2>/dev/null | head -1)"
+        [ -n "$app" ] || { say "no editorhost.app under $sdk/build-editorhost/bin"; return 1; }
+        rm -rf external/editorhost/editorhost.app && cp -R "$app" external/editorhost/ || return 1
+    else
+        local built; built="$(find "$sdk/build-editorhost/bin" -type f -name editorhost.exe 2>/dev/null | head -1)"
+        [ -n "$built" ] || { say "no editorhost.exe under $sdk/build-editorhost/bin"; return 1; }
+        cp "$built" "$out" || return 1
+    fi
+    chmod +x "$out"
+    echo "$out"
+}
+
 fetch_pluginval() {
     local dir="external/pluginval" out
     case "$os" in
@@ -68,7 +105,8 @@ fetch_pluginval() {
 }
 
 case "${1:-}" in
-    validator) fetch_validator ;;
-    pluginval) fetch_pluginval ;;
-    *) echo "usage: tools/fetch-validators.sh validator|pluginval" >&2; exit 2 ;;
+    validator)  fetch_validator ;;
+    pluginval)  fetch_pluginval ;;
+    editorhost) fetch_editorhost ;;
+    *) echo "usage: tools/fetch-validators.sh validator|pluginval|editorhost" >&2; exit 2 ;;
 esac

@@ -17,6 +17,7 @@
 #include <pluginterfaces/base/ipluginbase.h>
 #include <pluginterfaces/base/ibstream.h>
 #include <pluginterfaces/gui/iplugview.h>
+#include <pluginterfaces/gui/iplugviewcontentscalesupport.h>
 #include <pluginterfaces/vst/ivstaudioprocessor.h>
 #include <pluginterfaces/vst/ivstcomponent.h>
 #include <pluginterfaces/vst/ivsteditcontroller.h>
@@ -46,6 +47,7 @@ namespace Steinberg
 {
     DEF_CLASS_IID (IPlugView)
     DEF_CLASS_IID (IPlugFrame)
+    DEF_CLASS_IID (IPlugViewContentScaleSupport)
     DEF_CLASS_IID (Linux::IRunLoop)
     DEF_CLASS_IID (Linux::IEventHandler)
     DEF_CLASS_IID (Linux::ITimerHandler)
@@ -189,10 +191,13 @@ struct HostApplication final : HostObject<Vst::IHostApplication>
 struct PlugFrame final : HostObject<IPlugFrame>
 {
     RunLoop& runLoop; Display* display = nullptr; Window window = 0; int resizeRequests = 0;
+    int budget = 1000000, refused = 0;   // resizeView calls left before the frame refuses (a runaway host/plug-in ping-pong)
     explicit PlugFrame (RunLoop& r) : runLoop (r) {}
     tresult PLUGIN_API resizeView (IPlugView* view, ViewRect* newSize) override
     {
         ++resizeRequests;
+        if (budget <= 0) { ++refused; return kResultFalse; }
+        --budget;
         if (display != nullptr && window != 0 && newSize != nullptr)
         {
             XResizeWindow (display, window, (unsigned) std::max (1, newSize->getWidth()), (unsigned) std::max (1, newSize->getHeight()));
@@ -422,7 +427,61 @@ struct Instance
 
 struct ViewSession
 {
-    int attached = 0, resized = 0, hostResizeRequests = 0;
+    int attached = 0, resized = 0, hostResizeRequests = 0, scaleFactorsApplied = 0, negotiations = 0;
+
+    // The sequence a Steinberg host plays on a Windows screen scaled above 100 % (Cubase 10 and
+    // later): the view gets the display's content scale factor, then the host negotiates every
+    // size through checkSizeConstraint before onSize, including sizes the editor's constrainer
+    // must correct (off aspect, out of range). Each step tolerates a handful of resizeView
+    // callbacks from the plug-in; a ping-pong past the budget is refused by the frame and
+    // counted as a failure, a recursion would crash this process. A tester's Cubase 11 on
+    // Windows 10 crashed at the opening of the editor (2026-09-26); this reproduces the
+    // host side of that opening with the Linux build.
+    void cubaseNegotiation (IPlugView* view, RunLoop& runLoop, PlugFrame& frame, Display* display, Window window, int millis)
+    {
+        IPlugViewContentScaleSupport* scaling = nullptr;
+        require (view->queryInterface (IPlugViewContentScaleSupport::iid, (void**) &scaling) == kResultOk && scaling != nullptr,
+                 "view supports IPlugViewContentScaleSupport");
+        if (scaling == nullptr) return;
+        const double factors[] = { 1.25, 1.5, 2.0, 1.0 };
+        for (double factor : factors)
+        {
+            const int before = frame.resizeRequests;
+            frame.budget = 16; frame.refused = 0;
+            require (scaling->setContentScaleFactor ((IPlugViewContentScaleSupport::ScaleFactor) factor) == kResultTrue,
+                     "setContentScaleFactor " + std::to_string (factor));
+            ++scaleFactorsApplied;
+            runLoop.runFor (millis / 4);
+            ViewRect size;
+            require (view->getSize (&size) == kResultOk && size.getWidth() > 0 && size.getHeight() > 0, "getSize after scale");
+            // 1. The host applies the size the plug-in reports (what Cubase does right after the scale).
+            XResizeWindow (display, window, (unsigned) std::max (1, size.getWidth()), (unsigned) std::max (1, size.getHeight())); XSync (display, False);
+            require (view->onSize (&size) == kResultOk, "onSize with the reported size");
+            runLoop.runFor (millis / 8);
+            // 2. Proposals the constrainer must correct: off aspect, below and above the limits.
+            const ViewRect proposals[] = { ViewRect (0, 0, (int32) (size.getWidth() * 1.3), (int32) (size.getHeight() * 1.05)),
+                                           ViewRect (0, 0, 300, 900), ViewRect (0, 0, 4000, 300), ViewRect (0, 0, 1000, 640) };
+            for (ViewRect proposal : proposals)
+            {
+                ViewRect corrected = proposal;
+                view->checkSizeConstraint (&corrected);
+                require (corrected.getWidth() > 0 && corrected.getHeight() > 0, "checkSizeConstraint returns a usable size");
+                XResizeWindow (display, window, (unsigned) std::max (1, corrected.getWidth()), (unsigned) std::max (1, corrected.getHeight())); XSync (display, False);
+                require (view->onSize (&corrected) == kResultOk, "onSize with the corrected size");
+                runLoop.runFor (millis / 8);
+                // A second checkSizeConstraint on what we just applied must be a fixed point.
+                ViewRect again = corrected;
+                view->checkSizeConstraint (&again);
+                require (std::abs (again.getWidth() - corrected.getWidth()) <= 1 && std::abs (again.getHeight() - corrected.getHeight()) <= 1,
+                         "the corrected size is a fixed point of checkSizeConstraint");
+                ++negotiations;
+            }
+            require (frame.refused == 0, "no runaway resizeView ping-pong at scale " + std::to_string (factor)
+                                             + " (" + std::to_string (frame.resizeRequests - before) + " host requests)");
+            frame.budget = 1000000;
+        }
+        scaling->release();
+    }
     // Create the editor view, attach it to a fresh X11 window, run the host loop, resize, remove.
     void open (Instance& inst, RunLoop& runLoop, PlugFrame& frame, Display* display, int millis, bool processWhileOpen)
     {
@@ -456,6 +515,7 @@ struct ViewSession
             XResizeWindow (display, window, (unsigned) back.getWidth(), (unsigned) back.getHeight()); XSync (display, False);
             view->onSize (&back); ++resized;
             runLoop.runFor (millis / 2);
+            cubaseNegotiation (view, runLoop, frame, display, window, millis);
         }
         require (view->removed() == kResultOk, "removed");
         frame.display = nullptr; frame.window = 0;
@@ -597,8 +657,8 @@ int main (int argc, char** argv)
     require (runLoop.fds.empty() && runLoop.timers.empty(), "plug-in unregistered every run-loop handler/timer");
     require (host.refs == 1 && frame.refs == 1 && handler.refs == 1 && runLoop.refs == 1, "host object references balanced after teardown");
 
-    std::printf ("instances %d, blocks %d, note events %d, state round trips %d, views attached %d, view resizes %d, host resize requests %d\n",
-                 instancesCreated, blocks, events, stateRoundTrips, views.attached, views.resized, frame.resizeRequests);
+    std::printf ("instances %d, blocks %d, note events %d, state round trips %d, views attached %d, view resizes %d, host resize requests %d, content scale factors %d, size negotiations %d\n",
+                 instancesCreated, blocks, events, stateRoundTrips, views.attached, views.resized, frame.resizeRequests, views.scaleFactorsApplied, views.negotiations);
     std::printf ("run loop: fd registrations %d, fd callbacks %d, timer registrations %d, timer callbacks %d; component handler: begin %d perform %d end %d restart %d\n",
                  runLoop.fdRegistrations, runLoop.fdCallbacks, runLoop.timerRegistrations, runLoop.timerCallbacks, handler.begins, handler.performs, handler.ends, handler.restarts);
     std::printf ("%d check(s), %d failure(s): %s\n", checks, failures, failures == 0 ? "PASS" : "FAIL");

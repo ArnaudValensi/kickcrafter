@@ -7,6 +7,7 @@ external/JUCE/
 external/vst3sdk/
 external/validator/
 external/pluginval/
+external/editorhost/
 # scratch
 __pycache__/
 *.o

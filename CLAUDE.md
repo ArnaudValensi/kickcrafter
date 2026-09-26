@@ -27,8 +27,9 @@ scripts it calls are described in `docs/development.md`).
 - **The leak gate**: `./run memory` (pass A) and `./run memory --diag` (pass B, rebuilds JUCE
   instrumented). On demand, on a development machine only, never in CI; both before a release.
 - **Pieces**: `./run build [targets]`, `./run test`, `./run test-plugin "<case substring>"`,
-  `./run validator [bundle]`, `./run pluginval [level] [bundle]` (after `./run fetch-validator`
-  and `./run fetch-pluginval` when the tools are not installed),
+  `./run validator [bundle]`, `./run pluginval [level] [bundle]`, `./run editorhost [seconds]
+  [bundle]` (after `./run fetch-validator`, `./run fetch-pluginval`, `./run fetch-editorhost`
+  when the tools are not installed; editorhost is macOS and Windows only),
   `./run reaper [from-stage]`, `./run memory [--diag]`, `./run dist` (the per-platform archive of
   what `build/` holds, CI's last step), `./run package` (the Linux delivery: refuses without a
   green, committed, recorded build).
@@ -95,8 +96,9 @@ The reasoning is in `docs/development.md` (Conventions, Memory-leak gate) and `R
 - CI builds and runs the checks that need no host and no display harness, and it runs only
   for a release. GitHub Actions compiles the plug-in for every platform (Linux, macOS Intel and
   ARM, Windows), runs the JUCE-free engine tests on each (six seconds, the only proof that every
-  binary makes the same sound), then the Steinberg validator, pluginval and, on macOS, `auval`
-  (since 2026-09-25, after a Windows crash reported by a tester that nothing had caught), and
+  binary makes the same sound), then the Steinberg validator, pluginval, Steinberg's editorhost
+  on macOS and Windows and, on macOS, `auval` (since 2026-09-25, after a Windows crash reported
+  by a tester that nothing had caught), and
   publishes the archives, on the push of a version tag or a manual run, never on an ordinary
   push or pull request (no Actions minutes outside a version). The Windows job publishes the
   `.pdb` symbols as an artifact. `./run check`, `./run validate` and `./run memory` (the plug-in

@@ -117,8 +117,12 @@ cmd_validator()   { tools/validate-bundle.sh "$@"; }           # validator [bund
 cmd_pluginval()   {   # pluginval [level] [bundle]
     case "${1:-}" in ''|*[!0-9]*) tools/pluginval.sh "$@" ;; *) local level="$1"; shift; tools/pluginval.sh --level "$level" "$@" ;; esac
 }
-cmd_fetch_validator() { tools/fetch-validators.sh validator; }
-cmd_fetch_pluginval() { tools/fetch-validators.sh pluginval; }
+cmd_fetch_validator()  { tools/fetch-validators.sh validator; }
+cmd_fetch_pluginval()  { tools/fetch-validators.sh pluginval; }
+cmd_fetch_editorhost() { tools/fetch-validators.sh editorhost; }
+cmd_editorhost() {   # editorhost [seconds] [bundle]
+    case "${1:-}" in ''|*[!0-9]*) tools/editorhost.sh "$@" ;; *) local secs="$1"; shift; tools/editorhost.sh --seconds "$secs" "$@" ;; esac
+}
 
 # --- host and memory ------------------------------------------------------------
 cmd_reaper()          { tools/reaper/run_all_stages.sh "$@"; }   # reaper [from-stage]
@@ -192,6 +196,8 @@ cmd_help() {
     row "pluginval [level] [bundle]" "Tracktion pluginval on the staged bundle, strictness 1-10 (default 5; KCF_PLUGINVAL, or external/pluginval/)"
     row fetch-validator "build the Steinberg validator from the pinned VST3 SDK into external/validator/ (CI does this, cached)"
     row fetch-pluginval "download the pinned pluginval release into external/pluginval/"
+    row "editorhost [seconds] [bundle]" "open the editor in Steinberg's editorhost and require it alive after N s (default 20); macOS and Windows"
+    row fetch-editorhost "build Steinberg's editorhost sample from the pinned SDK into external/editorhost/ (macOS and Windows)"
     sec "Host and memory"
     row "reaper [from-stage]" "every REAPER host stage in order (or from one stage on), stop at the first failure"
     row "reaper-stage <stage>" "a single stage (earlier stages' outputs must exist); reaper-stop stops REAPER"
@@ -216,6 +222,8 @@ case "$cmd" in
     check|validate|setup|juce|displays|build|test|asan|validator|pluginval|reaper|memory|dist|preflight|package|diagram|clean) "cmd_$cmd" "$@" ;;
     fetch-validator)  cmd_fetch_validator ;;
     fetch-pluginval)  cmd_fetch_pluginval ;;
+    fetch-editorhost) cmd_fetch_editorhost ;;
+    editorhost)       cmd_editorhost "$@" ;;
     test-engine)      cmd_test_engine "$@" ;;
     test-plugin)      cmd_test_plugin "$@" ;;
     build-chain)      cmd_build_chain "$@" ;;

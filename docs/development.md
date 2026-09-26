@@ -97,6 +97,19 @@ report under `artifacts/logs/pluginval/`. It opens a window: on a headless machi
 `.env` or `xvfb-run -a ./run pluginval`. `KCF_PLUGINVAL` names another executable. It is not part
 of `./run check` or `./run validate`; CI runs it on the three platforms.
 
+### 4c. editorhost (Steinberg's own editor host, macOS and Windows)
+
+The SDK's `editorhost` sample opens a plug-in's editor the way Steinberg's hosts do (its window
+code is the closest public relative of Cubase's); a tester's Cubase 11 on Windows 10 crashed at
+that moment (2026-09-26). `./run fetch-editorhost` builds it from the same SDK checkout into
+`external/editorhost/` (macOS and Windows only: on Linux its window needs gtkmm-3.0);
+`./run editorhost [seconds] [bundle]` opens the editor and requires the host to be alive after N
+seconds (default 20), then kills it; an earlier exit is a failure with the host's exit code. Logged
+like the validator. `KCF_EDITORHOST` names another executable. CI runs it on macOS and Windows at
+the runner's 100 % screen scale, so it covers the attach and the size negotiation, not the DPI
+scale factor; the Linux VST3 host test (`kcf_vst3_host`, run by `./run memory`) covers that factor
+through the same JUCE wrapper code (content scale 1.25, 1.5, 2, then negotiated sizes).
+
 ### 5. REAPER (host harness)
 
 Download the Linux x86_64 build from [reaper.fm](https://www.reaper.fm/download.php) (tested with
@@ -110,6 +123,7 @@ executable (default `/usr/sbin/reaper`). The harness runs REAPER with its own co
 |---|---|---|
 | `KCF_VALIDATOR` | `validate-bundle.sh`, `memory-check.sh` | Steinberg validator executable (`validator` on `PATH`, then `external/validator/`) |
 | `KCF_PLUGINVAL` | `pluginval.sh` | pluginval executable (`pluginval` on `PATH`, then `external/pluginval/`) |
+| `KCF_EDITORHOST` | `editorhost.sh` | Steinberg editorhost executable (`external/editorhost/`; macOS and Windows) |
 | `KCF_REAPER` | REAPER harness | REAPER executable (`/usr/sbin/reaper`) |
 | `KCF_DISPLAY` | REAPER harness, `memory-check.sh --display` | X display of the harness (`:102`); the tests use `DISPLAY` (`:104`) |
 | `KCF_XDOTOOL` | REAPER harness | xdotool executable (`xdotool`) |
@@ -252,6 +266,11 @@ rejected, unchanged host values are not counted as changes, xdotool failures pro
 
 Things learned the hard way, kept here so nobody rediscovers them:
 
+- Never edit `run` or a script under `tools/` while a gate that runs it is still executing: bash reads a
+  script incrementally, so the running gate executes a mix of the old and the new text and dies
+  with a syntax error that the file itself does not have (seen 2026-09-26, a `./run memory` killed
+  by an edit of `run`). Finish the gate, or wait for it, then edit.
+
 - The dummy audio device needs the full `linux_audio_*` / `dummy_*` key set in `reaper.ini`; a bare
   `audio_driver=4` leaves the engine closed and parameter delivery stalls. ReaScript parameter
   changes reach the plug-in through REAPER's processing side: verify the component chunk before
@@ -309,9 +328,11 @@ host-independent checks (`epics/windows-validation`, 2026-09-25, after a tester'
 that nothing had caught): the Steinberg validator on the bundle (`./run fetch-validator`, built
 from the pinned SDK and cached under `external/validator/` by OS and tag, then `./run validator
 <bundle>`), pluginval at strictness 5 (`./run fetch-pluginval`, `./run pluginval 5 <bundle>`,
-under `xvfb-run` on Linux), and on macOS `auval -v aumu Kcfb Arnv` on the component, which the
-job copies into the runner's `~/Library/Audio/Plug-Ins/Components/` first (the one place a script
-installs the plug-in anywhere: a throwaway machine). Each check is its own step, so the job
+under `xvfb-run` on Linux), on macOS and Windows Steinberg's `editorhost` on the bundle
+(`./run fetch-editorhost`, cached like the validator, then `./run editorhost 20 <bundle>`: the
+editor open and the host alive after 20 s), and on macOS `auval -v aumu Kcfb Arnv` on the
+component, which the job copies into the runner's `~/Library/Audio/Plug-Ins/Components/` first
+(the one place a script installs the plug-in anywhere: a throwaway machine). Each check is its own step, so the job
 summary names the one that failed, and a failing check fails the job and therefore the release.
 The plug-in tests, the REAPER harness and the memory gate still need this development machine.
 
@@ -422,7 +443,7 @@ demand; a project remembers its preset by kind and name and shows "(missing)" wh
   | `tests/leak_tests.cpp`, `tests/vst3_host_lifecycle.cpp` | `./run build kcf_leak_tests kcf_vst3_host && ./run memory` (pass A is enough unless the change is about instrumentation) |
   | `tools/reaper/kcf_*.lua`, `analyze_render.py`, `check_saved_state.py`, `drive_mouse.py`, `find_highlight.py`, `image_check.py`, `run_reaper_validation.sh` | `./run reaper` (a single stage, `./run reaper-stage <stage>`, only when the earlier stages' outputs already exist) and `./run reaper-controls` |
   | `tools/build-and-test.sh`, `tools/package*.sh`, `tools/validate-bundle.sh`, `tools/run-logged.sh`, `run` | `./run check` then `./run package-controls` and `./run preflight` |
-  | `tools/fetch-validators.sh`, `tools/pluginval.sh`, `.github/workflows/` | run the command once locally (`./run fetch-validator`, `./run fetch-pluginval`, `./run pluginval`) and read its log; a manual run of the Build workflow for the workflow itself (it spends Actions minutes: the owner's call) |
+  | `tools/fetch-validators.sh`, `tools/pluginval.sh`, `tools/editorhost.sh`, `.github/workflows/` | run the command once locally (`./run fetch-validator`, `./run fetch-pluginval`, `./run pluginval`) and read its log; a manual run of the Build workflow for the workflow itself (it spends Actions minutes: the owner's call) |
   | `tools/dist.sh` | `./run dist` and read the listing it prints; `./run package` if the staging it does for `package.sh` changed |
   | `tools/memory-check.sh` | `./run memory` and `./run memory --diag` |
   | `tools/xvfb-display.sh`, `tools/fetch-juce.sh`, `tools/diagrams/` | run the script once and look at what it produced (`./run displays`, `./run juce`, `./run diagram`) |

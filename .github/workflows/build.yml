@@ -100,6 +100,26 @@ jobs:
           bundle="build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3"
           if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a ./run pluginval 5 "$bundle"; else ./run pluginval 5 "$bundle"; fi
 
+      # Steinberg's editorhost: the SDK's own editor host, the closest public relative of
+      # Cubase's window code (a tester's Cubase 11 crashed at the opening of the editor). Built
+      # from the same SDK checkout, cached; macOS and Windows (on Linux it needs gtkmm). Alive
+      # for 20 s with the editor open is the pass; the runner's screen is at 100 %, so this
+      # exercises the attach and size negotiation, not the DPI scale factor.
+      - name: editorhost, cached build from the pinned SDK
+        if: runner.os != 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: external/editorhost
+          key: ${{ runner.os }}-vst3-editorhost-v3.8.1_build_84
+
+      - name: editorhost (build if not cached)
+        if: runner.os != 'Linux'
+        run: ./run fetch-editorhost
+
+      - name: editorhost opens the editor and stays alive 20 s
+        if: runner.os != 'Linux'
+        run: ./run editorhost 20 "build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3"
+
       # auval needs the component registered: the runner's own plug-in folder, on a throwaway
       # machine. The only place a script installs the plug-in anywhere (CLAUDE.md).
       - name: auval on the Audio Unit
