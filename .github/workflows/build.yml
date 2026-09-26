@@ -17,6 +17,11 @@ name: Build
 on:
   workflow_call:
   workflow_dispatch:
+    inputs:
+      crash_dump:
+        description: "Diagnostic Windows build: the module writes a crash minidump to %TEMP% (CMake KCF_CRASH_DUMP; archive named -crashdump; never a release)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -69,11 +74,32 @@ jobs:
       - name: JUCE (pinned commit)
         run: ./run juce
 
+      # The diagnostic build (epics/cubase-crash, way 3): Windows only, on the manual input.
+      - name: Diagnostic build options
+        if: runner.os == 'Windows' && inputs.crash_dump == true
+        run: |
+          echo "KCF_CMAKE_OPTIONS=-DKCF_CRASH_DUMP=ON" >> "$GITHUB_ENV"
+          echo "KCF_DIST_SUFFIX=-crashdump" >> "$GITHUB_ENV"
+
       - name: Build
         run: ./run build
 
       - name: Engine tests
         run: ./run test-engine
+
+      # The mechanism proven on the runner: with KCF_CRASH_TEST set, the diagnostic module raises
+      # an access violation at its first instantiation; the validator process must die and a dump
+      # must appear in %TEMP%. The dump is removed so the ordinary checks below start clean.
+      - name: Crash dump self-test (diagnostic build)
+        if: runner.os == 'Windows' && inputs.crash_dump == true
+        run: |
+          bundle="build/KickCrafter_artefacts/Release/VST3/KickCrafter.vst3"
+          temp="$(cygpath -u "${TEMP:-${TMP:?}}")"
+          rm -f "$temp"/KickCrafter-crash-*.dmp "$temp"/KickCrafter-crash-*.txt
+          if KCF_CRASH_TEST=1 ./run validator "$bundle"; then echo "::error::the validator survived the deliberate crash"; exit 1; fi
+          ls -la "$temp"/KickCrafter-crash-*.dmp "$temp"/KickCrafter-crash-*.txt
+          cat "$temp"/KickCrafter-crash-*.txt
+          rm -f "$temp"/KickCrafter-crash-*.dmp "$temp"/KickCrafter-crash-*.txt
 
       # Host-independent checks (epics/windows-validation). Each is its own step so the job
       # summary names the one that failed; every log lands under artifacts/logs/ and is uploaded

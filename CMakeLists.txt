@@ -209,6 +209,20 @@ if(KCF_BUILD_PLUGIN AND NOT KCF_ENGINE_ONLY)
 
     # Keep the engine visible to the test executables that link the shared code.
     target_link_libraries(KickCrafter PUBLIC kcf_engine)
+
+    # Diagnostic build (epics/cubase-crash, way 3): the module writes a minidump to %TEMP% when the
+    # host crashes, so a tester's crash can be read with the .pdb of the same build. Windows only,
+    # off by default, never in a release (release.yml never sets it; the archive name says
+    # -crashdump when it is on, through KCF_DIST_SUFFIX in the workflow).
+    option(KCF_CRASH_DUMP "Diagnostic build: write a crash minidump to %TEMP% (Windows only, never in a release)" OFF)
+    if(KCF_CRASH_DUMP)
+        if(NOT WIN32)
+            message(FATAL_ERROR "KCF_CRASH_DUMP is a Windows-only diagnostic option")
+        endif()
+        target_sources(KickCrafter PRIVATE plugin/CrashDump_win32.cpp)
+        target_compile_definitions(KickCrafter PUBLIC KCF_CRASH_DUMP=1)
+        target_link_libraries(KickCrafter PUBLIC dbghelp)
+    endif()
     if(MSVC)
         # One .pdb per format target, named after the target: the VST3 module and the Standalone
         # executable are both called KickCrafter, and two links writing one KickCrafter.pdb in the

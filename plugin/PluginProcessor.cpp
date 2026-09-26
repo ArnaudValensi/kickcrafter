@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 #include "PluginProcessor.h"
+#include "CrashDump.h"
 #include "PluginEditor.h"
 
 #include <cmath>
@@ -42,6 +43,8 @@ KickCrafterProcessor::KickCrafterProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "KickCrafterParams", params::createLayout())
 {
+    kcf::crashdump::install();             // no-ops outside the Windows diagnostic build (KCF_CRASH_DUMP)
+    kcf::crashdump::selfTestIfRequested();
     refs.attach (apvts);
     (void) presets::count();                 // initialise the preset catalogue before any audio
     engine.prepare (48000.0);

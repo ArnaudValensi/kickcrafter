@@ -38,7 +38,7 @@ rev="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 if [ "${GITHUB_ACTIONS:-}" = "true" ] && [ "${GITHUB_REF_TYPE:-}" != "tag" ]; then
     version="$version-$rev"
 fi
-name="kickcrafter-$version-$platform"
+name="kickcrafter-$version${KCF_DIST_SUFFIX:-}-$platform"   # e.g. -crashdump: the diagnostic build (CMake KCF_CRASH_DUMP)
 
 # The licence texts of every shipped third-party component (THIRD_PARTY_NOTICES.md names them).
 copy_licences() {   # copy_licences <licenses dir>

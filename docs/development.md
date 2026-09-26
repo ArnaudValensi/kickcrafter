@@ -110,6 +110,24 @@ the runner's 100 % screen scale, so it covers the attach and the size negotiatio
 scale factor; the Linux VST3 host test (`kcf_vst3_host`, run by `./run memory`) covers that factor
 through the same JUCE wrapper code (content scale 1.25, 1.5, 2, then negotiated sizes).
 
+### 4d. Diagnostic build: Windows crash dumps
+
+A tester's crash on Windows is read with a minidump and the `.pdb` of the same build. Because
+Windows writes no dump by default and a tester rarely edits the registry, the plug-in can do it
+itself in a **diagnostic build**: CMake option `KCF_CRASH_DUMP=ON` (Windows only; `./run build`
+passes it through `KCF_CMAKE_OPTIONS`), which compiles `plugin/CrashDump_win32.cpp`: at the first
+instantiation the module installs an unhandled-exception filter; when the host crashes it writes
+`%TEMP%\KickCrafter-crash-<date>-<time>.dmp` and a `.txt` next to it (version, module base,
+exception code and address), shows a message box with the path, then lets the crash continue.
+Never in a release: `release.yml` cannot set it, and the archive of such a build is named
+`kickcrafter-<version>-<sha>-crashdump-windows-x86_64.zip` (`KCF_DIST_SUFFIX`). To make one: run
+the Build workflow by hand with the `crash_dump` input on; the Windows job also self-tests the
+mechanism (`KCF_CRASH_TEST=1` makes the module raise an access violation at its first
+instantiation, the validator must die and the dump must appear) and uploads the archive and the
+symbols. Give the tester the archive; when it crashes, the message box names the dump; open the
+`.dmp` in WinDbg with the `.pdb` from the same run's `kickcrafter-windows-x86_64-symbols` artifact
+(`.sympath+ <folder with the .pdb>`, `!analyze -v`).
+
 ### 5. REAPER (host harness)
 
 Download the Linux x86_64 build from [reaper.fm](https://www.reaper.fm/download.php) (tested with
@@ -124,6 +142,9 @@ executable (default `/usr/sbin/reaper`). The harness runs REAPER with its own co
 | `KCF_VALIDATOR` | `validate-bundle.sh`, `memory-check.sh` | Steinberg validator executable (`validator` on `PATH`, then `external/validator/`) |
 | `KCF_PLUGINVAL` | `pluginval.sh` | pluginval executable (`pluginval` on `PATH`, then `external/pluginval/`) |
 | `KCF_EDITORHOST` | `editorhost.sh` | Steinberg editorhost executable (`external/editorhost/`; macOS and Windows) |
+| `KCF_CMAKE_OPTIONS` | `run build` | extra CMake options for `build/` (empty; CI sets `-DKCF_CRASH_DUMP=ON` for the diagnostic build) |
+| `KCF_DIST_SUFFIX` | `dist.sh` | inserted after the version in the archive name (empty; `-crashdump` for the diagnostic build) |
+| `KCF_CRASH_TEST` | the diagnostic module | set: the module raises an access violation at its first instantiation (the self-test of the crash dump) |
 | `KCF_REAPER` | REAPER harness | REAPER executable (`/usr/sbin/reaper`) |
 | `KCF_DISPLAY` | REAPER harness, `memory-check.sh --display` | X display of the harness (`:102`); the tests use `DISPLAY` (`:104`) |
 | `KCF_XDOTOOL` | REAPER harness | xdotool executable (`xdotool`) |

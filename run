@@ -100,9 +100,9 @@ cmd_setup() {
 }
 
 # --- build and test -----------------------------------------------------------
-cmd_build() {   # build [targets...]   (default: every target, Release, into build/)
+cmd_build() {   # build [targets...]   (default: every target, Release, into build/; KCF_CMAKE_OPTIONS adds CMake options)
     local targets="${*:-$ALL_TARGETS}"
-    configure build -DCMAKE_BUILD_TYPE=Release && logged build ninja -C build -j"$KCF_JOBS" $targets
+    configure build -DCMAKE_BUILD_TYPE=Release ${KCF_CMAKE_OPTIONS:-} && logged build ninja -C build -j"$KCF_JOBS" $targets
 }
 cmd_test_engine() { logged engine-tests "./build/tests/kcf_engine_tests$EXE" "$@"; }
 cmd_test_plugin() { logged plugin-tests "./build/tests/kcf_plugin_tests$EXE" "$@"; }
